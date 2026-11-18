@@ -1,0 +1,13 @@
+﻿{% extends 'base.html' %}
+{% block title %}Create account · RallyRate{% endblock %}
+{% block content %}
+<section class="auth-layout">
+  <div class="auth-intro"><p class="eyebrow">YOUR GAME, TRACKED</p><h1>Build your game<br><span>one rally at a time.</span></h1><p>Join your local pickleball community and keep your progress in one place.</p><div class="intro-line"></div><small>Verified matches. Ratings that move with you.</small></div>
+  <div class="form-card"><p class="eyebrow">GET STARTED</p><h2>Create your account</h2><p class="muted">Set up your RallyRate player profile.</p>
+    <form method="post" novalidate>{% csrf_token %}{% if form.non_field_errors %}<div class="form-errors">{{ form.non_field_errors }}</div>{% endif %}
+      <div class="form-grid">{% for field in form %}<div class="form-row {% if field.name == 'email' or field.name|slice:':8' == 'password' %}full{% endif %}"><label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %}<span class="required"> *</span>{% endif %}</label>{{ field }}{% if field.help_text %}<small class="help">{{ field.help_text|safe }}</small>{% endif %}{% for error in field.errors %}<small class="error">{{ error }}</small>{% endfor %}</div>{% endfor %}</div>
+      <button class="button primary full-button" type="submit">Create account <span>→</span></button>
+    </form><p class="form-foot">Already have an account? <a href="{% url 'accounts:login' %}">Log in</a></p>
+  </div>
+</section>
+{% endblock %}

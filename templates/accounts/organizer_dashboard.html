@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+{% block title %}Club dashboard ? RallyRate{% endblock %}
+{% block content %}
+<section class="welcome-row"><div><p class="eyebrow">CLUB ORGANIZER DASHBOARD</p><h1>Welcome, {{ request.user.first_name|default:request.user.email }}.</h1><p class="muted">Your organizer workspace is ready. Club roster, match verification, and leaderboard tools will appear here as those features are built.</p></div><a class="button outline" href="{% url 'accounts:profile' %}">Edit profile <span>?</span></a></section>
+<section class="dashboard-grid"><article class="stat-card rating-card"><p class="eyebrow">CLUB WORKSPACE</p><div class="stat-placeholder">Ready</div><p class="muted">Organizer access is active for this account.</p></article><article class="stat-card"><p class="eyebrow">ROSTER</p><div class="stat-placeholder">?</div><p class="muted">Roster tools are planned for a later project phase.</p></article><article class="stat-card"><p class="eyebrow">MATCH REVIEW</p><div class="stat-placeholder">?</div><p class="muted">Verification tools are planned for a later project phase.</p></article></section>
+<section class="next-card"><div class="next-icon">?</div><div><p class="eyebrow">ORGANIZER PROFILE</p><h2>{{ request.user.get_role_display }}</h2><p class="muted">Update your contact and player details in your profile.</p></div><a class="text-link" href="{% url 'accounts:profile' %}">Manage profile ?</a></section>
+{% endblock %}
