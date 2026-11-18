@@ -1,13 +1,12 @@
-﻿{% extends 'base.html' %}
-{% block title %}Create account · RallyRate{% endblock %}
+{% extends 'base.html' %}
+{% block title %}Create account ? RallyRate{% endblock %}
+{% block body_class %}auth-body signup-body{% endblock %}
+{% block header_class %}auth-topbar{% endblock %}
+{% block page_class %}signup-shell{% endblock %}
+{% block header_actions %}<div class="signup-header-action">Already a member? <a href="{% url 'accounts:login' %}">Sign in</a></div>{% endblock %}
 {% block content %}
-<section class="auth-layout">
-  <div class="auth-intro"><p class="eyebrow">YOUR GAME, TRACKED</p><h1>Build your game<br><span>one rally at a time.</span></h1><p>Join your local pickleball community and keep your progress in one place.</p><div class="intro-line"></div><small>Verified matches. Ratings that move with you.</small></div>
-  <div class="form-card"><p class="eyebrow">GET STARTED</p><h2>Create your account</h2><p class="muted">Set up your RallyRate player profile.</p>
-    <form method="post" novalidate>{% csrf_token %}{% if form.non_field_errors %}<div class="form-errors">{{ form.non_field_errors }}</div>{% endif %}
-      <div class="form-grid">{% for field in form %}<div class="form-row {% if field.name == 'email' or field.name|slice:':8' == 'password' %}full{% endif %}"><label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %}<span class="required"> *</span>{% endif %}</label>{{ field }}{% if field.help_text %}<small class="help">{{ field.help_text|safe }}</small>{% endif %}{% for error in field.errors %}<small class="error">{{ error }}</small>{% endfor %}</div>{% endfor %}</div>
-      <button class="button primary full-button" type="submit">Create account <span>→</span></button>
-    </form><p class="form-foot">Already have an account? <a href="{% url 'accounts:login' %}">Log in</a></p>
-  </div>
-</section>
+<section class="signup-heading"><p class="signin-kicker">JOIN YOUR LOCAL GAME</p><h1>Create your account</h1><p>A few details, then you?re ready for the court.</p></section>
+<form method="post" class="signup-form" novalidate>{% csrf_token %}{% if form.non_field_errors %}<div class="form-errors signup-errors" role="alert">{{ form.non_field_errors }}</div>{% endif %}
+<div class="signup-columns"><div class="signup-column"><h2>01&nbsp; Account details</h2>{% for field in form %}{% if field.name == 'full_name' or field.name == 'email' or field.name == 'password1' or field.name == 'password2' %}<div class="signup-field"><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% if field.name == 'password1' %}<small class="signup-help">Use at least 8 characters.</small>{% endif %}{% for error in field.errors %}<small class="error">{{ error }}</small>{% endfor %}</div>{% endif %}{% endfor %}</div>
+<div class="signup-column"><h2>02&nbsp; Player preferences</h2>{% for field in form %}{% if field.name == 'role' or field.name == 'preferred_paddle' or field.name == 'home_court' %}<div class="signup-field"><label for="{{ field.id_for_label }}">{% if field.name == 'preferred_paddle' %}Preferred paddle (optional){% else %}{{ field.label }}{% endif %}</label>{{ field }}{% if field.name == 'role' %}<small class="signup-help">Club organizers can also record their own matches.</small>{% endif %}{% for error in field.errors %}<small class="error">{{ error }}</small>{% endfor %}</div>{% endif %}{% endfor %}<p class="signup-rating-note">Your profile details can be updated later.</p><button class="signin-submit" type="submit">Create account</button><p class="signup-legal">By creating an account, you agree to our Terms and Privacy Policy.</p></div></div></form>
 {% endblock %}

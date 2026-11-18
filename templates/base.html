@@ -1,4 +1,4 @@
-﻿{% load static %}
+{% load static %}
 <!doctype html>
 <html lang="en">
 <head>
@@ -6,25 +6,27 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#311322">
   <title>{% block title %}RallyRate{% endblock %}</title>
-  <link rel="stylesheet" href="{% static 'css/site.css' %}">
+  <link rel="stylesheet" href="{% static 'css/site.css' %}?v=20261118-login-fixed-feedback">
 </head>
-<body>
-  <header class="topbar">
+<body class="{% block body_class %}{% endblock %}">
+  <header class="topbar {% block header_class %}{% endblock %}">
     <a class="brand" href="{% url 'accounts:dashboard' %}"><span class="brand-mark">R</span> RallyRate</a>
-    {% if request.user.is_authenticated %}
-      <nav class="nav-links">
-        <a href="{% url 'accounts:dashboard' %}">Dashboard</a>
-        <a href="{% url 'accounts:profile' %}">Profile</a>
-        <form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}<button class="nav-button" type="submit">Log out</button></form>
-      </nav>
-    {% else %}
-      <a class="nav-cta" href="{% url 'accounts:login' %}">Log in</a>
-    {% endif %}
+    {% block header_actions %}
+      {% if request.user.is_authenticated %}
+        <nav class="nav-links">
+          <a href="{% url 'accounts:dashboard' %}">Dashboard</a>
+          <a href="{% url 'accounts:profile' %}">Profile</a>
+          <form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}<button class="nav-button" type="submit">Log out</button></form>
+        </nav>
+      {% else %}
+        <a class="nav-cta" href="{% url 'accounts:login' %}">Log in</a>
+      {% endif %}
+    {% endblock %}
   </header>
-  <main class="page-shell">
+  <main class="page-shell {% block page_class %}{% endblock %}">
     {% if messages %}<div class="messages">{% for message in messages %}<div class="message {{ message.tags }}">{{ message }}</div>{% endfor %}</div>{% endif %}
     {% block content %}{% endblock %}
   </main>
-  <footer class="footer">RallyRate <span>·</span> Play, record, improve.</footer>
+  <footer class="footer">{% block footer %}RallyRate <span>?</span> Play, record, improve.{% endblock %}</footer>
 </body>
 </html>

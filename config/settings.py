@@ -93,6 +93,7 @@ DATABASES = {
     )
 }
 AUTH_USER_MODEL = 'accounts.User'
+AUTHENTICATION_BACKENDS = ['apps.accounts.backends.EmailOrUsernameBackend']
 LOGIN_URL = 'accounts:login'
 LOGIN_REDIRECT_URL = 'accounts:dashboard'
 LOGOUT_REDIRECT_URL = 'accounts:login'
