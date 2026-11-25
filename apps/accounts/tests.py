@@ -223,3 +223,36 @@ class AccountAndDashboardTests(TestCase):
             resp = self.client.get(reverse(route))
             self.assertEqual(resp.status_code, 200)
             self.assertContains(resp, "In progress")
+
+
+    def test_profile_rejects_blank_name_blank_email_and_duplicate_email(self):
+        self.client.force_login(self.player)
+
+        # Blank full_name and blank email are rejected so user cannot lock themselves out
+        bad_blank = self.client.post(
+            reverse("accounts:profile"),
+            {
+                "full_name": "   ",
+                "email": "",
+                "phone_number": "",
+                "preferred_paddle": "",
+                "home_court": "",
+            },
+        )
+        self.assertEqual(bad_blank.status_code, 200)
+        self.assertIn("full_name", bad_blank.context["form"].errors)
+        self.assertIn("email", bad_blank.context["form"].errors)
+
+        # Case-insensitive duplicate email belonging to another user is rejected
+        bad_dup = self.client.post(
+            reverse("accounts:profile"),
+            {
+                "full_name": "Mika Reyes",
+                "email": "OPPONENT@RALLYRATE.TEST",
+                "phone_number": "",
+                "preferred_paddle": "",
+                "home_court": "",
+            },
+        )
+        self.assertEqual(bad_dup.status_code, 200)
+        self.assertIn("email", bad_dup.context["form"].errors)

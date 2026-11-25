@@ -100,7 +100,16 @@ class ProfileForm(forms.ModelForm):
 
     def clean_email(self):
         email = (self.cleaned_data.get("email") or "").strip().lower()
-        return email or None
+        if not email:
+            if self.instance and self.instance.email:
+                raise forms.ValidationError("Email address is required so you can sign in.")
+            return None
+        qs = User.objects.filter(email__iexact=email)
+        if self.instance and self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise forms.ValidationError("Another account is already using this email address.")
+        return email
 
     def clean(self):
         cleaned = super().clean()
@@ -108,13 +117,16 @@ class ProfileForm(forms.ModelForm):
         first_name = (cleaned.get("first_name") or "").strip()
         last_name = (cleaned.get("last_name") or "").strip()
 
-        if full_name:
-            parts = full_name.split(maxsplit=1)
-            cleaned["first_name"] = parts[0]
-            cleaned["last_name"] = parts[1] if len(parts) > 1 else ""
-        elif not first_name and not (self.instance and self.instance.username):
-            self.add_error("full_name", "Please enter your name.")
-        else:
+        if "full_name" in self.data:
+            if not full_name:
+                self.add_error("full_name", "Please enter your full name.")
+            else:
+                parts = full_name.split(maxsplit=1)
+                cleaned["first_name"] = parts[0]
+                cleaned["last_name"] = parts[1] if len(parts) > 1 else ""
+        elif first_name:
             cleaned["first_name"] = first_name
             cleaned["last_name"] = last_name
+        elif not (self.instance and self.instance.is_superuser):
+            self.add_error("full_name", "Please enter your full name.")
         return cleaned

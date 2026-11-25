@@ -1,4 +1,4 @@
-﻿# RallyRate architecture
+# RallyRate architecture
 
 RallyRate is a Django modular monolith. A single Django project serves the full application through Django views and templates. Feature domains live in separate Django apps under `apps/` so they can evolve independently while sharing the same project, deployment, and Supabase PostgreSQL database.
 

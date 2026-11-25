@@ -18,11 +18,18 @@ def _display_name(user):
 
 
 def _decorate_match_for_player(match, user):
-    user_team = match.participant_team_for(user) or MatchParticipant.Team.TEAM_A
+    actual_team = match.participant_team_for(user)
+    if actual_team is None:
+        team_a = [_display_name(p.player) for p in match.participants.all() if p.team == MatchParticipant.Team.TEAM_A]
+        team_b = [_display_name(p.player) for p in match.participants.all() if p.team == MatchParticipant.Team.TEAM_B]
+        match.partner_line = " · ".join(team_a) if team_a else "Team A"
+        match.opponents_line = f"vs {' · '.join(team_b)}" if team_b else "vs Team B"
+        return match
+
     teammates = []
     opponents = []
     for p in match.participants.all():
-        if p.team == user_team:
+        if p.team == actual_team:
             if p.player_id != user.id:
                 teammates.append(_display_name(p.player))
         else:
