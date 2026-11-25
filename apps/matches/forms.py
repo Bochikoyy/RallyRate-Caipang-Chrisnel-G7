@@ -20,22 +20,22 @@ class PlayerChoiceField(forms.ModelChoiceField):
 class MatchForm(forms.ModelForm):
     team_a_player_1 = PlayerChoiceField(
         queryset=User.objects.none(),
-        label="Team A — Player 1",
+        label="Player 1",
         required=True,
     )
     partner = PlayerChoiceField(
         queryset=User.objects.none(),
-        label="Partner (Team A)",
+        label="Partner",
         required=False,
     )
     opponent_1 = PlayerChoiceField(
         queryset=User.objects.none(),
-        label="Opponent 1 (Team B)",
+        label="Opponent 1",
         required=True,
     )
     opponent_2 = PlayerChoiceField(
         queryset=User.objects.none(),
-        label="Opponent 2 (Team B)",
+        label="Opponent 2",
         required=False,
     )
 
@@ -47,21 +47,33 @@ class MatchForm(forms.ModelForm):
             "location",
             "team_a_score",
             "team_b_score",
+            "game_2_team_a",
+            "game_2_team_b",
+            "game_3_team_a",
+            "game_3_team_b",
             "notes",
         )
         widgets = {
             "played_at": forms.DateInput(attrs={"type": "date"}),
-            "location": forms.TextInput(attrs={"placeholder": "e.g., Cebu Pickleball Center — Court 2"}),
+            "location": forms.TextInput(attrs={"placeholder": "Riverside · Court 3"}),
             "team_a_score": forms.NumberInput(attrs={"min": 0, "max": 99, "placeholder": "11"}),
             "team_b_score": forms.NumberInput(attrs={"min": 0, "max": 99, "placeholder": "9"}),
-            "notes": forms.Textarea(attrs={"rows": 3, "placeholder": "Optional match notes or rally highlights"}),
+            "game_2_team_a": forms.NumberInput(attrs={"min": 0, "max": 99, "placeholder": "—"}),
+            "game_2_team_b": forms.NumberInput(attrs={"min": 0, "max": 99, "placeholder": "—"}),
+            "game_3_team_a": forms.NumberInput(attrs={"min": 0, "max": 99, "placeholder": "—"}),
+            "game_3_team_b": forms.NumberInput(attrs={"min": 0, "max": 99, "placeholder": "—"}),
+            "notes": forms.Textarea(attrs={"rows": 2, "placeholder": "Optional match notes"}),
         }
         labels = {
             "match_type": "Match format",
-            "played_at": "Match date",
-            "location": "Court / Venue",
-            "team_a_score": "Team A score",
-            "team_b_score": "Team B score",
+            "played_at": "Date played",
+            "location": "Court",
+            "team_a_score": "Game 1 — Your team",
+            "team_b_score": "Game 1 — Opponents",
+            "game_2_team_a": "Game 2 — Your team",
+            "game_2_team_b": "Game 2 — Opponents",
+            "game_3_team_a": "Game 3 — Your team",
+            "game_3_team_b": "Game 3 — Opponents",
             "notes": "Notes (optional)",
         }
 
@@ -71,6 +83,9 @@ class MatchForm(forms.ModelForm):
         self.is_organizer = getattr(user, "role", None) == "organizer"
 
         active_users = User.objects.filter(is_active=True).order_by("first_name", "last_name", "username")
+
+        if not self.instance.pk and not self.is_bound:
+            self.fields["match_type"].initial = Match.MatchType.DOUBLES
 
         if self.is_organizer:
             self.fields["team_a_player_1"].queryset = active_users
@@ -85,8 +100,6 @@ class MatchForm(forms.ModelForm):
             self.fields["partner"].queryset = other_users
             self.fields["opponent_1"].queryset = other_users
             self.fields["opponent_2"].queryset = other_users
-            self.fields["team_a_score"].label = "Your team score (Team A)"
-            self.fields["team_b_score"].label = "Opponent score (Team B)"
 
         if self.instance and self.instance.pk:
             team_a = list(
@@ -131,22 +144,55 @@ class MatchForm(forms.ModelForm):
             raise forms.ValidationError("Match date cannot be in the future.")
         return played_at
 
+    def _validate_game_pair(self, score_a, score_b, field_a, field_b, game_num):
+        if score_a == score_b:
+            self.add_error(field_b, f"Game {game_num}: Pickleball games cannot end in a tie.")
+            return False
+        winner_score = max(score_a, score_b)
+        margin = abs(score_a - score_b)
+        if winner_score < 11:
+            self.add_error(field_a, f"Game {game_num}: Winning score must be at least 11 points.")
+            return False
+        if margin < 2:
+            self.add_error(field_b, f"Game {game_num}: Winner must win by at least 2 points.")
+            return False
+        return True
+
     def clean(self):
         cleaned_data = super().clean()
         match_type = cleaned_data.get("match_type")
-        score_a = cleaned_data.get("team_a_score")
-        score_b = cleaned_data.get("team_b_score")
+        g1_a = cleaned_data.get("team_a_score")
+        g1_b = cleaned_data.get("team_b_score")
+        g2_a = cleaned_data.get("game_2_team_a")
+        g2_b = cleaned_data.get("game_2_team_b")
+        g3_a = cleaned_data.get("game_3_team_a")
+        g3_b = cleaned_data.get("game_3_team_b")
 
-        if score_a is not None and score_b is not None:
-            if score_a == score_b:
-                self.add_error("team_b_score", "Pickleball matches cannot end in a tie.")
+        g1_valid = False
+        if g1_a is not None and g1_b is not None:
+            g1_valid = self._validate_game_pair(g1_a, g1_b, "team_a_score", "team_b_score", 1)
+
+        g2_present = g2_a is not None or g2_b is not None
+        g3_present = g3_a is not None or g3_b is not None
+
+        g2_valid = False
+        if g2_present:
+            if g2_a is None or g2_b is None:
+                self.add_error("game_2_team_b", "Enter both scores for Game 2, or leave both blank.")
             else:
-                winner_score = max(score_a, score_b)
-                margin = abs(score_a - score_b)
-                if winner_score < 11:
-                    self.add_error("team_a_score", "Winning score must be at least 11 points.")
-                elif margin < 2:
-                    self.add_error("team_b_score", "Winner must win by at least 2 points.")
+                g2_valid = self._validate_game_pair(g2_a, g2_b, "game_2_team_a", "game_2_team_b", 2)
+
+        if g3_present:
+            if not g2_present:
+                self.add_error("game_3_team_a", "Enter Game 2 before recording Game 3.")
+            elif g3_a is None or g3_b is None:
+                self.add_error("game_3_team_b", "Enter both scores for Game 3, or leave both blank.")
+            else:
+                self._validate_game_pair(g3_a, g3_b, "game_3_team_a", "game_3_team_b", 3)
+                if g1_valid and g2_valid and ((g1_a > g1_b) == (g2_a > g2_b)):
+                    self.add_error("game_3_team_a", "Game 3 is not needed when the match already ended 2–0.")
+        elif g1_valid and g2_valid and ((g1_a > g1_b) != (g2_a > g2_b)):
+            self.add_error("game_3_team_a", "Series is tied 1–1; enter Game 3 to determine the match winner.")
 
         lead_player = cleaned_data.get("team_a_player_1") if self.is_organizer else self.user
         partner = cleaned_data.get("partner")
