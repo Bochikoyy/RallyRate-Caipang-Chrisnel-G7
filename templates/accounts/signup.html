@@ -1,12 +1,156 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block title %}Create account · RallyRate{% endblock %}
 {% block body_class %}auth-body signup-body{% endblock %}
 {% block header_class %}auth-topbar{% endblock %}
 {% block page_class %}signup-shell{% endblock %}
 {% block header_actions %}<div class="signup-header-action">Already a member? <a href="{% url 'accounts:login' %}">Sign in</a></div>{% endblock %}
 {% block content %}
-<section class="signup-heading"><p class="signin-kicker">JOIN YOUR LOCAL GAME</p><h1>Create your account</h1><p>A few details, then you're ready for the court.</p></section>
-<form method="post" class="signup-form" novalidate>{% csrf_token %}{% if form.non_field_errors %}<div class="form-errors signup-errors" role="alert">{{ form.non_field_errors }}</div>{% endif %}
-<div class="signup-columns"><div class="signup-column"><h2>01&nbsp; Account details</h2>{% for field in form %}{% if field.name == 'full_name' or field.name == 'email' or field.name == 'password1' or field.name == 'password2' %}<div class="signup-field"><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% if field.name == 'password1' %}<small class="signup-help">Use at least 8 characters.</small>{% endif %}{% for error in field.errors %}<small class="error">{{ error }}</small>{% endfor %}</div>{% endif %}{% endfor %}</div>
-<div class="signup-column"><h2>02&nbsp; Player preferences</h2>{% for field in form %}{% if field.name == 'role' or field.name == 'preferred_paddle' or field.name == 'home_court' %}<div class="signup-field"><label for="{{ field.id_for_label }}">{% if field.name == 'preferred_paddle' %}Preferred paddle (optional){% else %}{{ field.label }}{% endif %}</label>{{ field }}{% if field.name == 'role' %}<small class="signup-help">Club organizers can also record their own matches.</small>{% endif %}{% for error in field.errors %}<small class="error">{{ error }}</small>{% endfor %}</div>{% endif %}{% endfor %}<p class="signup-rating-note">Your profile details can be updated later.</p><button class="signin-submit" type="submit">Create account</button><p class="signup-legal">By creating an account, you agree to our Terms and Privacy Policy.</p></div></div></form>
+<div class="signup-grid">
+  <section class="signup-card" aria-labelledby="signup-title">
+    <p class="signin-kicker">JOIN YOUR LOCAL GAME</p>
+    <h1 id="signup-title">Create your account</h1>
+    <p class="signup-lead">A few details, then you're ready to record and confirm matches on court.</p>
+
+    <form method="post" class="signup-form" novalidate>
+      {% csrf_token %}
+      {% if form.non_field_errors %}
+        <div class="form-errors signup-errors" role="alert">{{ form.non_field_errors }}</div>
+      {% endif %}
+
+      <div class="signup-role-section">
+        <span class="signup-section-label">Choose your account role</span>
+        <div class="signup-role-cards" role="radiogroup" aria-label="Account role">
+          <label class="role-choice-card" data-role-card="player">
+            <input type="radio" name="role" value="player" {% if form.role.value|default:'player' == 'player' %}checked{% endif %}>
+            <span class="role-choice-title">Player</span>
+            <span class="role-choice-desc">Record matches, confirm opponent scores, and track your record.</span>
+          </label>
+          <label class="role-choice-card" data-role-card="organizer">
+            <input type="radio" name="role" value="organizer" {% if form.role.value == 'organizer' %}checked{% endif %}>
+            <span class="role-choice-title">Club organizer</span>
+            <span class="role-choice-desc">Oversee club matches, resolve score disputes, and record games.</span>
+          </label>
+        </div>
+        {% for error in form.role.errors %}<small class="error">{{ error }}</small>{% endfor %}
+      </div>
+
+      <div class="signup-field-grid">
+        <div class="signup-field">
+          <label for="{{ form.full_name.id_for_label }}">{{ form.full_name.label }} <span class="required">*</span></label>
+          {{ form.full_name }}
+          {% for error in form.full_name.errors %}<small class="error">{{ error }}</small>{% endfor %}
+        </div>
+
+        <div class="signup-field">
+          <label for="{{ form.email.id_for_label }}">{{ form.email.label }} <span class="required">*</span></label>
+          {{ form.email }}
+          {% for error in form.email.errors %}<small class="error">{{ error }}</small>{% endfor %}
+        </div>
+
+        <div class="signup-field">
+          <label for="{{ form.password1.id_for_label }}">Password <span class="required">*</span></label>
+          <div class="pw-input-wrap">
+            {{ form.password1 }}
+            <button type="button" class="pw-toggle-btn" data-pw-toggle="{{ form.password1.id_for_label }}">Show</button>
+          </div>
+          {% for error in form.password1.errors %}<small class="error">{{ error }}</small>{% endfor %}
+        </div>
+
+        <div class="signup-field">
+          <label for="{{ form.password2.id_for_label }}">Confirm password <span class="required">*</span></label>
+          <div class="pw-input-wrap">
+            {{ form.password2 }}
+            <button type="button" class="pw-toggle-btn" data-pw-toggle="{{ form.password2.id_for_label }}">Show</button>
+          </div>
+          {% for error in form.password2.errors %}<small class="error">{{ error }}</small>{% endfor %}
+        </div>
+      </div>
+      <p class="signup-pw-hint">Use at least 8 characters and avoid common or all-numeric passwords.</p>
+
+      <div class="signup-divider"></div>
+      <p class="signup-section-label">Court preferences <span class="signup-optional-tag">Optional</span></p>
+
+      <div class="signup-field-grid">
+        <div class="signup-field">
+          <label for="{{ form.preferred_paddle.id_for_label }}">Preferred paddle</label>
+          {{ form.preferred_paddle }}
+          {% for error in form.preferred_paddle.errors %}<small class="error">{{ error }}</small>{% endfor %}
+        </div>
+
+        <div class="signup-field">
+          <label for="{{ form.home_court.id_for_label }}">Home court / club</label>
+          {{ form.home_court }}
+          {% for error in form.home_court.errors %}<small class="error">{{ error }}</small>{% endfor %}
+        </div>
+      </div>
+
+      <button class="signin-submit signup-submit-btn" type="submit">Create account</button>
+    </form>
+  </section>
+
+  <aside class="signup-side-card" aria-label="Club membership benefits">
+    <div>
+      <p class="signin-kicker">YOUR STARTING POINT</p>
+      <div class="signup-start-rating">1,000</div>
+      <p class="signup-start-sub">Every new member starts on equal footing.</p>
+
+      <ol class="signup-benefit-list">
+        <li>
+          <span>01</span>
+          <div>
+            <strong>Peer-confirmed scores</strong>
+            <p>Opponents confirm submitted results so club records stay accurate and fair.</p>
+          </div>
+        </li>
+        <li>
+          <span>02</span>
+          <div>
+            <strong>Singles &amp; doubles ready</strong>
+            <p>Log single games or best-of-3 sets right after stepping off the court.</p>
+          </div>
+        </li>
+        <li>
+          <span>03</span>
+          <div>
+            <strong>Private contact details</strong>
+            <p>Your email stays visible only to you and club organizers.</p>
+          </div>
+        </li>
+      </ol>
+    </div>
+
+    <div class="signup-side-foot">
+      <img src="{% static 'images/rallyraye.png' %}" alt="RallyRaye mascot">
+      <p>Built for the people you play with.<br><small>Profile preferences can be updated anytime.</small></p>
+    </div>
+  </aside>
+</div>
+
+<script>
+  (function () {
+    const roleCards = document.querySelectorAll('[data-role-card]');
+    function syncRoleCards() {
+      roleCards.forEach(function (card) {
+        const input = card.querySelector('input[type="radio"]');
+        card.classList.toggle('selected', Boolean(input && input.checked));
+      });
+    }
+    roleCards.forEach(function (card) {
+      const input = card.querySelector('input[type="radio"]');
+      if (input) input.addEventListener('change', syncRoleCards);
+    });
+    syncRoleCards();
+
+    document.querySelectorAll('[data-pw-toggle]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        const target = document.getElementById(btn.getAttribute('data-pw-toggle'));
+        if (!target) return;
+        const showing = target.type === 'text';
+        target.type = showing ? 'password' : 'text';
+        btn.textContent = showing ? 'Show' : 'Hide';
+      });
+    });
+  })();
+</script>
 {% endblock %}

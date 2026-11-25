@@ -6,11 +6,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#311322">
   <title>{% block title %}RallyRate{% endblock %}</title>
-  <link rel="stylesheet" href="{% static 'css/site.css' %}?v=20261126-auth-align">
+  <link rel="stylesheet" href="{% static 'css/site.css' %}?v=20261126-signup-redesign">
 </head>
 <body class="{% block body_class %}{% endblock %}">
   <header class="topbar {% block header_class %}{% endblock %}">
-    <a class="brand" href="{% url 'accounts:dashboard' %}"><span class="brand-mark">R</span> RallyRate</a>
+    <a class="brand" href="{% url 'accounts:dashboard' %}"><img class="auth-brand-mascot" src="{% static 'images/rallyraye.png' %}" alt=""><span class="brand-mark">R</span> RallyRate</a>
     {% block header_actions %}
       {% if request.user.is_authenticated %}
         <nav class="nav-links">

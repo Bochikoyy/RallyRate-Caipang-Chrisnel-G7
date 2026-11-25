@@ -10,15 +10,23 @@ def style_fields(form):
 
 
 class SignUpForm(UserCreationForm):
-    full_name = forms.CharField(label="Full name", max_length=150, widget=forms.TextInput(attrs={"autocomplete": "name"}))
+    full_name = forms.CharField(
+        label="Full name",
+        max_length=150,
+        widget=forms.TextInput(attrs={"autocomplete": "name", "placeholder": "e.g., Maya Chen"}),
+    )
+    email = forms.EmailField(
+        label="Email address",
+        required=True,
+        widget=forms.EmailInput(attrs={"autocomplete": "email", "placeholder": "you@example.com"}),
+    )
 
     class Meta:
         model = User
         fields = ("full_name", "email", "role", "preferred_paddle", "home_court")
         widgets = {
-            "email": forms.EmailInput(attrs={"autocomplete": "email"}),
-            "preferred_paddle": forms.TextInput(attrs={"placeholder": "Optional"}),
-            "home_court": forms.TextInput(attrs={"placeholder": "Optional"}),
+            "preferred_paddle": forms.TextInput(attrs={"placeholder": "e.g., Selkirk LUXX Control"}),
+            "home_court": forms.TextInput(attrs={"placeholder": "e.g., Riverside Pickleball Club"}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -26,11 +34,22 @@ class SignUpForm(UserCreationForm):
         style_fields(self)
         self.fields["role"].initial = User.Role.PLAYER
         self.order_fields(["full_name", "email", "password1", "password2", "role", "preferred_paddle", "home_court"])
-        self.fields["password1"].widget.attrs.update({"autocomplete": "new-password"})
-        self.fields["password2"].widget.attrs.update({"autocomplete": "new-password"})
+        self.fields["password1"].widget.attrs.update({"autocomplete": "new-password", "placeholder": "At least 8 characters"})
+        self.fields["password2"].widget.attrs.update({"autocomplete": "new-password", "placeholder": "Re-enter password"})
+
+    def clean_full_name(self):
+        name = (self.cleaned_data.get("full_name") or "").strip()
+        if not name:
+            raise forms.ValidationError("Please enter your full name.")
+        return name
 
     def clean_email(self):
-        return self.cleaned_data["email"].strip().lower()
+        email = (self.cleaned_data.get("email") or "").strip().lower()
+        if not email:
+            raise forms.ValidationError("Please enter your email address.")
+        if User.objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError("An account with this email already exists. Try signing in instead.")
+        return email
 
     def save(self, commit=True):
         user = super().save(commit=False)

@@ -1634,3 +1634,298 @@
     gap: 18px;
   }
 }
+
+
+/* Auth Brand Mascot & Upgraded Registration UI */
+.auth-brand-mascot {
+  display: none;
+}
+
+.auth-body .auth-brand-mascot {
+  display: block;
+  width: 64px;
+  height: 64px;
+  margin: -10px -12px -10px -16px;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.auth-body .brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.signup-body .auth-topbar,
+.signup-body .signup-shell {
+  width: min(1240px, calc(100% - 96px));
+  max-width: 1240px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.signup-body .signup-shell {
+  margin-top: 16px;
+  margin-bottom: 44px;
+}
+
+.signup-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.92fr);
+  gap: 28px;
+  align-items: stretch;
+}
+
+.signup-card {
+  background: #ffffff;
+  border: 1px solid var(--ws-border);
+  border-radius: 14px;
+  padding: 34px 38px;
+  box-shadow: 0 14px 40px rgba(56, 21, 40, 0.04);
+}
+
+.signup-card h1 {
+  margin: 0 0 8px;
+  color: var(--ws-ink);
+  font: 700 30px/1.2 'Inter', 'DM Sans', sans-serif;
+  letter-spacing: -0.6px;
+}
+
+.signup-lead {
+  margin: 0 0 26px;
+  color: var(--ws-muted);
+  font-size: 14px;
+}
+
+.signup-section-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #4a3f46;
+}
+
+.signup-optional-tag {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #f4eef1;
+  color: var(--ws-muted);
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+.signup-role-section {
+  margin-bottom: 22px;
+}
+
+.signup-role-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.role-choice-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  border: 1.5px solid #e7dfe4;
+  border-radius: 10px;
+  background: #fdfbfc;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+
+.role-choice-card:hover {
+  border-color: #cbb5c2;
+}
+
+.role-choice-card.selected {
+  border-color: var(--ws-plum);
+  background: #faf5f8;
+  box-shadow: 0 0 0 3px rgba(89, 23, 54, 0.08);
+}
+
+.role-choice-card input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.role-choice-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--ws-ink);
+}
+
+.role-choice-card.selected .role-choice-title {
+  color: var(--ws-plum);
+}
+
+.role-choice-desc {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ws-muted);
+}
+
+.signup-field-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.signup-card .signup-field {
+  margin-bottom: 0;
+}
+
+.pw-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.pw-input-wrap .field-input {
+  padding-right: 58px;
+}
+
+.pw-toggle-btn {
+  position: absolute;
+  right: 12px;
+  border: 0;
+  background: none;
+  padding: 4px 6px;
+  font: 600 11.5px 'Inter', 'DM Sans', sans-serif;
+  color: var(--ws-plum);
+  cursor: pointer;
+}
+
+.pw-toggle-btn:hover {
+  text-decoration: underline;
+}
+
+.signup-pw-hint {
+  margin: 10px 0 0;
+  font-size: 11.5px;
+  color: var(--ws-muted);
+}
+
+.signup-divider {
+  height: 1px;
+  background: var(--ws-border);
+  margin: 22px 0 18px;
+}
+
+.signup-submit-btn {
+  margin-top: 24px;
+  height: 46px;
+}
+
+.signup-side-card {
+  background: var(--ws-blush);
+  border-radius: 14px;
+  padding: 34px 30px 26px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 28px;
+}
+
+.signup-start-rating {
+  font-size: 46px;
+  font-weight: 700;
+  letter-spacing: -1.5px;
+  line-height: 1;
+  color: var(--ws-plum);
+  margin-bottom: 8px;
+}
+
+.signup-start-sub {
+  margin: 0 0 28px;
+  font-size: 13.5px;
+  color: #6b5e66;
+}
+
+.signup-benefit-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.signup-benefit-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.signup-benefit-list li > span {
+  padding-top: 2px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ws-plum);
+}
+
+.signup-benefit-list strong {
+  display: block;
+  margin-bottom: 3px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--ws-ink);
+}
+
+.signup-benefit-list p {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #6f636a;
+}
+
+.signup-side-foot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 18px;
+  border-top: 1px solid #dfd2da;
+}
+
+.signup-side-foot img {
+  width: 68px;
+  height: 68px;
+  margin: -10px -8px -10px -12px;
+  object-fit: contain;
+  flex: none;
+}
+
+.signup-side-foot p {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ws-plum);
+  line-height: 1.4;
+}
+
+.signup-side-foot small {
+  font-size: 11.5px;
+  font-weight: 400;
+  color: #776a72;
+}
+
+@media (max-width: 960px) {
+  .signup-body .auth-topbar,
+  .signup-body .signup-shell {
+    width: calc(100% - 36px);
+  }
+  .signup-grid,
+  .signup-field-grid,
+  .signup-role-cards {
+    grid-template-columns: 1fr;
+  }
+  .signup-card {
+    padding: 26px 22px;
+  }
+}
