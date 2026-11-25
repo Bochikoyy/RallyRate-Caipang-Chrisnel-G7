@@ -202,7 +202,7 @@ class MatchCRUDTests(TestCase):
         # Organizer sees all matches
         self.client.force_login(self.organizer)
         org_list = self.client.get(reverse("matches:list"))
-        self.assertEqual(org_list.context["matches"].count(), 2)
+        self.assertEqual(len(org_list.context["matches"]), 2)
         self.assertEqual(self.client.get(reverse("matches:detail", args=[pending_match.pk])).status_code, 200)
 
     def test_submitter_can_edit_and_delete_pending_match(self):
@@ -268,3 +268,124 @@ class MatchCRUDTests(TestCase):
         org_del = self.client.post(reverse("matches:delete", args=[match.pk]))
         self.assertRedirects(org_del, reverse("matches:list"))
         self.assertFalse(Match.objects.filter(pk=match.pk).exists())
+
+
+class MatchVerificationTests(TestCase):
+    def setUp(self):
+        self.password = "RallyPass123!"
+        self.player_a1 = User.objects.create_user(
+            email="ver_a1@example.com",
+            password=self.password,
+            first_name="Alex",
+            last_name="One",
+            role=User.Role.PLAYER,
+        )
+        self.player_a2 = User.objects.create_user(
+            email="ver_a2@example.com",
+            password=self.password,
+            first_name="Bea",
+            last_name="Two",
+            role=User.Role.PLAYER,
+        )
+        self.player_b1 = User.objects.create_user(
+            email="ver_b1@example.com",
+            password=self.password,
+            first_name="Carlo",
+            last_name="Three",
+            role=User.Role.PLAYER,
+        )
+        self.player_b2 = User.objects.create_user(
+            email="ver_b2@example.com",
+            password=self.password,
+            first_name="Dana",
+            last_name="Four",
+            role=User.Role.PLAYER,
+        )
+        self.outsider = User.objects.create_user(
+            email="ver_out@example.com",
+            password=self.password,
+            role=User.Role.PLAYER,
+        )
+        self.organizer = User.objects.create_user(
+            email="ver_org@example.com",
+            password=self.password,
+            first_name="Coach",
+            last_name="Lead",
+            role=User.Role.ORGANIZER,
+        )
+
+        self.match = Match.objects.create(
+            submitted_by=self.player_a1,
+            match_type=Match.MatchType.DOUBLES,
+            played_at=timezone.localdate(),
+            location="Verification Court 1",
+            team_a_score=11,
+            team_b_score=8,
+            status=Match.Status.PENDING,
+        )
+        MatchParticipant.objects.bulk_create(
+            [
+                MatchParticipant(match=self.match, player=self.player_a1, team=MatchParticipant.Team.TEAM_A),
+                MatchParticipant(match=self.match, player=self.player_a2, team=MatchParticipant.Team.TEAM_A),
+                MatchParticipant(match=self.match, player=self.player_b1, team=MatchParticipant.Team.TEAM_B),
+                MatchParticipant(match=self.match, player=self.player_b2, team=MatchParticipant.Team.TEAM_B),
+            ]
+        )
+
+    def test_submitter_and_partner_cannot_self_verify_and_outsider_blocked(self):
+        for same_team_user in (self.player_a1, self.player_a2):
+            self.client.force_login(same_team_user)
+            resp = self.client.post(reverse("matches:verify", args=[self.match.pk]))
+            self.assertRedirects(resp, reverse("matches:detail", args=[self.match.pk]))
+            self.match.refresh_from_db()
+            self.assertEqual(self.match.status, Match.Status.PENDING)
+            self.assertIsNone(self.match.verified_by)
+
+        self.client.force_login(self.outsider)
+        self.assertEqual(self.client.post(reverse("matches:verify", args=[self.match.pk])).status_code, 403)
+
+    def test_opponent_can_verify_pending_match(self):
+        self.client.force_login(self.player_b1)
+        resp = self.client.post(reverse("matches:verify", args=[self.match.pk]))
+        self.assertRedirects(resp, reverse("matches:detail", args=[self.match.pk]))
+        self.match.refresh_from_db()
+        self.assertEqual(self.match.status, Match.Status.VERIFIED)
+        self.assertEqual(self.match.verified_by, self.player_b1)
+        self.assertIsNotNone(self.match.verified_at)
+
+    def test_opponent_dispute_validation_and_organizer_resolution(self):
+        self.client.force_login(self.player_b2)
+
+        # Too-short reason fails validation and keeps status Pending
+        bad_resp = self.client.post(
+            reverse("matches:dispute", args=[self.match.pk]),
+            {"dispute_reason": "no"},
+        )
+        self.assertEqual(bad_resp.status_code, 200)
+        self.match.refresh_from_db()
+        self.assertEqual(self.match.status, Match.Status.PENDING)
+
+        # Valid dispute marks match Disputed
+        good_resp = self.client.post(
+            reverse("matches:dispute", args=[self.match.pk]),
+            {"dispute_reason": "Final score was 11-9 in favor of Team B."},
+        )
+        self.assertRedirects(good_resp, reverse("matches:detail", args=[self.match.pk]))
+        self.match.refresh_from_db()
+        self.assertEqual(self.match.status, Match.Status.DISPUTED)
+        self.assertEqual(self.match.disputed_by, self.player_b2)
+
+        # Players cannot verify a disputed match directly, but Organizer can resolve & verify it
+        self.client.force_login(self.player_b1)
+        self.client.post(reverse("matches:verify", args=[self.match.pk]))
+        self.match.refresh_from_db()
+        self.assertEqual(self.match.status, Match.Status.DISPUTED)
+
+        self.client.force_login(self.organizer)
+        resolve_resp = self.client.post(reverse("matches:verify", args=[self.match.pk]))
+        self.assertRedirects(resolve_resp, reverse("matches:detail", args=[self.match.pk]))
+        self.match.refresh_from_db()
+        self.assertEqual(self.match.status, Match.Status.VERIFIED)
+        self.assertEqual(self.match.verified_by, self.organizer)
+        self.assertEqual(self.match.disputed_by, self.player_b2)
+        self.assertIn("11-9", self.match.dispute_reason)
