@@ -5,12 +5,12 @@ RallyRate is a Django modular monolith. A single Django project serves the full 
 ## App boundaries
 
 - `apps.accounts`: authentication, user roles, and player profile data.
-- `apps.matches`: future match logging and score verification.
+- `apps.matches`: match logging (Singles/Doubles CRUD), pickleball validation, opponent score verification, and organizer dispute resolution.
 - `apps.ratings`: future Elo calculations and rating history.
 - `apps.clubs`: future club membership and leaderboards.
 - `apps.imports`: future CSV and mock API roster/event imports.
 
-The four future feature apps are registered placeholders. Keep their implementation empty until the related feature is scheduled and approved. Cross-app model relationships should refer to users through `settings.AUTH_USER_MODEL` and avoid importing another app's concrete models directly where a string model reference works.
+The remaining three future feature apps (`ratings`, `clubs`, `imports`) are registered placeholders. Keep their implementation empty until the related feature is scheduled and approved. Cross-app model relationships should refer to users through `settings.AUTH_USER_MODEL` and avoid importing another app's concrete models directly where a string model reference works.
 
 ## Repository map
 
