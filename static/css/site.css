@@ -94,3 +94,17 @@
 .dispute-details summary:hover{text-decoration:underline}
 .dispute-form{margin-top:14px}
 .dispute-form .form-actions{margin-top:14px}
+
+
+/* Role dashboard match sections */
+.rating-card .stat-placeholder small{color:#e4c787}
+.stat-card .text-link{display:inline-block;margin-top:10px}
+.dashboard-section{margin-top:26px}
+.section-head{display:flex;align-items:end;justify-content:space-between;gap:16px;margin-bottom:14px}
+.section-head .eyebrow{margin-bottom:6px}
+.section-head h2{font:700 20px Manrope,sans-serif;margin:0}
+.mini-match-list{display:flex;flex-direction:column;gap:10px}
+.mini-match-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 20px;background:#fff;border:1px solid var(--line);border-radius:12px}
+.mini-venue{margin-left:6px}
+.mini-sub{margin-top:4px;font-size:12px;color:var(--muted)}
+@media(max-width:760px){.mini-match-row{flex-direction:column;align-items:flex-start}.section-head{flex-direction:column;align-items:flex-start}}

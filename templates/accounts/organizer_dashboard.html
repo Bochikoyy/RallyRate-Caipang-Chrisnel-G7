@@ -1,7 +1,88 @@
 {% extends 'base.html' %}
-{% block title %}Club dashboard ? RallyRate{% endblock %}
+{% block title %}Club dashboard · RallyRate{% endblock %}
 {% block content %}
-<section class="welcome-row"><div><p class="eyebrow">CLUB ORGANIZER DASHBOARD</p><h1>Welcome, {{ request.user.first_name|default:request.user.email }}.</h1><p class="muted">Your organizer workspace is ready. Club roster, match verification, and leaderboard tools will appear here as those features are built.</p></div><a class="button outline" href="{% url 'accounts:profile' %}">Edit profile <span>?</span></a></section>
-<section class="dashboard-grid"><article class="stat-card rating-card"><p class="eyebrow">CLUB WORKSPACE</p><div class="stat-placeholder">Ready</div><p class="muted">Organizer access is active for this account.</p></article><article class="stat-card"><p class="eyebrow">ROSTER</p><div class="stat-placeholder">?</div><p class="muted">Roster tools are planned for a later project phase.</p></article><article class="stat-card"><p class="eyebrow">MATCH REVIEW</p><div class="stat-placeholder">?</div><p class="muted">Verification tools are planned for a later project phase.</p></article></section>
-<section class="next-card"><div class="next-icon">?</div><div><p class="eyebrow">ORGANIZER PROFILE</p><h2>{{ request.user.get_role_display }}</h2><p class="muted">Update your contact and player details in your profile.</p></div><a class="text-link" href="{% url 'accounts:profile' %}">Manage profile ?</a></section>
+<section class="welcome-row">
+  <div>
+    <p class="eyebrow">CLUB ORGANIZER DASHBOARD</p>
+    <h1>Welcome, {{ request.user.first_name|default:request.user.email|default:request.user.username }}.</h1>
+    <p class="muted">Monitor club match activity, verify pending submissions, and resolve disputed scores.</p>
+  </div>
+  <div class="action-group">
+    <a class="button outline" href="{% url 'matches:create' %}">Log a match <span>+</span></a>
+    <a class="button primary" href="{% url 'matches:list' %}">Review matches <span>→</span></a>
+  </div>
+</section>
+
+<section class="dashboard-grid">
+  <article class="stat-card rating-card">
+    <p class="eyebrow">CLUB MATCHES</p>
+    <div class="stat-placeholder">{{ total_matches }} <small>logged</small></div>
+    <p class="muted">{{ verified_count }} verified match{{ verified_count|pluralize:"es" }} finalized across the club.</p>
+    <span class="card-glow"></span>
+  </article>
+
+  <article class="stat-card">
+    <p class="eyebrow">DISPUTED SCORES</p>
+    <div class="stat-placeholder">{{ disputed_count }} <small>disputed</small></div>
+    <p class="muted">Matches flagged by players needing organizer resolution.</p>
+    <a class="text-link" href="{% url 'matches:list' %}?status=disputed">Filter disputed →</a>
+  </article>
+
+  <article class="stat-card">
+    <p class="eyebrow">PENDING VERIFICATION</p>
+    <div class="stat-placeholder">{{ pending_count }} <small>pending</small></div>
+    <p class="muted">Matches awaiting opponent or organizer confirmation.</p>
+    <a class="text-link" href="{% url 'matches:list' %}?status=pending">Filter pending →</a>
+  </article>
+</section>
+
+<section class="dashboard-section">
+  <div class="section-head">
+    <div>
+      <p class="eyebrow">MATCH REVIEW QUEUE</p>
+      <h2>Needs organizer attention</h2>
+    </div>
+    <a class="text-link" href="{% url 'matches:list' %}">View all club matches →</a>
+  </div>
+
+  {% if review_queue %}
+    <div class="mini-match-list">
+      {% for match in review_queue %}
+        <div class="mini-match-row">
+          <div>
+            <span class="status-badge status-{{ match.status }}">{{ match.get_status_display }}</span>
+            <strong class="mini-venue">{{ match.location }}</strong>
+            <span class="muted">({{ match.score_display }}) · {{ match.played_at|date:"M j, Y" }}</span>
+            {% if match.dispute_reason %}
+              <div class="mini-sub">Dispute note: {{ match.dispute_reason|truncatechars:90 }}</div>
+            {% else %}
+              <div class="mini-sub">Logged by {{ match.submitted_by.get_full_name|default:match.submitted_by.email|default:match.submitted_by.username }}</div>
+            {% endif %}
+          </div>
+          <a class="button outline" href="{% url 'matches:detail' match.pk %}">Inspect &amp; resolve →</a>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="next-card">
+      <div class="next-icon">✓</div>
+      <div>
+        <p class="eyebrow">QUEUE CLEAR</p>
+        <h2>No disputed or pending matches right now</h2>
+        <p class="muted">All submitted club matches have been reviewed. You can also log a match on behalf of club players.</p>
+      </div>
+      <a class="text-link" href="{% url 'matches:create' %}">Log club match →</a>
+    </div>
+  {% endif %}
+</section>
+
+<section class="next-card">
+  <div class="next-icon">✦</div>
+  <div>
+    <p class="eyebrow">ORGANIZER PROFILE</p>
+    <h2>{{ request.user.get_role_display }}</h2>
+    <p class="muted">Keep your contact details, preferred paddle, and home court updated.</p>
+  </div>
+  <a class="text-link" href="{% url 'accounts:profile' %}">Manage profile →</a>
+</section>
 {% endblock %}

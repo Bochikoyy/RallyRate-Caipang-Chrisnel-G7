@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#311322">
   <title>{% block title %}RallyRate{% endblock %}</title>
-  <link rel="stylesheet" href="{% static 'css/site.css' %}?v=20261125-matches">
+  <link rel="stylesheet" href="{% static 'css/site.css' %}?v=20261125-dashboards">
 </head>
 <body class="{% block body_class %}{% endblock %}">
   <header class="topbar {% block header_class %}{% endblock %}">
@@ -28,6 +28,6 @@
     {% if messages %}<div class="messages">{% for message in messages %}<div class="message {{ message.tags }}">{{ message }}</div>{% endfor %}</div>{% endif %}
     {% block content %}{% endblock %}
   </main>
-  <footer class="footer">{% block footer %}RallyRate <span>?</span> Play, record, improve.{% endblock %}</footer>
+  <footer class="footer">{% block footer %}RallyRate <span>·</span> Play, record, improve.{% endblock %}</footer>
 </body>
 </html>
