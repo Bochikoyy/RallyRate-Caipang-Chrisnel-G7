@@ -6,15 +6,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#591736">
   <title>{% block title %}RallyRate{% endblock %}</title>
-  <link rel="stylesheet" href="{% static 'css/site.css' %}?v=20261126-sidebar-fix">
+  <link rel="stylesheet" href="{% static 'css/site.css' %}?v=20261126-logo-fix">
 </head>
 <body class="ws-body {% block body_class %}{% endblock %}">
   <header class="ws-topbar">
     <div class="ws-brand-cell">
       <a class="ws-brand" href="{% url 'accounts:dashboard' %}">
-        <span class="ws-mascot-badge">
-          <img class="ws-brand-mascot" src="{% static 'images/rallyraye.png' %}" alt="RallyRaye mascot">
-        </span>
+        <img class="ws-brand-mascot" src="{% static 'images/rallyraye.png' %}" alt="RallyRaye mascot">
         <span class="ws-brand-text">RallyRate</span>
       </a>
     </div>
