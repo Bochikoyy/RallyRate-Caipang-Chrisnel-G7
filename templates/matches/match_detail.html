@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% block title %}Match #{{ match.pk }} · RallyRate{% endblock %}
+{% block content %}
+<section class="welcome-row">
+  <div>
+    <a class="back-link" href="{% url 'matches:list' %}">← Back to matches</a>
+    <p class="eyebrow">MATCH #{{ match.pk }} · {{ match.get_match_type_display|upper }}</p>
+    <h1>{{ match.location }}</h1>
+    <div class="match-meta-row">
+      <span class="status-badge status-{{ match.status }}">{{ match.get_status_display }}</span>
+      <span class="match-date">Played {{ match.played_at|date:"F j, Y" }}</span>
+    </div>
+  </div>
+  {% if can_modify %}
+    <div class="action-group">
+      <a class="button outline" href="{% url 'matches:update' match.pk %}">Edit match</a>
+      <a class="button danger-outline" href="{% url 'matches:delete' match.pk %}">Delete</a>
+    </div>
+  {% endif %}
+</section>
+
+<section class="scoreboard-card">
+  <div class="scoreboard-side {% if match.winner_team == 'A' %}is-winner{% endif %}">
+    <p class="eyebrow">TEAM A {% if match.winner_team == 'A' %}· WINNER{% endif %}</p>
+    <div class="scoreboard-score">{{ match.team_a_score }}</div>
+    <ul class="roster-list">
+      {% for p in match.team_a_participants %}
+        <li>{{ p.player.get_full_name|default:p.player.email|default:p.player.username }}</li>
+      {% empty %}
+        <li class="muted">No players assigned</li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <div class="scoreboard-vs">VS</div>
+
+  <div class="scoreboard-side {% if match.winner_team == 'B' %}is-winner{% endif %}">
+    <p class="eyebrow">TEAM B {% if match.winner_team == 'B' %}· WINNER{% endif %}</p>
+    <div class="scoreboard-score">{{ match.team_b_score }}</div>
+    <ul class="roster-list">
+      {% for p in match.team_b_participants %}
+        <li>{{ p.player.get_full_name|default:p.player.email|default:p.player.username }}</li>
+      {% empty %}
+        <li class="muted">No players assigned</li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+
+<section class="detail-meta-grid">
+  <article class="stat-card detail-card">
+    <p class="eyebrow">SUBMISSION DETAILS</p>
+    <dl class="detail-dl">
+      <div><dt>Logged by</dt><dd>{{ match.submitted_by.get_full_name|default:match.submitted_by.email|default:match.submitted_by.username }}</dd></div>
+      <div><dt>Format</dt><dd>{{ match.get_match_type_display }}</dd></div>
+      <div><dt>Submitted on</dt><dd>{{ match.created_at|date:"M j, Y · g:i A" }}</dd></div>
+      <div><dt>Last updated</dt><dd>{{ match.updated_at|date:"M j, Y · g:i A" }}</dd></div>
+    </dl>
+  </article>
+
+  <article class="stat-card detail-card">
+    <p class="eyebrow">VERIFICATION STATUS</p>
+    <dl class="detail-dl">
+      <div><dt>Current status</dt><dd>{{ match.get_status_display }}</dd></div>
+      {% if match.verified_by %}
+        <div><dt>Verified by</dt><dd>{{ match.verified_by.get_full_name|default:match.verified_by.email|default:match.verified_by.username }}</dd></div>
+        {% if match.verified_at %}<div><dt>Verified at</dt><dd>{{ match.verified_at|date:"M j, Y · g:i A" }}</dd></div>{% endif %}
+      {% endif %}
+      {% if match.disputed_by %}
+        <div><dt>Disputed by</dt><dd>{{ match.disputed_by.get_full_name|default:match.disputed_by.email|default:match.disputed_by.username }}</dd></div>
+      {% endif %}
+      {% if match.dispute_reason %}
+        <div><dt>Dispute reason</dt><dd>{{ match.dispute_reason }}</dd></div>
+      {% endif %}
+      {% if match.notes %}
+        <div><dt>Notes</dt><dd>{{ match.notes }}</dd></div>
+      {% endif %}
+    </dl>
+  </article>
+</section>
+{% endblock %}

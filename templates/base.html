@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#311322">
   <title>{% block title %}RallyRate{% endblock %}</title>
-  <link rel="stylesheet" href="{% static 'css/site.css' %}?v=20261118-login-fixed-feedback">
+  <link rel="stylesheet" href="{% static 'css/site.css' %}?v=20261125-matches">
 </head>
 <body class="{% block body_class %}{% endblock %}">
   <header class="topbar {% block header_class %}{% endblock %}">
@@ -15,6 +15,7 @@
       {% if request.user.is_authenticated %}
         <nav class="nav-links">
           <a href="{% url 'accounts:dashboard' %}">Dashboard</a>
+          <a href="{% url 'matches:list' %}">Matches</a>
           <a href="{% url 'accounts:profile' %}">Profile</a>
           <form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}<button class="nav-button" type="submit">Log out</button></form>
         </nav>

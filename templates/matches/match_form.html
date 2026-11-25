@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+{% block title %}{% if is_edit %}Edit match{% else %}Log a match{% endif %} · RallyRate{% endblock %}
+{% block content %}
+<section class="simple-heading">
+  <a class="back-link" href="{% if is_edit %}{% url 'matches:detail' match.pk %}{% else %}{% url 'matches:list' %}{% endif %}">← Back</a>
+  <p class="eyebrow">{% if is_edit %}EDIT MATCH #{{ match.pk }}{% else %}MATCH LOGGER{% endif %}</p>
+  <h1>{% if is_edit %}Update match details{% else %}Log a pickleball match{% endif %}</h1>
+  <p class="muted">
+    {% if is_edit %}
+      Adjust players, venue, or scores while this match is still editable.
+    {% else %}
+      Enter the match format, players, and final score. Submitted matches start as Pending until confirmed by an opponent.
+    {% endif %}
+  </p>
+</section>
+
+<section class="profile-card match-form-card">
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+      <div class="form-errors">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <div class="form-grid">
+      <div class="form-row">
+        <label for="{{ form.match_type.id_for_label }}">{{ form.match_type.label }}<span class="required"> *</span></label>
+        {{ form.match_type }}
+        {% for error in form.match_type.errors %}<small class="error">{{ error }}</small>{% endfor %}
+      </div>
+
+      <div class="form-row">
+        <label for="{{ form.played_at.id_for_label }}">{{ form.played_at.label }}<span class="required"> *</span></label>
+        {{ form.played_at }}
+        {% for error in form.played_at.errors %}<small class="error">{{ error }}</small>{% endfor %}
+      </div>
+
+      <div class="form-row full">
+        <label for="{{ form.location.id_for_label }}">{{ form.location.label }}<span class="required"> *</span></label>
+        {{ form.location }}
+        {% for error in form.location.errors %}<small class="error">{{ error }}</small>{% endfor %}
+      </div>
+
+      {% if is_organizer %}
+        <div class="form-row">
+          <label for="{{ form.team_a_player_1.id_for_label }}">{{ form.team_a_player_1.label }}<span class="required"> *</span></label>
+          {{ form.team_a_player_1 }}
+          {% for error in form.team_a_player_1.errors %}<small class="error">{{ error }}</small>{% endfor %}
+        </div>
+      {% else %}
+        <div class="form-row">
+          <label>Team A — Player 1</label>
+          <div class="readonly-value">
+            {{ request.user.get_full_name|default:request.user.email|default:request.user.username }}
+            <span>You</span>
+          </div>
+        </div>
+      {% endif %}
+
+      <div class="form-row" data-doubles-only>
+        <label for="{{ form.partner.id_for_label }}">{{ form.partner.label }}<span class="required"> *</span></label>
+        {{ form.partner }}
+        {% for error in form.partner.errors %}<small class="error">{{ error }}</small>{% endfor %}
+      </div>
+
+      <div class="form-row">
+        <label for="{{ form.opponent_1.id_for_label }}">{{ form.opponent_1.label }}<span class="required"> *</span></label>
+        {{ form.opponent_1 }}
+        {% for error in form.opponent_1.errors %}<small class="error">{{ error }}</small>{% endfor %}
+      </div>
+
+      <div class="form-row" data-doubles-only>
+        <label for="{{ form.opponent_2.id_for_label }}">{{ form.opponent_2.label }}<span class="required"> *</span></label>
+        {{ form.opponent_2 }}
+        {% for error in form.opponent_2.errors %}<small class="error">{{ error }}</small>{% endfor %}
+      </div>
+
+      <div class="form-row">
+        <label for="{{ form.team_a_score.id_for_label }}">{{ form.team_a_score.label }}<span class="required"> *</span></label>
+        {{ form.team_a_score }}
+        {% for error in form.team_a_score.errors %}<small class="error">{{ error }}</small>{% endfor %}
+      </div>
+
+      <div class="form-row">
+        <label for="{{ form.team_b_score.id_for_label }}">{{ form.team_b_score.label }}<span class="required"> *</span></label>
+        {{ form.team_b_score }}
+        {% for error in form.team_b_score.errors %}<small class="error">{{ error }}</small>{% endfor %}
+      </div>
+
+      <div class="form-row full">
+        <small class="help">Standard pickleball scoring: winning team must reach at least 11 points and lead by at least 2 points.</small>
+      </div>
+
+      <div class="form-row full">
+        <label for="{{ form.notes.id_for_label }}">{{ form.notes.label }}</label>
+        {{ form.notes }}
+        {% for error in form.notes.errors %}<small class="error">{{ error }}</small>{% endfor %}
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <a class="text-link" href="{% if is_edit %}{% url 'matches:detail' match.pk %}{% else %}{% url 'matches:list' %}{% endif %}">Cancel</a>
+      <button class="button primary" type="submit">{% if is_edit %}Save changes{% else %}Submit match{% endif %}</button>
+    </div>
+  </form>
+</section>
+
+<script>
+  (function () {
+    const typeSelect = document.getElementById('{{ form.match_type.id_for_label }}');
+    const doublesFields = document.querySelectorAll('[data-doubles-only]');
+    if (!typeSelect) return;
+
+    function syncMatchType() {
+      const isDoubles = typeSelect.value === 'doubles';
+      doublesFields.forEach(function (el) {
+        el.style.display = isDoubles ? '' : 'none';
+        if (!isDoubles) {
+          const select = el.querySelector('select');
+          if (select) select.value = '';
+        }
+      });
+    }
+
+    typeSelect.addEventListener('change', syncMatchType);
+    syncMatchType();
+  })();
+</script>
+{% endblock %}
