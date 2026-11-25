@@ -1342,3 +1342,247 @@
     gap: 6px;
   }
 }
+
+
+/* Profile (Screen 6) + Rating History (Screen 4) + Leaderboard (Screen 5) */
+.ws-profile-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.85fr) minmax(270px, 0.95fr);
+  gap: 22px;
+  align-items: stretch;
+}
+
+.ws-privacy-note {
+  margin: 6px 0 22px;
+  font-size: 12px;
+  color: var(--ws-muted);
+}
+
+.ws-profile-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ws-public-card {
+  background: var(--ws-blush);
+  border-radius: 12px;
+  padding: 28px 26px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 28px;
+}
+
+.ws-public-name {
+  margin: 0 0 6px;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: var(--ws-ink);
+}
+
+.ws-public-sub {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ws-muted);
+}
+
+.ws-public-divider {
+  height: 1px;
+  background: #dfd3da;
+  margin: 22px 0;
+}
+
+.ws-public-label {
+  margin: 0 0 8px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.7px;
+  color: #6b5f66;
+}
+
+.ws-public-rating-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.ws-public-rating {
+  font-size: 38px;
+  font-weight: 700;
+  letter-spacing: -1px;
+  line-height: 1;
+  color: var(--ws-plum);
+}
+
+.ws-public-record {
+  margin: 0 0 18px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ws-ink);
+}
+
+.ws-public-paddle {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ws-muted);
+}
+
+.ws-public-foot {
+  margin: 0;
+  font-size: 12px;
+  color: var(--ws-muted);
+}
+
+/* Rating History Skeletal (Screen 4) */
+.ws-static-pill {
+  cursor: default;
+}
+
+.ws-rating-hero {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.ws-rating-hero-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.ws-big-rating {
+  font-size: 40px;
+  font-weight: 700;
+  letter-spacing: -1.2px;
+  color: var(--ws-plum);
+}
+
+.ws-chart-card {
+  position: relative;
+  background: #ffffff;
+  border: 1px solid var(--ws-border);
+  border-radius: 12px;
+  padding: 28px 30px;
+  overflow: hidden;
+}
+
+.ws-chart-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 44px;
+}
+
+.ws-chart-row {
+  display: grid;
+  grid-template-columns: 42px 1fr;
+  align-items: center;
+  gap: 14px;
+  font-size: 11px;
+  color: #9b9097;
+}
+
+.ws-chart-row div {
+  height: 1px;
+  background: #f0eaed;
+}
+
+.ws-chart-baseline {
+  height: 2px !important;
+  background: #dccad4 !important;
+}
+
+.ws-chart-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.72);
+  padding: 20px;
+  text-align: center;
+}
+
+.ws-chart-overlay p {
+  margin: 0;
+  max-width: 420px;
+  font-size: 13px;
+  color: #5c5158;
+}
+
+.ws-empty-inline {
+  background: #ffffff;
+  border: 1px solid var(--ws-border);
+  border-radius: 12px;
+  padding: 24px 26px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.ws-empty-inline p {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--ws-muted);
+}
+
+/* Leaderboard Skeletal (Screen 5) */
+.ws-leaderboard-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.ws-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.ws-club-box {
+  height: 42px;
+  min-width: 240px;
+  padding: 0 16px;
+  display: inline-flex;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid var(--ws-border);
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--ws-ink);
+}
+
+.ws-you-row {
+  background: var(--ws-blush);
+}
+
+.ws-you-name {
+  font-weight: 700;
+  color: var(--ws-ink);
+}
+
+.ws-leaderboard-foot {
+  margin: 16px 0 0;
+  font-size: 12px;
+  color: var(--ws-muted);
+}
+
+@media (max-width: 920px) {
+  .ws-profile-grid {
+    grid-template-columns: 1fr;
+  }
+}

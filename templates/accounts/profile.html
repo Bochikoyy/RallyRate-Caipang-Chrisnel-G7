@@ -1,6 +1,87 @@
-﻿{% extends 'base.html' %}
+﻿{% extends 'workspace_base.html' %}
 {% block title %}Your profile · RallyRate{% endblock %}
+{% block nav_profile %}active{% endblock %}
 {% block content %}
-<section class="simple-heading"><p class="eyebrow">ACCOUNT SETTINGS</p><h1>Your player profile</h1><p class="muted">Keep your account and pickleball details up to date.</p></section>
-<section class="profile-card"><form method="post" novalidate>{% csrf_token %}{% if form.non_field_errors %}<div class="form-errors">{{ form.non_field_errors }}</div>{% endif %}<div class="form-grid">{% for field in form %}<div class="form-row"><label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %}<span class="required"> *</span>{% endif %}</label>{{ field }}{% for error in field.errors %}<small class="error">{{ error }}</small>{% endfor %}</div>{% endfor %}</div><div class="form-actions"><a class="text-link" href="{% url 'accounts:dashboard' %}">Cancel</a><button class="button primary" type="submit">Save changes</button></div></form></section>
+<section class="ws-page-head">
+  <div>
+    <h1>Your profile</h1>
+    <p class="ws-page-sub">Keep your details up to date.</p>
+  </div>
+</section>
+
+<section class="ws-profile-grid">
+  <div class="ws-setup-card">
+    <h2>Personal details</h2>
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% if form.non_field_errors %}
+        <div class="ws-alert error" style="margin-bottom: 16px;">{{ form.non_field_errors }}</div>
+      {% endif %}
+
+      <div class="ws-field-grid">
+        <div class="ws-field">
+          <label for="{{ form.full_name.id_for_label }}">Full name</label>
+          {{ form.full_name }}
+          {% for error in form.full_name.errors %}<small class="error">{{ error }}</small>{% endfor %}
+        </div>
+
+        <div class="ws-field">
+          <label for="{{ form.email.id_for_label }}">Email address</label>
+          {{ form.email }}
+          {% for error in form.email.errors %}<small class="error">{{ error }}</small>{% endfor %}
+        </div>
+
+        <div class="ws-field">
+          <label for="{{ form.phone_number.id_for_label }}">Contact number (optional)</label>
+          {{ form.phone_number }}
+          {% for error in form.phone_number.errors %}<small class="error">{{ error }}</small>{% endfor %}
+        </div>
+
+        <div class="ws-field">
+          <label>Role</label>
+          <div class="ws-readonly-box">{{ request.user.get_role_display }}</div>
+        </div>
+
+        <div class="ws-field">
+          <label for="{{ form.preferred_paddle.id_for_label }}">Preferred paddle</label>
+          {{ form.preferred_paddle }}
+          {% for error in form.preferred_paddle.errors %}<small class="error">{{ error }}</small>{% endfor %}
+        </div>
+
+        <div class="ws-field">
+          <label for="{{ form.home_court.id_for_label }}">Home court</label>
+          {{ form.home_court }}
+          {% for error in form.home_court.errors %}<small class="error">{{ error }}</small>{% endfor %}
+        </div>
+      </div>
+
+      <p class="ws-privacy-note">Your contact details are only visible to you and club organizers.</p>
+
+      <div class="ws-profile-actions">
+        <button class="ws-btn ws-btn-primary" type="submit">Save changes</button>
+        <a class="ws-btn ws-btn-outline" href="{% url 'accounts:dashboard' %}">Cancel</a>
+      </div>
+    </form>
+  </div>
+
+  <aside class="ws-public-card">
+    <div>
+      <p class="ws-eyebrow">PUBLIC PROFILE</p>
+      <h2 class="ws-public-name">{{ request.user.get_full_name|default:request.user.first_name|default:request.user.email|default:request.user.username }}</h2>
+      <p class="ws-public-sub">{{ request.user.get_role_display }} · {{ request.user.home_court|default:"RallyRate Club" }}</p>
+
+      <div class="ws-public-divider"></div>
+
+      <p class="ws-public-label">CURRENT RATING</p>
+      <div class="ws-public-rating-row">
+        <span class="ws-public-rating">1,000</span>
+        <span class="ws-inprogress-pill">In progress</span>
+      </div>
+      <p class="ws-public-record">{{ wins }} win{{ wins|pluralize }} · {{ losses }} loss{{ losses|pluralize:"es" }}</p>
+      <p class="ws-public-paddle">{{ request.user.preferred_paddle|default:"No preferred paddle set" }}</p>
+    </div>
+
+    <p class="ws-public-foot">Email and phone stay private.</p>
+  </aside>
+</section>
 {% endblock %}

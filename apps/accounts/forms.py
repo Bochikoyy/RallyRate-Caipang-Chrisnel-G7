@@ -53,6 +53,13 @@ class EmailLoginForm(AuthenticationForm):
 
 
 class ProfileForm(forms.ModelForm):
+    full_name = forms.CharField(
+        label="Full name",
+        max_length=150,
+        required=False,
+        widget=forms.TextInput(attrs={"autocomplete": "name", "placeholder": "Your full name"}),
+    )
+
     class Meta:
         model = User
         fields = ("first_name", "last_name", "email", "phone_number", "preferred_paddle", "home_court")
@@ -65,8 +72,30 @@ class ProfileForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields["first_name"].required = False
+        self.fields["last_name"].required = False
+        if self.instance and self.instance.pk:
+            combined = f"{self.instance.first_name} {self.instance.last_name}".strip()
+            self.fields["full_name"].initial = combined
         style_fields(self)
 
     def clean_email(self):
         email = (self.cleaned_data.get("email") or "").strip().lower()
         return email or None
+
+    def clean(self):
+        cleaned = super().clean()
+        full_name = (cleaned.get("full_name") or "").strip()
+        first_name = (cleaned.get("first_name") or "").strip()
+        last_name = (cleaned.get("last_name") or "").strip()
+
+        if full_name:
+            parts = full_name.split(maxsplit=1)
+            cleaned["first_name"] = parts[0]
+            cleaned["last_name"] = parts[1] if len(parts) > 1 else ""
+        elif not first_name and not (self.instance and self.instance.username):
+            self.add_error("full_name", "Please enter your name.")
+        else:
+            cleaned["first_name"] = first_name
+            cleaned["last_name"] = last_name
+        return cleaned

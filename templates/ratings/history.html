@@ -1,0 +1,72 @@
+{% extends 'workspace_base.html' %}
+{% block title %}Rating history · RallyRate{% endblock %}
+{% block nav_ratings %}active{% endblock %}
+{% block content %}
+<section class="ws-page-head">
+  <div>
+    <h1>Your rating, over time</h1>
+    <p class="ws-page-sub">Steady progress, one confirmed match at a time.</p>
+  </div>
+  <span class="ws-btn ws-btn-outline ws-static-pill">Last 30 days · In progress</span>
+</section>
+
+<section class="ws-rating-hero">
+  <div class="ws-rating-hero-left">
+    <span class="ws-big-rating">1,000</span>
+    <span class="ws-inprogress-pill">Dynamic Elo engine — In progress</span>
+  </div>
+  <span class="ws-td-muted">{{ verified_count }} confirmed match{{ verified_count|pluralize:"es" }}</span>
+</section>
+
+<section class="ws-chart-card">
+  <div class="ws-chart-grid">
+    <div class="ws-chart-row"><span>1040</span><div></div></div>
+    <div class="ws-chart-row"><span>1000</span><div class="ws-chart-baseline"></div></div>
+    <div class="ws-chart-row"><span>960</span><div></div></div>
+  </div>
+  <div class="ws-chart-overlay">
+    <span class="ws-inprogress-pill">In progress</span>
+    <p>Rating progression chart will populate automatically once the Elo calculator module is active.</p>
+  </div>
+</section>
+
+<div class="ws-section-head" style="margin-top: 28px;">
+  <h2>Confirmed match changes</h2>
+</div>
+
+{% if verified_matches %}
+  <div class="ws-table-card">
+    <table class="ws-table">
+      <thead>
+        <tr>
+          <th>DATE</th>
+          <th>RESULT</th>
+          <th>OPPONENTS</th>
+          <th>BEFORE</th>
+          <th>CHANGE</th>
+          <th class="ws-align-right">AFTER</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for match in verified_matches %}
+          <tr>
+            <td class="ws-td-muted">{{ match.played_at|date:"M j" }}</td>
+            <td><strong>{{ match.player_result }}</strong></td>
+            <td>
+              <a class="ws-row-primary" href="{% url 'matches:detail' match.pk %}">{{ match.opponents_line }}</a>
+            </td>
+            <td class="ws-td-muted">1,000</td>
+            <td><span class="ws-inprogress-pill">In progress</span></td>
+            <td class="ws-align-right ws-td-muted">1,000</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <section class="ws-empty-inline">
+    <p>No confirmed matches yet. Once your matches are verified by opponents, their rating changes will appear here.</p>
+    <a class="ws-text-link" href="{% url 'matches:create' %}">Record a match →</a>
+  </section>
+{% endif %}
+{% endblock %}
