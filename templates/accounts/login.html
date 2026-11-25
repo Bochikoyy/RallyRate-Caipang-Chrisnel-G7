@@ -16,4 +16,4 @@
 <div class="signin-field"><label for="{{ form.password.id_for_label }}">Password</label>{{ form.password }}</div><input type="hidden" name="next" value="{{ next }}"><button class="signin-submit" type="submit">Sign in</button></form>
 <p class="signin-create">New to the club? <a href="{% url 'accounts:signup' %}">Create an account</a></p><div class="signin-tagline">One account. Your club. Every verified match.</div></div></section>
 {% endblock %}
-{% block footer %}<span>Privacy</span><span>·</span><span>Terms</span>{% endblock %}
+{% block footer %}{% endblock %}
