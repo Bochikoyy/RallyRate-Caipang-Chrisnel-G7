@@ -78,3 +78,19 @@
 .delete-summary .eyebrow{margin-bottom:8px}
 .delete-summary .muted{margin:0;font-size:13px}
 @media(max-width:760px){.match-card-body{flex-direction:column;align-items:flex-start;gap:14px}.scoreboard-card{grid-template-columns:1fr;padding:22px}.detail-meta-grid{grid-template-columns:1fr}.detail-dl>div{flex-direction:column;gap:4px}.detail-dl dd{text-align:left}}
+
+
+/* Verification & dispute workflow */
+.action-pill{padding:3px 10px;border-radius:999px;background:#f4e9ee;color:var(--wine2);font-size:11px;font-weight:700}
+.verification-banner{background:#fff;border:1px solid #dccad4;border-radius:16px;padding:24px 28px;margin-bottom:20px;box-shadow:0 12px 30px #38152808}
+.verification-banner-main{display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap}
+.verification-banner .eyebrow{margin-bottom:8px}
+.verification-banner h2{font:700 20px Manrope,sans-serif;margin:0 0 6px}
+.verification-banner .muted{margin:0;max-width:600px;font-size:13px}
+.verify-btn{background:var(--green);color:#fff;white-space:nowrap}
+.verify-btn:hover{background:#416254}
+.dispute-details{margin-top:18px;padding-top:16px;border-top:1px solid #f0e8ec}
+.dispute-details summary{cursor:pointer;font-size:13px;font-weight:600;color:#a13743;user-select:none}
+.dispute-details summary:hover{text-decoration:underline}
+.dispute-form{margin-top:14px}
+.dispute-form .form-actions{margin-top:14px}

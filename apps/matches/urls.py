@@ -10,4 +10,6 @@ urlpatterns = [
     path("<int:pk>/", views.match_detail, name="detail"),
     path("<int:pk>/edit/", views.match_update, name="update"),
     path("<int:pk>/delete/", views.match_delete, name="delete"),
+    path("<int:pk>/verify/", views.match_verify, name="verify"),
+    path("<int:pk>/dispute/", views.match_dispute, name="dispute"),
 ]

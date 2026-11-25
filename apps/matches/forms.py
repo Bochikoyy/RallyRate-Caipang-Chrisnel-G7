@@ -198,3 +198,23 @@ class MatchForm(forms.ModelForm):
             ]
             MatchParticipant.objects.bulk_create(participants)
             return match
+
+
+class MatchDisputeForm(forms.Form):
+    dispute_reason = forms.CharField(
+        label="Reason for dispute",
+        max_length=500,
+        widget=forms.Textarea(
+            attrs={
+                "class": "field-input",
+                "rows": 3,
+                "placeholder": "Describe what is inaccurate (e.g., final score or player assignment).",
+            }
+        ),
+    )
+
+    def clean_dispute_reason(self):
+        reason = (self.cleaned_data.get("dispute_reason") or "").strip()
+        if len(reason) < 5:
+            raise forms.ValidationError("Please provide a clear reason (at least 5 characters) for disputing this match.")
+        return reason

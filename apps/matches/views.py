@@ -3,8 +3,10 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
+from django.views.decorators.http import require_POST
 
-from .forms import MatchForm
+from .forms import MatchDisputeForm, MatchForm
 from .models import Match
 
 
@@ -29,6 +31,7 @@ def _matches_for_user(user):
 def match_list(request):
     status_filter = request.GET.get("status", "all").strip().lower()
     valid_statuses = {choice.value for choice in Match.Status}
+    is_organizer = getattr(request.user, "role", None) == "organizer"
 
     visible_matches = _matches_for_user(request.user)
     counts = {
@@ -39,18 +42,35 @@ def match_list(request):
     }
 
     if status_filter in valid_statuses:
-        matches = visible_matches.filter(status=status_filter)
+        matches = list(visible_matches.filter(status=status_filter))
     else:
         status_filter = "all"
-        matches = visible_matches
+        matches = list(visible_matches)
+
+    for match in matches:
+        if is_organizer:
+            match.needs_action = match.status in (Match.Status.PENDING, Match.Status.DISPUTED)
+        else:
+            match.needs_action = match.can_be_verified_by(request.user)
 
     context = {
         "matches": matches,
         "status_filter": status_filter,
         "counts": counts,
-        "is_organizer": getattr(request.user, "role", None) == "organizer",
+        "is_organizer": is_organizer,
     }
     return render(request, "matches/match_list.html", context)
+
+
+def _detail_context(match, user, dispute_form=None):
+    return {
+        "match": match,
+        "can_modify": match.can_be_modified_by(user),
+        "can_verify": match.can_be_verified_by(user),
+        "can_dispute": match.can_be_disputed_by(user),
+        "dispute_form": dispute_form or MatchDisputeForm(),
+        "is_organizer": getattr(user, "role", None) == "organizer",
+    }
 
 
 @login_required
@@ -59,12 +79,7 @@ def match_detail(request, pk):
     if not match.can_be_viewed_by(request.user):
         raise PermissionDenied("You do not have permission to view this match.")
 
-    context = {
-        "match": match,
-        "can_modify": match.can_be_modified_by(request.user),
-        "is_organizer": getattr(request.user, "role", None) == "organizer",
-    }
-    return render(request, "matches/match_detail.html", context)
+    return render(request, "matches/match_detail.html", _detail_context(match, request.user))
 
 
 @login_required
@@ -138,3 +153,60 @@ def match_delete(request, pk):
         return redirect("matches:list")
 
     return render(request, "matches/match_confirm_delete.html", {"match": match})
+
+
+@login_required
+@require_POST
+def match_verify(request, pk):
+    match = get_object_or_404(_base_match_queryset(), pk=pk)
+    if not match.can_be_viewed_by(request.user):
+        raise PermissionDenied("You do not have permission to verify this match.")
+    if not match.can_be_verified_by(request.user):
+        messages.error(request, "You cannot verify your own submission or an already verified match.")
+        return redirect("matches:detail", pk=match.pk)
+
+    was_disputed = match.status == Match.Status.DISPUTED
+    match.status = Match.Status.VERIFIED
+    match.verified_by = request.user
+    match.verified_at = timezone.now()
+    match.save(update_fields=["status", "verified_by", "verified_at", "updated_at"])
+
+    if was_disputed:
+        messages.success(request, "Dispute resolved and match verified.")
+    else:
+        messages.success(request, "Match score confirmed and verified.")
+    return redirect("matches:detail", pk=match.pk)
+
+
+@login_required
+@require_POST
+def match_dispute(request, pk):
+    match = get_object_or_404(_base_match_queryset(), pk=pk)
+    if not match.can_be_viewed_by(request.user):
+        raise PermissionDenied("You do not have permission to dispute this match.")
+    if not match.can_be_disputed_by(request.user):
+        messages.error(request, "Only an opposing player or club organizer can dispute a pending match.")
+        return redirect("matches:detail", pk=match.pk)
+
+    dispute_form = MatchDisputeForm(request.POST)
+    if dispute_form.is_valid():
+        match.status = Match.Status.DISPUTED
+        match.disputed_by = request.user
+        match.dispute_reason = dispute_form.cleaned_data["dispute_reason"]
+        match.verified_by = None
+        match.verified_at = None
+        match.save(
+            update_fields=[
+                "status",
+                "disputed_by",
+                "dispute_reason",
+                "verified_by",
+                "verified_at",
+                "updated_at",
+            ]
+        )
+        messages.success(request, "Match marked as disputed for club organizer review.")
+        return redirect("matches:detail", pk=match.pk)
+
+    messages.error(request, "Please provide a clear dispute reason.")
+    return render(request, "matches/match_detail.html", _detail_context(match, request.user, dispute_form=dispute_form))

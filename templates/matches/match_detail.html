@@ -47,6 +47,59 @@
   </div>
 </section>
 
+{% if can_verify or can_dispute %}
+<section class="verification-banner">
+  <div class="verification-banner-main">
+    <div>
+      <p class="eyebrow">{% if is_organizer %}ORGANIZER REVIEW{% else %}OPPONENT VERIFICATION{% endif %}</p>
+      <h2>
+        {% if is_organizer and match.status == 'disputed' %}
+          Resolve disputed match
+        {% elif is_organizer %}
+          Review pending match
+        {% else %}
+          Confirm or dispute this result
+        {% endif %}
+      </h2>
+      <p class="muted">
+        {% if is_organizer and match.status == 'disputed' %}
+          Use <strong>Edit match</strong> above if scores or players need adjustment, then verify below to finalize this record.
+        {% else %}
+          Confirm that the score and players are accurate so this match becomes official, or flag a dispute if something is wrong.
+        {% endif %}
+      </p>
+    </div>
+
+    {% if can_verify %}
+      <form method="post" action="{% url 'matches:verify' match.pk %}">
+        {% csrf_token %}
+        <button class="button verify-btn" type="submit">
+          {% if is_organizer and match.status == 'disputed' %}Resolve &amp; verify{% else %}Confirm score{% endif %}
+          <span>✓</span>
+        </button>
+      </form>
+    {% endif %}
+  </div>
+
+  {% if can_dispute %}
+    <details class="dispute-details" {% if dispute_form.errors %}open{% endif %}>
+      <summary>Something inaccurate? Dispute this score</summary>
+      <form method="post" action="{% url 'matches:dispute' match.pk %}" class="dispute-form" novalidate>
+        {% csrf_token %}
+        <div class="form-row">
+          <label for="{{ dispute_form.dispute_reason.id_for_label }}">{{ dispute_form.dispute_reason.label }}<span class="required"> *</span></label>
+          {{ dispute_form.dispute_reason }}
+          {% for error in dispute_form.dispute_reason.errors %}<small class="error">{{ error }}</small>{% endfor %}
+        </div>
+        <div class="form-actions">
+          <button class="button danger" type="submit">Submit dispute</button>
+        </div>
+      </form>
+    </details>
+  {% endif %}
+</section>
+{% endif %}
+
 <section class="detail-meta-grid">
   <article class="stat-card detail-card">
     <p class="eyebrow">SUBMISSION DETAILS</p>

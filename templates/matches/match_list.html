@@ -39,6 +39,9 @@
           <div class="match-meta-row">
             <span class="match-type-tag">{{ match.get_match_type_display }}</span>
             <span class="status-badge status-{{ match.status }}">{{ match.get_status_display }}</span>
+            {% if match.needs_action %}
+              <span class="action-pill">{% if is_organizer %}Needs review{% else %}Needs your confirmation{% endif %}</span>
+            {% endif %}
             <span class="match-date">{{ match.played_at|date:"M j, Y" }}</span>
           </div>
           <a class="text-link" href="{% url 'matches:detail' match.pk %}">View details →</a>
