@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#591736">
   <title>{% block title %}RallyRate{% endblock %}</title>
-  <link rel="stylesheet" href="{% static 'css/site.css' %}?v=20261126-profile-skeletal">
+  <link rel="stylesheet" href="{% static 'css/site.css' %}?v=20261126-sidebar-fix">
 </head>
 <body class="ws-body {% block body_class %}{% endblock %}">
   <header class="ws-topbar">
@@ -49,7 +49,8 @@
         <p class="ws-club-eyebrow">{{ request.user.home_court|default:"RALLYRATE CLUB"|upper }}</p>
         <p class="ws-club-tagline">Local ratings.<br>Verified results.</p>
         <div class="ws-foot-links">
-          <span class="ws-help-note">Help &amp; rating rules <small>In progress</small></span>
+          {% url 'ratings:rules' as rules_url %}
+          <a class="ws-help-link" href="{{ rules_url|default:'#' }}">Help &amp; rating rules</a>
           <form method="post" action="{% url 'accounts:logout' %}">
             {% csrf_token %}
             <button class="ws-logout-btn" type="submit">Log out</button>

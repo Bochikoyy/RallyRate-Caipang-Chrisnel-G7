@@ -317,22 +317,16 @@
   gap: 10px;
 }
 
-.ws-help-note {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+.ws-help-link {
+  display: inline-block;
   font-size: 12px;
   font-weight: 600;
   color: var(--ws-plum);
+  white-space: nowrap;
 }
 
-.ws-help-note small {
-  padding: 2px 6px;
-  border-radius: 999px;
-  background: var(--ws-blush);
-  color: var(--ws-plum);
-  font-size: 10px;
-  font-weight: 600;
+.ws-help-link:hover {
+  text-decoration: underline;
 }
 
 .ws-foot-links form {

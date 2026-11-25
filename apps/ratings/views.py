@@ -31,3 +31,8 @@ def rating_history(request):
             "verified_count": len(verified_matches),
         },
     )
+
+
+@login_required
+def rating_rules(request):
+    return render(request, "ratings/rules.html")
