@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block title %}Delete match #{{ match.pk }} · RallyRate{% endblock %}
+{% block content %}
+<section class="simple-heading">
+  <a class="back-link" href="{% url 'matches:detail' match.pk %}">← Back to match</a>
+  <p class="eyebrow">CONFIRM DELETION</p>
+  <h1>Delete this match?</h1>
+  <p class="muted">This will permanently remove the match record and its participant entries from RallyRate.</p>
+</section>
+
+<section class="profile-card match-form-card">
+  <div class="delete-summary">
+    <p class="eyebrow">{{ match.get_match_type_display|upper }} · {{ match.played_at|date:"F j, Y" }}</p>
+    <h2>{{ match.location }} ({{ match.score_display }})</h2>
+    <p class="muted">Status: {{ match.get_status_display }}</p>
+  </div>
+
+  <form method="post">
+    {% csrf_token %}
+    <div class="form-actions">
+      <a class="text-link" href="{% url 'matches:detail' match.pk %}">Cancel</a>
+      <button class="button danger" type="submit">Yes, delete match</button>
+    </div>
+  </form>
+</section>
+{% endblock %}

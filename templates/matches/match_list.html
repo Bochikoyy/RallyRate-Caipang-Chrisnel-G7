@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% block title %}Matches · RallyRate{% endblock %}
+{% block content %}
+<section class="welcome-row">
+  <div>
+    <p class="eyebrow">{% if is_organizer %}CLUB MATCH MANAGEMENT{% else %}MATCH LOG{% endif %}</p>
+    <h1>{% if is_organizer %}Club matches{% else %}Your matches{% endif %}</h1>
+    <p class="muted">
+      {% if is_organizer %}
+        Review logged pickleball matches across the club, inspect score details, and manage pending or disputed records.
+      {% else %}
+        Log singles or doubles results and track opponent verification before matches count toward your rating.
+      {% endif %}
+    </p>
+  </div>
+  <a class="button primary" href="{% url 'matches:create' %}">Log a match <span>+</span></a>
+</section>
+
+<nav class="filter-tabs" aria-label="Filter matches by status">
+  <a class="filter-tab {% if status_filter == 'all' %}active{% endif %}" href="{% url 'matches:list' %}">
+    All <span class="tab-count">{{ counts.all }}</span>
+  </a>
+  <a class="filter-tab {% if status_filter == 'pending' %}active{% endif %}" href="{% url 'matches:list' %}?status=pending">
+    Pending <span class="tab-count">{{ counts.pending }}</span>
+  </a>
+  <a class="filter-tab {% if status_filter == 'verified' %}active{% endif %}" href="{% url 'matches:list' %}?status=verified">
+    Verified <span class="tab-count">{{ counts.verified }}</span>
+  </a>
+  <a class="filter-tab {% if status_filter == 'disputed' %}active{% endif %}" href="{% url 'matches:list' %}?status=disputed">
+    Disputed <span class="tab-count">{{ counts.disputed }}</span>
+  </a>
+</nav>
+
+{% if matches %}
+  <section class="match-list">
+    {% for match in matches %}
+      <article class="match-card">
+        <div class="match-card-top">
+          <div class="match-meta-row">
+            <span class="match-type-tag">{{ match.get_match_type_display }}</span>
+            <span class="status-badge status-{{ match.status }}">{{ match.get_status_display }}</span>
+            <span class="match-date">{{ match.played_at|date:"M j, Y" }}</span>
+          </div>
+          <a class="text-link" href="{% url 'matches:detail' match.pk %}">View details →</a>
+        </div>
+
+        <div class="match-card-body">
+          <div class="match-teams">
+            <div class="team-row {% if match.winner_team == 'A' %}is-winner{% endif %}">
+              <span class="team-label">Team A</span>
+              <span class="team-names">
+                {% for p in match.team_a_participants %}
+                  {{ p.player.get_full_name|default:p.player.email|default:p.player.username }}{% if not forloop.last %} &amp; {% endif %}
+                {% empty %}
+                  —
+                {% endfor %}
+              </span>
+            </div>
+            <div class="team-row {% if match.winner_team == 'B' %}is-winner{% endif %}">
+              <span class="team-label">Team B</span>
+              <span class="team-names">
+                {% for p in match.team_b_participants %}
+                  {{ p.player.get_full_name|default:p.player.email|default:p.player.username }}{% if not forloop.last %} &amp; {% endif %}
+                {% empty %}
+                  —
+                {% endfor %}
+              </span>
+            </div>
+          </div>
+
+          <div class="match-score-box">
+            <span class="score-num {% if match.winner_team == 'A' %}winner{% endif %}">{{ match.team_a_score }}</span>
+            <span class="score-sep">–</span>
+            <span class="score-num {% if match.winner_team == 'B' %}winner{% endif %}">{{ match.team_b_score }}</span>
+          </div>
+        </div>
+
+        <div class="match-card-foot">
+          <span>{{ match.location }}</span>
+          <span>Logged by {{ match.submitted_by.get_full_name|default:match.submitted_by.email|default:match.submitted_by.username }}</span>
+        </div>
+      </article>
+    {% endfor %}
+  </section>
+{% else %}
+  <section class="empty-state-card">
+    <p class="eyebrow">NO MATCHES FOUND</p>
+    <h2>{% if status_filter == 'all' %}No matches logged yet{% else %}No {{ status_filter }} matches{% endif %}</h2>
+    <p class="muted">
+      {% if status_filter == 'all' %}
+        Record your first singles or doubles game to start building your verified pickleball match history.
+      {% else %}
+        There are currently no matches with status "{{ status_filter }}".
+      {% endif %}
+    </p>
+    <a class="button primary" href="{% url 'matches:create' %}">Log a match <span>+</span></a>
+  </section>
+{% endif %}
+{% endblock %}
