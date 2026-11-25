@@ -24,7 +24,7 @@
     <div>
       <strong>Match result confirmed</strong>
       <p>
-        Verified by {{ match.verified_by.get_full_name|default:match.verified_by.email|default:match.verified_by.username|default:"player" }}{% if match.verified_at %} on {{ match.verified_at|date:"M j, Y" }}{% endif %}. Rating calculation is in progress.
+        {% if match.verified_by %}Verified by {{ match.verified_by.get_full_name|default:match.verified_by.email|default:match.verified_by.username }}{% else %}Confirmed match record{% endif %}{% if match.verified_at %} on {{ match.verified_at|date:"M j, Y" }}{% endif %}. Rating calculation is in progress.
       </p>
     </div>
   </section>

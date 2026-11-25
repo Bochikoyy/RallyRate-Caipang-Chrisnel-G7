@@ -171,3 +171,55 @@ class AccountAndDashboardTests(TestCase):
         self.assertEqual(org_resp.context["pending_count"], 1)
         self.assertEqual(org_resp.context["disputed_count"], 1)
         self.assertEqual(org_resp.context["review_queue"][0], disputed_match)
+
+
+    def test_new_player_empty_dashboard_and_duplicate_email_check(self):
+        # Brand-new player has 0 matches -> empty state context & copy
+        self.client.force_login(self.player)
+        dash_resp = self.client.get(reverse("accounts:player_dashboard"))
+        self.assertEqual(dash_resp.status_code, 200)
+        self.assertTrue(dash_resp.context["is_new_player"])
+        self.assertContains(dash_resp, "Welcome to the club")
+        self.assertContains(dash_resp, "Your first result belongs here.")
+
+        # Logout and test case-insensitive duplicate email check on signup
+        self.client.logout()
+        dup_resp = self.client.post(
+            reverse("accounts:signup"),
+            {
+                "full_name": "Duplicate User",
+                "email": "PLAYER@RALLYRATE.TEST",
+                "password1": "Pickleball99!",
+                "password2": "Pickleball99!",
+                "role": User.Role.PLAYER,
+            },
+        )
+        self.assertEqual(dup_resp.status_code, 200)
+        self.assertContains(dup_resp, "already exists")
+
+    def test_profile_full_name_and_skeletal_workspace_pages(self):
+        # Anonymous users redirected from skeletal routes
+        for route in ("ratings:history", "ratings:rules", "clubs:leaderboard"):
+            anon = self.client.get(reverse(route))
+            self.assertEqual(anon.status_code, 302)
+
+        self.client.force_login(self.player)
+        prof_resp = self.client.post(
+            reverse("accounts:profile"),
+            {
+                "full_name": "Chrisnel Graine Caipang",
+                "email": "player@rallyrate.test",
+                "phone_number": "09170001111",
+                "preferred_paddle": "Selkirk LUXX",
+                "home_court": "Riverside Pickleball Club",
+            },
+        )
+        self.assertRedirects(prof_resp, reverse("accounts:profile"))
+        self.player.refresh_from_db()
+        self.assertEqual(self.player.first_name, "Chrisnel")
+        self.assertEqual(self.player.last_name, "Graine Caipang")
+
+        for route in ("ratings:history", "ratings:rules", "clubs:leaderboard"):
+            resp = self.client.get(reverse(route))
+            self.assertEqual(resp.status_code, 200)
+            self.assertContains(resp, "In progress")
