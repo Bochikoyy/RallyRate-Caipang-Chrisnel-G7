@@ -1,5 +1,9 @@
-# Match management
+# Match management (`apps.matches`)
 
-Placeholder Django app for future RallyRate development.
+Implements RallyRate's core Match Logging & Opponent Score Verification vertical slice:
 
-Keep this app focused on the match management domain. Add models, forms, views, URLs, templates, migrations, and feature-specific tests here as the approved scope is implemented.
+- `models.py` — `Match` and `MatchParticipant` (`submitted_by`, `verified_by`, `disputed_by` FKs + `players` M2M through `MatchParticipant`).
+- `forms.py` — `MatchForm` (Singles/Doubles roster & pickleball score validation) and `MatchDisputeForm`.
+- `views.py` & `urls.py` — Role-scoped CRUD (`list`, `create`, `detail`, `update`, `delete`) plus `verify` and `dispute` actions under `/matches/`.
+- `services.py` — Dashboard summary queries consumed by Player and Club Organizer dashboards.
+- `tests.py` — Automated CRUD, validation, permission, verification, and dispute resolution tests.

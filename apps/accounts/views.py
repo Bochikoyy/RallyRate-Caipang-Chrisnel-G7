@@ -3,6 +3,10 @@ from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from functools import wraps
 from django.shortcuts import redirect, render
+from apps.matches.services import (
+    get_organizer_dashboard_summary,
+    get_player_dashboard_summary,
+)
 from .forms import ProfileForm, SignUpForm
 from .models import User
 
@@ -40,12 +44,14 @@ def role_required(role):
 
 @role_required(User.Role.PLAYER)
 def player_dashboard(request):
-    return render(request, "accounts/dashboard.html")
+    context = get_player_dashboard_summary(request.user)
+    return render(request, "accounts/dashboard.html", context)
 
 
 @role_required(User.Role.ORGANIZER)
 def organizer_dashboard(request):
-    return render(request, "accounts/organizer_dashboard.html")
+    context = get_organizer_dashboard_summary()
+    return render(request, "accounts/organizer_dashboard.html", context)
 
 
 @login_required

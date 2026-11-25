@@ -90,12 +90,29 @@ class Match(models.Model):
     def is_organizer(self, user):
         return getattr(user, "role", None) == "organizer"
 
+    def participant_team_for(self, user):
+        if not user or not user.is_authenticated:
+            return None
+        for participant in self.participants.all():
+            if participant.player_id == user.id:
+                return participant.team
+        return None
+
+    def is_opposing_player(self, user):
+        user_team = self.participant_team_for(user)
+        if user_team is None or user.id == self.submitted_by_id:
+            return False
+        submitter_team = self.participant_team_for(self.submitted_by)
+        if submitter_team is not None:
+            return user_team != submitter_team
+        return True
+
     def can_be_viewed_by(self, user):
         if not user or not user.is_authenticated:
             return False
         if self.is_organizer(user) or self.submitted_by_id == user.id:
             return True
-        return self.participants.filter(player_id=user.id).exists()
+        return self.participant_team_for(user) is not None
 
     def can_be_modified_by(self, user):
         if not user or not user.is_authenticated:
@@ -103,6 +120,20 @@ class Match(models.Model):
         if self.is_organizer(user):
             return True
         return self.submitted_by_id == user.id and self.status == self.Status.PENDING
+
+    def can_be_verified_by(self, user):
+        if not user or not user.is_authenticated:
+            return False
+        if self.is_organizer(user):
+            return self.status in (self.Status.PENDING, self.Status.DISPUTED)
+        return self.status == self.Status.PENDING and self.is_opposing_player(user)
+
+    def can_be_disputed_by(self, user):
+        if not user or not user.is_authenticated:
+            return False
+        if self.is_organizer(user):
+            return self.status == self.Status.PENDING
+        return self.status == self.Status.PENDING and self.is_opposing_player(user)
 
 
 class MatchParticipant(models.Model):
