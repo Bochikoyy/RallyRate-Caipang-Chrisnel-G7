@@ -8,6 +8,7 @@ from django.views.decorators.http import require_POST
 
 from .forms import MatchDisputeForm, MatchForm
 from .models import Match
+from .services import _decorate_match_for_player
 
 
 def _base_match_queryset():
@@ -48,6 +49,7 @@ def match_list(request):
         matches = list(visible_matches)
 
     for match in matches:
+        _decorate_match_for_player(match, request.user)
         if is_organizer:
             match.needs_action = match.status in (Match.Status.PENDING, Match.Status.DISPUTED)
         else:

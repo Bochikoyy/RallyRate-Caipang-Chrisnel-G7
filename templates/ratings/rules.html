@@ -1,0 +1,56 @@
+{% extends 'workspace_base.html' %}
+{% block title %}Help & rating rules · RallyRate{% endblock %}
+{% block content %}
+<section class="ws-page-head">
+  <div>
+    <h1>Help &amp; rating rules</h1>
+    <p class="ws-page-sub">How match logging, peer confirmation, and club ratings work in RallyRate.</p>
+  </div>
+</section>
+
+<div class="ws-detail-grid">
+  <section class="ws-setup-card">
+    <h2>Match logging &amp; verification</h2>
+    <p class="ws-hero-copy" style="max-width: none; margin-bottom: 18px;">
+      Every match recorded in RallyRate starts in <strong>Pending</strong> status until an opposing player confirms the final score.
+    </p>
+    <ol class="ws-steps-list">
+      <li>
+        <span class="ws-step-num">01</span>
+        <div>
+          <strong class="ws-step-title">Scoring format</strong>
+          <p>Games are played to at least 11 points and must be won by at least 2 points (single game or best of 3).</p>
+        </div>
+      </li>
+      <li>
+        <span class="ws-step-num">02</span>
+        <div>
+          <strong class="ws-step-title">Peer confirmation</strong>
+          <p>Only an opposing player (or a club organizer) can confirm a submitted result. Submitters and partners cannot self-verify.</p>
+        </div>
+      </li>
+      <li>
+        <span class="ws-step-num">03</span>
+        <div>
+          <strong class="ws-step-title">Dispute handling</strong>
+          <p>If a score or roster has an error, an opponent can report an issue to hold the match for club organizer review.</p>
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <aside class="ws-public-card">
+    <div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px;">
+        <p class="ws-eyebrow" style="margin: 0;">ELO RATING ENGINE</p>
+        <span class="ws-inprogress-pill">In progress</span>
+      </div>
+      <h2 class="ws-public-name" style="font-size: 20px;">Starting at 1,000</h2>
+      <p class="ws-public-sub" style="line-height: 1.6; margin-top: 8px;">
+        Dynamic Elo rating adjustments and club leaderboard rankings are currently in progress for the next development phase. Pending and disputed matches never alter player ratings.
+      </p>
+    </div>
+    <a class="ws-btn ws-btn-primary" href="{% url 'matches:create' %}">Record a match</a>
+  </aside>
+</div>
+{% endblock %}

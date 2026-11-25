@@ -1,4 +1,4 @@
-﻿# RallyRate
+# RallyRate
 
 Django full-stack web application for pickleball match logging, opponent score verification, and local skill ratings. Server-rendered Django templates power the frontend and Supabase PostgreSQL serves as the database.
 
@@ -11,7 +11,7 @@ Django full-stack web application for pickleball match logging, opponent score v
 - **User Profile (`/accounts/profile/`):** Manage name, email, phone number, preferred paddle, and home court.
 
 ### Core Feature Vertical Slice — Match Logging & Verification (`apps.matches`)
-- **Create (`/matches/new/`):** Log **Singles** or **Doubles** pickleball matches with partner/opponent selection, venue, date, and final scores. New submissions are linked to `submitted_by` (`ForeignKey` to `User`), store team rosters via `MatchParticipant` (`ManyToMany` to `User`), and start in **Pending verification** status.
+- **Create (`/matches/new/`):** Log **Singles** or **Doubles** pickleball matches (single-game or **Best-of-3** sets) with partner/opponent selection, venue, date, and final scores. New submissions are linked to `submitted_by` (`ForeignKey` to `User`), store team rosters via `MatchParticipant` (`ManyToMany` to `User`), and start in **Pending verification** status.
 - **Read (`/matches/`, `/matches/<id>/`):** Filter matches by status (`All`, `Pending`, `Verified`, `Disputed`) and inspect full match scoreboards, rosters, and verification/dispute audit metadata. Players only see matches they submitted or played in; Club Organizers have club-wide visibility.
 - **Update & Delete (`/matches/<id>/edit/`, `/matches/<id>/delete/`):** Submitters can edit or delete their own `Pending` matches; `Verified` and `Disputed` matches are locked from player edits. Club Organizers can update or remove club match records when resolving issues.
 - **Opponent Verification & Dispute Resolution (`/matches/<id>/verify/`, `/matches/<id>/dispute/`):**

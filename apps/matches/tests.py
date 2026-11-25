@@ -389,3 +389,70 @@ class MatchVerificationTests(TestCase):
         self.assertEqual(self.match.verified_by, self.organizer)
         self.assertEqual(self.match.disputed_by, self.player_b2)
         self.assertIn("11-9", self.match.dispute_reason)
+
+
+    def test_best_of_three_series_and_validation(self):
+        self.client.force_login(self.player_a1)
+
+        # 1-1 split without Game 3 is rejected
+        split_form = MatchForm(
+            {
+                "match_type": Match.MatchType.SINGLES,
+                "played_at": timezone.localdate().isoformat(),
+                "location": "Riverside Court 3",
+                "opponent_1": self.player_b1.pk,
+                "team_a_score": 11,
+                "team_b_score": 8,
+                "game_2_team_a": 7,
+                "game_2_team_b": 11,
+            },
+            user=self.player_a1,
+        )
+        self.assertFalse(split_form.is_valid())
+        self.assertIn("game_3_team_a", split_form.errors)
+
+        # Unnecessary Game 3 after 2-0 sweep is rejected
+        sweep_extra_form = MatchForm(
+            {
+                "match_type": Match.MatchType.SINGLES,
+                "played_at": timezone.localdate().isoformat(),
+                "location": "Riverside Court 3",
+                "opponent_1": self.player_b1.pk,
+                "team_a_score": 11,
+                "team_b_score": 8,
+                "game_2_team_a": 11,
+                "game_2_team_b": 7,
+                "game_3_team_a": 11,
+                "game_3_team_b": 9,
+            },
+            user=self.player_a1,
+        )
+        self.assertFalse(sweep_extra_form.is_valid())
+        self.assertIn("game_3_team_a", sweep_extra_form.errors)
+
+        # Valid 2-1 Best-of-3 match persists all 3 games and computes series winner
+        resp = self.client.post(
+            reverse("matches:create"),
+            {
+                "match_type": Match.MatchType.DOUBLES,
+                "played_at": timezone.localdate().isoformat(),
+                "location": "Riverside Court 3",
+                "partner": self.player_a2.pk,
+                "opponent_1": self.player_b1.pk,
+                "opponent_2": self.player_b2.pk,
+                "team_a_score": 9,
+                "team_b_score": 11,
+                "game_2_team_a": 11,
+                "game_2_team_b": 6,
+                "game_3_team_a": 11,
+                "game_3_team_b": 8,
+            },
+        )
+        created = Match.objects.exclude(pk=self.match.pk).first()
+        self.assertIsNotNone(created)
+        self.assertRedirects(resp, reverse("matches:detail", args=[created.pk]))
+        self.assertEqual(len(created.games), 3)
+        self.assertEqual(created.series_wins, (2, 1))
+        self.assertEqual(created.series_score_display, "2 – 1")
+        self.assertEqual(created.winner_team, MatchParticipant.Team.TEAM_A)
+        self.assertEqual(len(created.verification_rows), 4)

@@ -1,0 +1,57 @@
+{% extends 'workspace_base.html' %}
+{% block title %}Leaderboard · RallyRate{% endblock %}
+{% block nav_leaderboard %}active{% endblock %}
+{% block content %}
+<section class="ws-page-head">
+  <div>
+    <h1>The local leaderboard</h1>
+    <p class="ws-page-sub">A familiar court. A little friendly competition.</p>
+  </div>
+  <span class="ws-inprogress-pill">Elo rankings · In progress</span>
+</section>
+
+<section class="ws-leaderboard-toolbar">
+  <div class="ws-toolbar-left">
+    <div class="ws-club-box">{{ request.user.home_court|default:"RallyRate Pickleball Club" }}</div>
+    <span class="ws-btn ws-btn-outline ws-static-pill">All players</span>
+  </div>
+  <span class="ws-td-muted">{{ player_count }} club member{{ player_count|pluralize }} · Sorted by confirmed wins while Elo is in progress</span>
+</section>
+
+{% if rows %}
+  <div class="ws-table-card">
+    <table class="ws-table">
+      <thead>
+        <tr>
+          <th>RANK</th>
+          <th>PLAYER</th>
+          <th>RATING</th>
+          <th>RECORD</th>
+          <th class="ws-align-right">LAST MATCH</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+          <tr class="{% if row.is_you %}ws-you-row{% endif %}">
+            <td class="ws-td-muted">{{ row.rank }}</td>
+            <td>
+              <span class="{% if row.is_you %}ws-you-name{% else %}ws-row-primary{% endif %}">
+                {{ row.name }}{% if row.is_you %} · you{% endif %}
+              </span>
+            </td>
+            <td><span class="ws-inprogress-pill">1,000 · In progress</span></td>
+            <td class="ws-td-score">{{ row.wins }}–{{ row.losses }}</td>
+            <td class="ws-align-right ws-td-muted">
+              {% if row.last_match %}{{ row.last_match|date:"M j" }}{% else %}—{% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endif %}
+
+<p class="ws-leaderboard-foot">
+  Official Elo rankings require 5 confirmed matches (module in progress). Pending and disputed matches are excluded.
+</p>
+{% endblock %}

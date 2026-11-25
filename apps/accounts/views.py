@@ -59,6 +59,15 @@ def profile(request):
     form = ProfileForm(request.POST or None, instance=request.user)
     if request.method == "POST" and form.is_valid():
         form.save()
-        messages.success(request, "Profile updated.")
+        messages.success(request, "Profile saved. You're all set for your next match.")
         return redirect("accounts:profile")
-    return render(request, "accounts/profile.html", {"form": form})
+    summary = get_player_dashboard_summary(request.user)
+    return render(
+        request,
+        "accounts/profile.html",
+        {
+            "form": form,
+            "wins": summary["wins"],
+            "losses": summary["losses"],
+        },
+    )

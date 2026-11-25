@@ -1,6 +1,7 @@
 from django.db.models import Case, IntegerField, Q, Value, When
+from django.utils import timezone
 
-from .models import Match
+from .models import Match, MatchParticipant
 
 
 def _match_queryset():
@@ -9,6 +10,46 @@ def _match_queryset():
         "verified_by",
         "disputed_by",
     ).prefetch_related("participants__player")
+
+
+def _display_name(user):
+    full_name = f"{user.first_name} {user.last_name}".strip()
+    return full_name or user.email or user.username
+
+
+def _decorate_match_for_player(match, user):
+    actual_team = match.participant_team_for(user)
+    if actual_team is None:
+        team_a = [_display_name(p.player) for p in match.participants.all() if p.team == MatchParticipant.Team.TEAM_A]
+        team_b = [_display_name(p.player) for p in match.participants.all() if p.team == MatchParticipant.Team.TEAM_B]
+        match.partner_line = " · ".join(team_a) if team_a else "Team A"
+        match.opponents_line = f"vs {' · '.join(team_b)}" if team_b else "vs Team B"
+        return match
+
+    teammates = []
+    opponents = []
+    for p in match.participants.all():
+        if p.team == actual_team:
+            if p.player_id != user.id:
+                teammates.append(_display_name(p.player))
+        else:
+            opponents.append(_display_name(p.player))
+
+    if match.match_type == Match.MatchType.DOUBLES:
+        match.partner_line = " · ".join(teammates) if teammates else "Doubles partner"
+    else:
+        match.partner_line = "Singles match"
+    match.opponents_line = " · ".join(opponents) if opponents else "Opponent"
+    return match
+
+
+def _time_greeting():
+    hour = timezone.localtime().hour
+    if hour < 12:
+        return "Good morning"
+    if hour < 18:
+        return "Good afternoon"
+    return "Good evening"
 
 
 def get_player_dashboard_summary(user):
@@ -24,11 +65,14 @@ def get_player_dashboard_summary(user):
     pending_count = 0
     disputed_count = 0
     awaiting_confirmation = []
+    verified_matches = []
 
     for match in user_matches:
+        _decorate_match_for_player(match, user)
         user_team = match.participant_team_for(user)
         if match.status == Match.Status.VERIFIED and user_team is not None:
             verified_count += 1
+            verified_matches.append(match)
             if match.winner_team == user_team:
                 wins += 1
             elif match.winner_team is not None:
@@ -40,16 +84,24 @@ def get_player_dashboard_summary(user):
         elif match.status == Match.Status.DISPUTED:
             disputed_count += 1
 
+    win_rate = round((wins / verified_count) * 100) if verified_count > 0 else None
+    table_matches = verified_matches[:4] if verified_matches else user_matches[:4]
+
     return {
+        "greeting": _time_greeting(),
+        "is_new_player": len(user_matches) == 0,
         "total_matches": len(user_matches),
         "verified_count": verified_count,
         "wins": wins,
         "losses": losses,
+        "win_rate": win_rate,
         "pending_count": pending_count,
         "disputed_count": disputed_count,
         "awaiting_confirmation": awaiting_confirmation[:5],
         "awaiting_confirmation_count": len(awaiting_confirmation),
         "recent_matches": user_matches[:5],
+        "table_matches": table_matches,
+        "showing_verified_only": bool(verified_matches),
     }
 
 
