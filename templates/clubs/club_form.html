@@ -1,0 +1,87 @@
+{% extends 'workspace_base.html' %}
+{% block title %}{% if is_edit %}Edit club{% else %}Create a club{% endif %} · RallyRate{% endblock %}
+{% block nav_clubs %}active{% endblock %}
+{% block content %}
+<section class="ws-page-head">
+  <div>
+    <h1>{% if is_edit %}Edit {{ club.name }}{% else %}Create a club{% endif %}</h1>
+    <p class="ws-page-sub">You'll automatically become the Host and can add co-hosts, run open-play games, and manage standings.</p>
+  </div>
+  <a class="ws-btn ws-btn-outline" href="{% url 'clubs:hub' %}">Back to clubs</a>
+</section>
+
+<div class="ws-detail-grid">
+  <section class="ws-setup-card">
+    <h2>Club details</h2>
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% if form.non_field_errors %}
+        <div class="ws-alert error" style="margin-bottom: 16px;">{{ form.non_field_errors }}</div>
+      {% endif %}
+
+      <div class="ws-field-grid">
+        <div class="ws-field">
+          <label for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+          {{ form.name }}
+          {% for error in form.name.errors %}<small class="error">{{ error }}</small>{% endfor %}
+        </div>
+
+        <div class="ws-field">
+          <label for="{{ form.home_court.id_for_label }}">{{ form.home_court.label }}</label>
+          {{ form.home_court }}
+          {% for error in form.home_court.errors %}<small class="error">{{ error }}</small>{% endfor %}
+        </div>
+
+        <div class="ws-field" style="grid-column: 1 / -1;">
+          <label for="{{ form.description.id_for_label }}">{{ form.description.label }}</label>
+          {{ form.description }}
+          {% for error in form.description.errors %}<small class="error">{{ error }}</small>{% endfor %}
+        </div>
+
+        <div class="ws-field" style="grid-column: 1 / -1;">
+          <label style="display: inline-flex; align-items: center; gap: 10px; font-size: 13px; cursor: pointer;">
+            {{ form.is_public }}
+            <span>{{ form.is_public.label }}</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="ws-profile-actions">
+        <button class="ws-btn ws-btn-primary" type="submit">{% if is_edit %}Save club{% else %}Create club{% endif %}</button>
+        <a class="ws-btn ws-btn-outline" href="{% url 'clubs:hub' %}">Cancel</a>
+      </div>
+    </form>
+  </section>
+
+  <aside class="ws-public-card">
+    <div>
+      <p class="ws-eyebrow">HOST PRIVILEGES</p>
+      <h2 class="ws-public-name" style="font-size: 21px;">Run your local court</h2>
+      <ol class="ws-steps-list" style="margin-top: 18px;">
+        <li>
+          <span class="ws-step-num">01</span>
+          <div>
+            <strong class="ws-step-title">Add co-hosts</strong>
+            <p>Delegate session management and score entry to trusted club regulars.</p>
+          </div>
+        </li>
+        <li>
+          <span class="ws-step-num">02</span>
+          <div>
+            <strong class="ws-step-title">Host open-play games</strong>
+            <p>Let players join a session, auto-generate balanced matchups, and enter scores directly.</p>
+          </div>
+        </li>
+        <li>
+          <span class="ws-step-num">03</span>
+          <div>
+            <strong class="ws-step-title">Club leaderboard</strong>
+            <p>Track verified wins, losses, and 1.0–8.0 ratings across all club members.</p>
+          </div>
+        </li>
+      </ol>
+    </div>
+    <p class="ws-public-foot">Every club gets a unique invite code you can rotate anytime.</p>
+  </aside>
+</div>
+{% endblock %}

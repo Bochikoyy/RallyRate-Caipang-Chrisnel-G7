@@ -10,30 +10,13 @@
   <section class="signup-card" aria-labelledby="signup-title">
     <p class="signin-kicker">JOIN YOUR LOCAL GAME</p>
     <h1 id="signup-title">Create your account</h1>
-    <p class="signup-lead">A few details, then you're ready to record and confirm matches on court.</p>
+    <p class="signup-lead">Every player starts on equal footing — join or host clubs, play events, and track your rating.</p>
 
     <form method="post" class="signup-form" novalidate>
       {% csrf_token %}
       {% if form.non_field_errors %}
         <div class="form-errors signup-errors" role="alert">{{ form.non_field_errors }}</div>
       {% endif %}
-
-      <div class="signup-role-section">
-        <span class="signup-section-label">Choose your account role</span>
-        <div class="signup-role-cards" role="radiogroup" aria-label="Account role">
-          <label class="role-choice-card" data-role-card="player">
-            <input type="radio" name="role" value="player" {% if form.role.value|default:'player' == 'player' %}checked{% endif %}>
-            <span class="role-choice-title">Player</span>
-            <span class="role-choice-desc">Record matches, confirm opponent scores, and track your record.</span>
-          </label>
-          <label class="role-choice-card" data-role-card="organizer">
-            <input type="radio" name="role" value="organizer" {% if form.role.value == 'organizer' %}checked{% endif %}>
-            <span class="role-choice-title">Club organizer</span>
-            <span class="role-choice-desc">Oversee club matches, resolve score disputes, and record games.</span>
-          </label>
-        </div>
-        {% for error in form.role.errors %}<small class="error">{{ error }}</small>{% endfor %}
-      </div>
 
       <div class="signup-field-grid">
         <div class="signup-field">
@@ -85,36 +68,36 @@
         </div>
       </div>
 
-      <button class="signin-submit signup-submit-btn" type="submit">Create account</button>
+      <button class="signin-submit signup-submit-btn" type="submit">Create player account</button>
     </form>
   </section>
 
   <aside class="signup-side-card" aria-label="Club membership benefits">
     <div>
       <p class="signin-kicker">YOUR STARTING POINT</p>
-      <div class="signup-start-rating">1,000</div>
-      <p class="signup-start-sub">Every new member starts on equal footing.</p>
+      <div class="signup-start-rating">3.000</div>
+      <p class="signup-start-sub">1.000 – 8.000 performance rating scale.</p>
 
       <ol class="signup-benefit-list">
         <li>
           <span>01</span>
           <div>
-            <strong>Peer-confirmed scores</strong>
-            <p>Opponents confirm submitted results so club records stay accurate and fair.</p>
+            <strong>Create or join clubs</strong>
+            <p>Host your own club with co-hosts and open-play events, or join local clubs with an invite code.</p>
           </div>
         </li>
         <li>
           <span>02</span>
           <div>
-            <strong>Singles &amp; doubles ready</strong>
-            <p>Log single games or best-of-3 sets right after stepping off the court.</p>
+            <strong>Performance-based ratings</strong>
+            <p>DUPR-style 1.0–8.0 ratings factor in opponent strength, score margin, and reliability.</p>
           </div>
         </li>
         <li>
           <span>03</span>
           <div>
-            <strong>Private contact details</strong>
-            <p>Your email stays visible only to you and club organizers.</p>
+            <strong>Host &amp; peer verification</strong>
+            <p>Club hosts enter official event scores directly, or log casual games with opponent confirmation.</p>
           </div>
         </li>
       </ol>
@@ -129,19 +112,6 @@
 
 <script>
   (function () {
-    const roleCards = document.querySelectorAll('[data-role-card]');
-    function syncRoleCards() {
-      roleCards.forEach(function (card) {
-        const input = card.querySelector('input[type="radio"]');
-        card.classList.toggle('selected', Boolean(input && input.checked));
-      });
-    }
-    roleCards.forEach(function (card) {
-      const input = card.querySelector('input[type="radio"]');
-      if (input) input.addEventListener('change', syncRoleCards);
-    });
-    syncRoleCards();
-
     document.querySelectorAll('[data-pw-toggle]').forEach(function (btn) {
       btn.addEventListener('click', function () {
         const target = document.getElementById(btn.getAttribute('data-pw-toggle'));

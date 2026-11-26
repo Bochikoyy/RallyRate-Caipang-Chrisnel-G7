@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#591736">
   <title>{% block title %}RallyRate{% endblock %}</title>
-  <link rel="stylesheet" href="{% static 'css/site.css' %}?v=20261126-grid-align">
+  <link rel="stylesheet" href="{% static 'css/site.css' %}?v=20261126-rebase-flow">
 </head>
 <body class="ws-body {% block body_class %}{% endblock %}">
   <header class="ws-topbar">
@@ -18,10 +18,16 @@
     </div>
 
     <div class="ws-topbar-main">
-      <span class="ws-club-title">{{ request.user.home_court|default:"RallyRate Pickleball Club" }}</span>
+      <span class="ws-club-title">{{ request.user.home_court|default:"RallyRate Pickleball" }}</span>
       <div class="ws-user-meta">
         <span class="ws-user-name">{{ request.user.get_full_name|default:request.user.first_name|default:request.user.email|default:request.user.username }}</span>
-        <span class="ws-user-role">{{ request.user.get_role_display|upper }}</span>
+        <span class="ws-user-role">
+          {% if request.user.rating_profile %}
+            DBL {{ request.user.rating_profile.doubles_rating }} · SGL {{ request.user.rating_profile.singles_rating }}
+          {% else %}
+            PLAYER · 3.000
+          {% endif %}
+        </span>
       </div>
     </div>
   </header>
@@ -31,24 +37,22 @@
       <div class="ws-nav-group">
         <p class="ws-nav-heading">YOUR WORKSPACE</p>
         <nav class="ws-nav">
-          {% url 'ratings:history' as rating_history_url %}
-          {% url 'clubs:leaderboard' as leaderboard_url %}
           <a class="ws-nav-link {% block nav_overview %}{% endblock %}" href="{% url 'accounts:dashboard' %}">Overview</a>
+          <a class="ws-nav-link {% block nav_clubs %}{% endblock %}" href="{% url 'clubs:hub' %}">Clubs &amp; events</a>
           <a class="ws-nav-link {% block nav_record %}{% endblock %}" href="{% url 'matches:create' %}">Record match</a>
           <a class="ws-nav-link {% block nav_history %}{% endblock %}" href="{% url 'matches:list' %}">Match history</a>
-          <a class="ws-nav-link {% block nav_ratings %}{% endblock %}" href="{{ rating_history_url|default:'#' }}">Rating history</a>
-          <a class="ws-nav-link {% block nav_leaderboard %}{% endblock %}" href="{{ leaderboard_url|default:'#' }}">Leaderboard</a>
+          <a class="ws-nav-link {% block nav_ratings %}{% endblock %}" href="{% url 'ratings:history' %}">Rating history</a>
+          <a class="ws-nav-link {% block nav_leaderboard %}{% endblock %}" href="{% url 'clubs:leaderboard' %}">Leaderboards</a>
           <a class="ws-nav-link {% block nav_profile %}{% endblock %}" href="{% url 'accounts:profile' %}">Profile</a>
         </nav>
       </div>
 
       <div class="ws-sidebar-foot">
         <div class="ws-sidebar-divider"></div>
-        <p class="ws-club-eyebrow">{{ request.user.home_court|default:"RALLYRATE CLUB"|upper }}</p>
-        <p class="ws-club-tagline">Local ratings.<br>Verified results.</p>
+        <p class="ws-club-eyebrow">{{ request.user.home_court|default:"RALLYRATE"|upper }}</p>
+        <p class="ws-club-tagline">1.0–8.0 ratings.<br>Club &amp; global standings.</p>
         <div class="ws-foot-links">
-          {% url 'ratings:rules' as rules_url %}
-          <a class="ws-help-link" href="{{ rules_url|default:'#' }}">Help &amp; rating rules</a>
+          <a class="ws-help-link" href="{% url 'ratings:rules' %}">Help &amp; rating rules</a>
           <form method="post" action="{% url 'accounts:logout' %}">
             {% csrf_token %}
             <button class="ws-logout-btn" type="submit">Log out</button>
@@ -70,7 +74,7 @@
       </div>
 
       <footer class="ws-disclaimer">
-        {% block footer %}RallyRate club ratings · Independent of official rating providers{% endblock %}
+        {% block footer %}RallyRate 1.0–8.0 performance ratings · Independent of official rating providers{% endblock %}
       </footer>
     </main>
   </div>
