@@ -5,8 +5,8 @@
 {% block content %}
 <section class="ws-page-head">
   <div>
-    <h1>{% if is_edit %}Edit match{% else %}Record a match{% endif %}</h1>
-    <p class="ws-page-sub">Add the result. Everyone on court gets a chance to verify.</p>
+    <h1>{% if is_edit %}Edit match{% else %}Record a peer match{% endif %}</h1>
+    <p class="ws-page-sub">Log a casual or club game. Opponents confirm the final score before 1.0–8.0 ratings update.</p>
   </div>
   {% if is_edit %}
     <a class="ws-btn ws-btn-outline" href="{% url 'matches:detail' match.pk %}">Back to match</a>
@@ -20,7 +20,6 @@
   {% endif %}
 
   <div class="ws-entry-grid">
-    <!-- Left Card: Match Setup -->
     <section class="ws-setup-card">
       <h2>Match setup</h2>
 
@@ -31,6 +30,12 @@
       <div class="ws-hidden-select">
         {{ form.match_type }}
         {% for error in form.match_type.errors %}<small class="error">{{ error }}</small>{% endfor %}
+      </div>
+
+      <div class="ws-field" style="margin-bottom: 16px;">
+        <label for="{{ form.club.id_for_label }}">{{ form.club.label }}</label>
+        {{ form.club }}
+        {% for error in form.club.errors %}<small class="error">{{ error }}</small>{% endfor %}
       </div>
 
       <div class="ws-field-grid">
@@ -47,9 +52,9 @@
         </div>
       </div>
 
-      <p class="ws-team-kicker">YOUR TEAM</p>
+      <p class="ws-team-kicker">TEAM A</p>
       <div class="ws-field-grid">
-        {% if is_organizer %}
+        {% if can_pick_lead and form.team_a_player_1 %}
           <div class="ws-field">
             <label for="{{ form.team_a_player_1.id_for_label }}">Player 1</label>
             {{ form.team_a_player_1 }}
@@ -92,10 +97,9 @@
         {% for error in form.notes.errors %}<small class="error">{{ error }}</small>{% endfor %}
       </div>
 
-      <p class="ws-setup-foot">All players must have a RallyRate account in this club.</p>
+      <p class="ws-setup-foot">All players must have a RallyRate account.</p>
     </section>
 
-    <!-- Right Column: Enter the Score + Notice + Submit -->
     <aside class="ws-score-col">
       <div class="ws-score-card">
         <h2>Enter the score</h2>
@@ -103,7 +107,7 @@
 
         <div class="ws-score-head">
           <span>GAME</span>
-          <span>YOUR TEAM</span>
+          <span>TEAM A</span>
           <span>OPPONENTS</span>
         </div>
 
@@ -135,8 +139,8 @@
       </div>
 
       <div class="ws-amber-notice">
-        <strong>No rating change until confirmed.</strong>
-        <span>The other players will review this result.</span>
+        <strong>Peer confirmation required.</strong>
+        <span>Ratings update automatically once an opposing player confirms this result.</span>
       </div>
 
       <button class="ws-btn ws-btn-primary ws-submit-full" type="submit">

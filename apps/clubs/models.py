@@ -2,6 +2,7 @@ import secrets
 
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
 from django.utils.text import slugify
 
 
@@ -146,3 +147,98 @@ class ClubMembership(models.Model):
             self.Role.HOST,
             self.Role.CO_HOST,
         )
+
+
+class ClubEvent(models.Model):
+    class Format(models.TextChoices):
+        DOUBLES = "doubles", "Doubles"
+        SINGLES = "singles", "Singles"
+
+    class MatchmakingMode(models.TextChoices):
+        BALANCED = "balanced_elo", "Balanced rating"
+        ROUND_ROBIN = "round_robin", "Round robin rotation"
+        RANDOM = "random", "Random shuffle"
+
+    class Status(models.TextChoices):
+        OPEN = "open", "Open to join"
+        IN_PROGRESS = "in_progress", "In progress"
+        COMPLETED = "completed", "Completed"
+        CANCELLED = "cancelled", "Cancelled"
+
+    club = models.ForeignKey(
+        Club,
+        on_delete=models.CASCADE,
+        related_name="events",
+    )
+    title = models.CharField(max_length=140)
+    location = models.CharField(max_length=150)
+    starts_at = models.DateTimeField(default=timezone.now)
+    format = models.CharField(
+        max_length=10,
+        choices=Format.choices,
+        default=Format.DOUBLES,
+    )
+    matchmaking_mode = models.CharField(
+        max_length=20,
+        choices=MatchmakingMode.choices,
+        default=MatchmakingMode.BALANCED,
+    )
+    max_players = models.PositiveSmallIntegerField(default=16)
+    courts_count = models.PositiveSmallIntegerField(default=2)
+    status = models.CharField(
+        max_length=16,
+        choices=Status.choices,
+        default=Status.OPEN,
+    )
+    notes = models.TextField(blank=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="created_events",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("-starts_at", "-created_at")
+
+    def __str__(self):
+        return f"{self.title} ({self.club.name})"
+
+    @property
+    def players_per_court(self):
+        return 4 if self.format == self.Format.DOUBLES else 2
+
+
+class EventParticipant(models.Model):
+    class Status(models.TextChoices):
+        JOINED = "joined", "Joined"
+        CHECKED_IN = "checked_in", "Checked in"
+        WAITLIST = "waitlist", "Waitlist"
+
+    event = models.ForeignKey(
+        ClubEvent,
+        on_delete=models.CASCADE,
+        related_name="participants",
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="event_participations",
+    )
+    status = models.CharField(
+        max_length=12,
+        choices=Status.choices,
+        default=Status.JOINED,
+    )
+    games_played = models.PositiveSmallIntegerField(default=0)
+    joined_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("joined_at",)
+        constraints = [
+            models.UniqueConstraint(fields=["event", "user"], name="unique_event_participant"),
+        ]
+
+    def __str__(self):
+        return f"{self.user} @ {self.event}"

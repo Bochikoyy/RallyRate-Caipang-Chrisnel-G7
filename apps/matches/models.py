@@ -9,9 +9,36 @@ class Match(models.Model):
         DOUBLES = "doubles", "Doubles"
 
     class Status(models.TextChoices):
+        SCHEDULED = "scheduled", "Scheduled"
         PENDING = "pending", "Pending verification"
         VERIFIED = "verified", "Verified"
         DISPUTED = "disputed", "Disputed"
+
+    class Source(models.TextChoices):
+        CLUB_EVENT = "club_event", "Club event"
+        CASUAL_PEER = "casual_peer", "Peer match"
+
+    club = models.ForeignKey(
+        "clubs.Club",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="matches",
+    )
+    event = models.ForeignKey(
+        "clubs.ClubEvent",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="matches",
+    )
+    source = models.CharField(
+        max_length=16,
+        choices=Source.choices,
+        default=Source.CASUAL_PEER,
+    )
+    round_number = models.PositiveSmallIntegerField(null=True, blank=True)
+    court_number = models.PositiveSmallIntegerField(null=True, blank=True)
 
     submitted_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -25,8 +52,8 @@ class Match(models.Model):
     )
     played_at = models.DateField(default=timezone.localdate)
     location = models.CharField(max_length=150)
-    team_a_score = models.PositiveSmallIntegerField()
-    team_b_score = models.PositiveSmallIntegerField()
+    team_a_score = models.PositiveSmallIntegerField(null=True, blank=True)
+    team_b_score = models.PositiveSmallIntegerField(null=True, blank=True)
     game_2_team_a = models.PositiveSmallIntegerField(null=True, blank=True)
     game_2_team_b = models.PositiveSmallIntegerField(null=True, blank=True)
     game_3_team_a = models.PositiveSmallIntegerField(null=True, blank=True)
@@ -76,7 +103,13 @@ class Match(models.Model):
         return f"RR-{1000 + (self.pk or 0)}"
 
     @property
+    def has_scores(self):
+        return self.team_a_score is not None and self.team_b_score is not None
+
+    @property
     def games(self):
+        if not self.has_scores:
+            return []
         items = [{"num": 1, "a": self.team_a_score, "b": self.team_b_score}]
         if self.game_2_team_a is not None and self.game_2_team_b is not None:
             items.append({"num": 2, "a": self.game_2_team_a, "b": self.game_2_team_b})
@@ -85,17 +118,29 @@ class Match(models.Model):
         return items
 
     @property
+    def total_points(self):
+        pts_a = sum(g["a"] for g in self.games)
+        pts_b = sum(g["b"] for g in self.games)
+        return pts_a, pts_b
+
+    @property
     def series_wins(self):
+        if not self.has_scores:
+            return 0, 0
         wins_a = sum(1 for g in self.games if g["a"] > g["b"])
         wins_b = sum(1 for g in self.games if g["b"] > g["a"])
         return wins_a, wins_b
 
     @property
     def score_display(self):
+        if not self.has_scores:
+            return "Scheduled"
         return ", ".join(f"{g['a']}–{g['b']}" for g in self.games)
 
     @property
     def series_score_display(self):
+        if not self.has_scores:
+            return "vs"
         if len(self.games) > 1:
             wins_a, wins_b = self.series_wins
             return f"{wins_a} – {wins_b}"
@@ -103,6 +148,8 @@ class Match(models.Model):
 
     @property
     def winner_team(self):
+        if not self.has_scores:
+            return None
         wins_a, wins_b = self.series_wins
         if wins_a > wins_b:
             return MatchParticipant.Team.TEAM_A
@@ -126,15 +173,15 @@ class Match(models.Model):
             full_name = f"{p.player.first_name} {p.player.last_name}".strip()
             name = full_name or p.player.email or p.player.username
 
-            if p.player_id == self.submitted_by_id:
-                label, state = "Submitted", "submitted"
+            if self.status == self.Status.SCHEDULED:
+                label, state = "Scheduled", "awaiting"
             elif self.status == self.Status.VERIFIED:
-                if p.player_id == self.verified_by_id:
-                    label, state = "Confirmed", "confirmed"
-                elif submitter_team and p.team == submitter_team:
-                    label, state = "Confirmed", "confirmed"
+                if self.source == self.Source.CLUB_EVENT:
+                    label, state = "Host verified", "confirmed"
                 else:
                     label, state = "Confirmed", "confirmed"
+            elif p.player_id == self.submitted_by_id:
+                label, state = "Submitted", "submitted"
             elif self.status == self.Status.DISPUTED:
                 if p.player_id == self.disputed_by_id:
                     label, state = "Disputed", "disputed"
@@ -151,8 +198,15 @@ class Match(models.Model):
             rows.append({"name": name, "label": label, "state": state})
         return rows
 
-    def is_organizer(self, user):
+    def is_club_manager(self, user):
+        if not user or not user.is_authenticated:
+            return False
+        if self.club_id and self.club is not None:
+            return self.club.is_manager(user)
         return getattr(user, "role", None) == "organizer"
+
+    def is_organizer(self, user):
+        return self.is_club_manager(user)
 
     def participant_team_for(self, user):
         if not user or not user.is_authenticated:
@@ -174,28 +228,30 @@ class Match(models.Model):
     def can_be_viewed_by(self, user):
         if not user or not user.is_authenticated:
             return False
-        if self.is_organizer(user) or self.submitted_by_id == user.id:
+        if self.submitted_by_id == user.id or self.participant_team_for(user) is not None:
             return True
-        return self.participant_team_for(user) is not None
+        if self.club_id and self.club is not None:
+            return self.club.is_member(user) or self.club.is_public
+        return getattr(user, "role", None) == "organizer"
 
     def can_be_modified_by(self, user):
         if not user or not user.is_authenticated:
             return False
-        if self.is_organizer(user):
+        if self.is_club_manager(user):
             return True
         return self.submitted_by_id == user.id and self.status == self.Status.PENDING
 
     def can_be_verified_by(self, user):
-        if not user or not user.is_authenticated:
+        if not user or not user.is_authenticated or not self.has_scores:
             return False
-        if self.is_organizer(user):
+        if self.is_club_manager(user):
             return self.status in (self.Status.PENDING, self.Status.DISPUTED)
         return self.status == self.Status.PENDING and self.is_opposing_player(user)
 
     def can_be_disputed_by(self, user):
-        if not user or not user.is_authenticated:
+        if not user or not user.is_authenticated or not self.has_scores:
             return False
-        if self.is_organizer(user):
+        if self.is_club_manager(user):
             return self.status == self.Status.PENDING
         return self.status == self.Status.PENDING and self.is_opposing_player(user)
 
@@ -218,13 +274,12 @@ class MatchParticipant(models.Model):
     team = models.CharField(max_length=1, choices=Team.choices)
 
     class Meta:
-        ordering = ("team", "id")
         constraints = [
             models.UniqueConstraint(
-                fields=("match", "player"),
+                fields=["match", "player"],
                 name="unique_player_per_match",
             ),
         ]
 
     def __str__(self):
-        return f"{self.player} ({self.get_team_display()})"
+        return f"{self.player} (Team {self.team})"

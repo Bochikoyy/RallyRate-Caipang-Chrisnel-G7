@@ -1,0 +1,107 @@
+{% extends 'workspace_base.html' %}
+{% block title %}{% if is_edit %}Edit session{% else %}Host a club game{% endif %} · {{ club.name }}{% endblock %}
+{% block nav_clubs %}active{% endblock %}
+{% block content %}
+<section class="ws-page-head">
+  <div>
+    <p class="ws-eyebrow" style="margin-bottom: 6px;">{{ club.name }}</p>
+    <h1>{% if is_edit %}Edit {{ event.title }}{% else %}Host a pickleball game{% endif %}</h1>
+    <p class="ws-page-sub">Players join the session, you generate balanced matchups, and enter scores right on the court board.</p>
+  </div>
+  <a class="ws-btn ws-btn-outline" href="{% if is_edit %}{% url 'clubs:event_detail' club.slug event.pk %}{% else %}{% url 'clubs:detail' club.slug %}{% endif %}">Cancel</a>
+</section>
+
+<div class="ws-detail-grid">
+  <section class="ws-setup-card">
+    <h2>Session configuration</h2>
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% if form.non_field_errors %}
+        <div class="ws-alert error" style="margin-bottom: 16px;">{{ form.non_field_errors }}</div>
+      {% endif %}
+
+      <div class="ws-field-grid">
+        <div class="ws-field">
+          <label for="{{ form.title.id_for_label }}">Session title</label>
+          {{ form.title }}
+          {% for error in form.title.errors %}<small class="error">{{ error }}</small>{% endfor %}
+        </div>
+
+        <div class="ws-field">
+          <label for="{{ form.location.id_for_label }}">Court / venue</label>
+          {{ form.location }}
+          {% for error in form.location.errors %}<small class="error">{{ error }}</small>{% endfor %}
+        </div>
+
+        <div class="ws-field">
+          <label for="{{ form.starts_at.id_for_label }}">{{ form.starts_at.label }}</label>
+          {{ form.starts_at }}
+          {% for error in form.starts_at.errors %}<small class="error">{{ error }}</small>{% endfor %}
+        </div>
+
+        <div class="ws-field">
+          <label for="{{ form.format.id_for_label }}">Game format</label>
+          {{ form.format }}
+          {% for error in form.format.errors %}<small class="error">{{ error }}</small>{% endfor %}
+        </div>
+
+        <div class="ws-field">
+          <label for="{{ form.matchmaking_mode.id_for_label }}">Match generator mode</label>
+          {{ form.matchmaking_mode }}
+          {% for error in form.matchmaking_mode.errors %}<small class="error">{{ error }}</small>{% endfor %}
+        </div>
+
+        <div class="ws-field">
+          <label for="{{ form.courts_count.id_for_label }}">Active courts</label>
+          {{ form.courts_count }}
+          {% for error in form.courts_count.errors %}<small class="error">{{ error }}</small>{% endfor %}
+        </div>
+
+        <div class="ws-field">
+          <label for="{{ form.max_players.id_for_label }}">Player cap</label>
+          {{ form.max_players }}
+          {% for error in form.max_players.errors %}<small class="error">{{ error }}</small>{% endfor %}
+        </div>
+
+        <div class="ws-field" style="grid-column: 1 / -1;">
+          <label for="{{ form.notes.id_for_label }}">Session notes (optional)</label>
+          {{ form.notes }}
+        </div>
+      </div>
+
+      <button class="ws-btn ws-btn-primary" type="submit">{% if is_edit %}Save changes{% else %}Create session{% endif %}</button>
+    </form>
+  </section>
+
+  <aside class="ws-public-card">
+    <div>
+      <p class="ws-eyebrow">MATCH GENERATOR MODES</p>
+      <h2 class="ws-public-name" style="font-size: 20px;">How pairings work</h2>
+      <ol class="ws-steps-list" style="margin-top: 16px;">
+        <li>
+          <span class="ws-step-num">01</span>
+          <div>
+            <strong class="ws-step-title">Balanced rating</strong>
+            <p>Pairs (#1 + #4) vs (#2 + #3) by 1.0–8.0 rating so courts stay competitive.</p>
+          </div>
+        </li>
+        <li>
+          <span class="ws-step-num">02</span>
+          <div>
+            <strong class="ws-step-title">Round robin rotation</strong>
+            <p>Minimizes repeat partners and opponents across consecutive rounds.</p>
+          </div>
+        </li>
+        <li>
+          <span class="ws-step-num">03</span>
+          <div>
+            <strong class="ws-step-title">Fair sit-out rotation</strong>
+            <p>Players with fewer completed games in the session always rotate onto court first.</p>
+          </div>
+        </li>
+      </ol>
+    </div>
+    <p class="ws-public-foot">Host-entered event scores carry 1.0x full rating weight.</p>
+  </aside>
+</div>
+{% endblock %}

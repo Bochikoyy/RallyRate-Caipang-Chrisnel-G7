@@ -3,14 +3,16 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
-from django.db.models import Count, Q
+from django.db.models import Count, Max, Q
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from apps.matches.models import Match, MatchParticipant
 
-from .forms import ClubForm, JoinClubCodeForm
-from .models import Club, ClubMembership
+from .forms import ClubEventForm, ClubForm, CustomEventMatchForm, EventScoreForm, JoinClubCodeForm
+from .models import Club, ClubEvent, ClubMembership, EventParticipant
+from .services import generate_event_round, sync_event_games_played
 
 User = get_user_model()
 
@@ -28,6 +30,17 @@ def _require_club_manager(club, user):
 def _require_club_host(club, user):
     if not club.is_host(user):
         raise PermissionDenied("Only the club host can perform this action.")
+
+
+def _sync_ratings(match=None, full_recalc=False):
+    try:
+        from apps.ratings.engine import process_verified_match, recalculate_all_ratings
+    except ImportError:
+        return
+    if full_recalc:
+        recalculate_all_ratings()
+    elif match is not None and match.status == Match.Status.VERIFIED:
+        process_verified_match(match)
 
 
 @login_required
@@ -196,16 +209,40 @@ def club_detail(request, slug):
     if not club.is_public and not is_active_member:
         raise PermissionDenied("This club is invite-only. Join using the club's invite code.")
 
-    active_memberships = list(
-        club.memberships.select_related("user")
-        .filter(status=ClubMembership.Status.ACTIVE)
-        .order_by("role", "user__first_name", "user__last_name", "user__username")
+    active_memberships_qs = club.memberships.select_related("user").filter(
+        status=ClubMembership.Status.ACTIVE
     )
+    if hasattr(User, "rating_profile"):
+        active_memberships_qs = active_memberships_qs.select_related("user__rating_profile")
+    active_memberships = list(
+        active_memberships_qs.order_by("role", "user__first_name", "user__last_name", "user__username")
+    )
+
     pending_count = (
         club.memberships.filter(status=ClubMembership.Status.PENDING).count()
         if club.is_manager(request.user)
         else 0
     )
+
+    events = list(
+        club.events.select_related("created_by")
+        .annotate(player_count=Count("participants"))
+        .order_by("-starts_at")[:8]
+    )
+
+    club_matches = list(
+        Match.objects.select_related("submitted_by", "verified_by", "event")
+        .prefetch_related("participants__player")
+        .filter(club=club)
+        .order_by("-played_at", "-created_at")[:6]
+    )
+    disputed_club_matches = []
+    if club.is_manager(request.user):
+        disputed_club_matches = list(
+            Match.objects.select_related("submitted_by", "disputed_by")
+            .filter(club=club, status__in=[Match.Status.DISPUTED, Match.Status.PENDING])
+            .order_by("status", "-played_at")[:5]
+        )
 
     return render(
         request,
@@ -219,9 +256,9 @@ def club_detail(request, slug):
             "active_memberships": active_memberships,
             "member_count": len(active_memberships),
             "pending_count": pending_count,
-            "events": [],
-            "club_matches": [],
-            "disputed_club_matches": [],
+            "events": events,
+            "club_matches": club_matches,
+            "disputed_club_matches": disputed_club_matches,
         },
     )
 
@@ -361,6 +398,361 @@ def club_delete(request, slug):
     club.delete()
     messages.success(request, f"Deleted club '{name}'.")
     return redirect("clubs:hub")
+
+
+# ============================================================================
+# Club Events / Open Play Sessions & Match Generator
+# ============================================================================
+
+
+@login_required
+def event_create(request, slug):
+    club = get_object_or_404(Club, slug=slug)
+    _require_club_manager(club, request.user)
+
+    form = ClubEventForm(request.POST or None, initial={"location": club.home_court})
+    if request.method == "POST" and form.is_valid():
+        with transaction.atomic():
+            event = form.save(commit=False)
+            event.club = club
+            event.created_by = request.user
+            event.save()
+            EventParticipant.objects.create(
+                event=event,
+                user=request.user,
+                status=EventParticipant.Status.CHECKED_IN,
+            )
+        messages.success(request, f"Created game session '{event.title}'. Players can now join!")
+        return redirect("clubs:event_detail", slug=club.slug, event_id=event.pk)
+
+    return render(
+        request,
+        "clubs/event_form.html",
+        {"club": club, "form": form, "is_edit": False},
+    )
+
+
+@login_required
+def event_update(request, slug, event_id):
+    club = get_object_or_404(Club, slug=slug)
+    _require_club_manager(club, request.user)
+    event = get_object_or_404(ClubEvent, pk=event_id, club=club)
+
+    form = ClubEventForm(request.POST or None, instance=event)
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, "Session settings updated.")
+        return redirect("clubs:event_detail", slug=club.slug, event_id=event.pk)
+
+    return render(
+        request,
+        "clubs/event_form.html",
+        {"club": club, "event": event, "form": form, "is_edit": True},
+    )
+
+
+@login_required
+def event_detail(request, slug, event_id):
+    club = get_object_or_404(Club, slug=slug)
+    if not club.is_public and not club.is_member(request.user):
+        raise PermissionDenied("Join this club first to view its open-play sessions.")
+
+    event = get_object_or_404(ClubEvent.objects.select_related("club", "created_by"), pk=event_id, club=club)
+    is_manager = club.is_manager(request.user)
+    is_member = club.is_member(request.user)
+
+    participants_qs = event.participants.select_related("user")
+    if hasattr(User, "rating_profile"):
+        participants_qs = participants_qs.select_related("user__rating_profile")
+    participants = list(participants_qs.order_by("status", "joined_at"))
+
+    active_roster = [p for p in participants if p.status != EventParticipant.Status.WAITLIST]
+    waitlist_roster = [p for p in participants if p.status == EventParticipant.Status.WAITLIST]
+    my_participation = next((p for p in participants if p.user_id == request.user.id), None)
+
+    matches_qs = event.matches.select_related("verified_by", "submitted_by").prefetch_related("participants__player")
+    if hasattr(Match, "rating_entries"):
+        matches_qs = matches_qs.prefetch_related("rating_entries")
+    event_matches = list(matches_qs.order_by("-round_number", "court_number", "id"))
+
+    for m in event_matches:
+        deltas_by_user = {}
+        if hasattr(m, "rating_entries"):
+            for entry in m.rating_entries.all():
+                sign = "+" if entry.delta > 0 else ""
+                deltas_by_user[entry.user_id] = f"{sign}{entry.delta}"
+        m.team_a_list = [
+            {
+                "name": _display_name(p.player),
+                "delta": deltas_by_user.get(p.player_id),
+            }
+            for p in m.team_a_participants
+        ]
+        m.team_b_list = [
+            {
+                "name": _display_name(p.player),
+                "delta": deltas_by_user.get(p.player_id),
+            }
+            for p in m.team_b_participants
+        ]
+
+    unjoined_members = []
+    custom_match_form = None
+    if is_manager:
+        joined_user_ids = [p.user_id for p in participants]
+        unjoined_members = list(
+            User.objects.filter(
+                club_memberships__club=club,
+                club_memberships__status=ClubMembership.Status.ACTIVE,
+                is_active=True,
+            )
+            .exclude(id__in=joined_user_ids)
+            .order_by("first_name", "last_name", "username")
+        )
+        custom_match_form = CustomEventMatchForm(event=event)
+
+    return render(
+        request,
+        "clubs/event_detail.html",
+        {
+            "club": club,
+            "event": event,
+            "is_manager": is_manager,
+            "is_member": is_member,
+            "active_roster": active_roster,
+            "waitlist_roster": waitlist_roster,
+            "my_participation": my_participation,
+            "can_generate": len(active_roster) >= event.players_per_court,
+            "event_matches": event_matches,
+            "unjoined_members": unjoined_members,
+            "custom_match_form": custom_match_form,
+        },
+    )
+
+
+@login_required
+@require_POST
+def event_join(request, slug, event_id):
+    club = get_object_or_404(Club, slug=slug)
+    event = get_object_or_404(ClubEvent, pk=event_id, club=club)
+
+    if not club.is_member(request.user):
+        if club.is_public:
+            ClubMembership.objects.get_or_create(
+                club=club,
+                user=request.user,
+                defaults={"role": ClubMembership.Role.MEMBER, "status": ClubMembership.Status.ACTIVE},
+            )
+        else:
+            raise PermissionDenied("You must be an active member of this club to join its games.")
+
+    if event.status in (ClubEvent.Status.COMPLETED, ClubEvent.Status.CANCELLED):
+        messages.error(request, "This session is closed to new signups.")
+        return redirect("clubs:event_detail", slug=club.slug, event_id=event.pk)
+
+    if EventParticipant.objects.filter(event=event, user=request.user).exists():
+        messages.info(request, "You're already on the roster for this game.")
+        return redirect("clubs:event_detail", slug=club.slug, event_id=event.pk)
+
+    active_count = event.participants.exclude(status=EventParticipant.Status.WAITLIST).count()
+    assigned_status = (
+        EventParticipant.Status.JOINED
+        if active_count < event.max_players
+        else EventParticipant.Status.WAITLIST
+    )
+    EventParticipant.objects.create(event=event, user=request.user, status=assigned_status)
+    if assigned_status == EventParticipant.Status.WAITLIST:
+        messages.warning(request, "Session is full — you've been added to the waitlist.")
+    else:
+        messages.success(request, f"You're in for {event.title}!")
+    return redirect("clubs:event_detail", slug=club.slug, event_id=event.pk)
+
+
+@login_required
+@require_POST
+def event_leave(request, slug, event_id):
+    club = get_object_or_404(Club, slug=slug)
+    event = get_object_or_404(ClubEvent, pk=event_id, club=club)
+    ep = EventParticipant.objects.filter(event=event, user=request.user).first()
+    if ep:
+        was_active = ep.status != EventParticipant.Status.WAITLIST
+        ep.delete()
+        if was_active:
+            next_wait = (
+                event.participants.filter(status=EventParticipant.Status.WAITLIST)
+                .order_by("joined_at")
+                .first()
+            )
+            if next_wait:
+                next_wait.status = EventParticipant.Status.JOINED
+                next_wait.save(update_fields=["status"])
+        messages.success(request, "You have left the session roster.")
+    return redirect("clubs:event_detail", slug=club.slug, event_id=event.pk)
+
+
+@login_required
+@require_POST
+def event_add_member(request, slug, event_id):
+    club = get_object_or_404(Club, slug=slug)
+    _require_club_manager(club, request.user)
+    event = get_object_or_404(ClubEvent, pk=event_id, club=club)
+
+    user_id = request.POST.get("user_id")
+    member_user = get_object_or_404(
+        User,
+        pk=user_id,
+        club_memberships__club=club,
+        club_memberships__status=ClubMembership.Status.ACTIVE,
+    )
+    EventParticipant.objects.get_or_create(
+        event=event,
+        user=member_user,
+        defaults={"status": EventParticipant.Status.CHECKED_IN},
+    )
+    messages.success(request, f"Added {_display_name(member_user)} to the game.")
+    return redirect("clubs:event_detail", slug=club.slug, event_id=event.pk)
+
+
+@login_required
+@require_POST
+def event_remove_participant(request, slug, event_id, participant_id):
+    club = get_object_or_404(Club, slug=slug)
+    _require_club_manager(club, request.user)
+    event = get_object_or_404(ClubEvent, pk=event_id, club=club)
+    ep = get_object_or_404(EventParticipant.objects.select_related("user"), pk=participant_id, event=event)
+    name = _display_name(ep.user)
+    ep.delete()
+    messages.success(request, f"Removed {name} from the session.")
+    return redirect("clubs:event_detail", slug=club.slug, event_id=event.pk)
+
+
+@login_required
+@require_POST
+def event_generate_matches(request, slug, event_id):
+    club = get_object_or_404(Club, slug=slug)
+    _require_club_manager(club, request.user)
+    event = get_object_or_404(ClubEvent, pk=event_id, club=club)
+
+    created = generate_event_round(event, submitted_by=request.user)
+    if not created:
+        messages.error(
+            request,
+            f"Need at least {event.players_per_court} active players in the session to generate a {event.get_format_display().lower()} match.",
+        )
+    else:
+        messages.success(
+            request,
+            f"Generated {len(created)} match{'es' if len(created) != 1 else ''} for Round {created[0].round_number}! Enter scores below as games finish.",
+        )
+    return redirect("clubs:event_detail", slug=club.slug, event_id=event.pk)
+
+
+@login_required
+@require_POST
+def event_custom_match(request, slug, event_id):
+    club = get_object_or_404(Club, slug=slug)
+    _require_club_manager(club, request.user)
+    event = get_object_or_404(ClubEvent, pk=event_id, club=club)
+
+    form = CustomEventMatchForm(request.POST, event=event)
+    if not form.is_valid():
+        errors = "; ".join(str(e) for errs in form.errors.values() for e in errs)
+        messages.error(request, errors or "Invalid player pairing.")
+        return redirect("clubs:event_detail", slug=club.slug, event_id=event.pk)
+
+    team_a = [p for p in (form.cleaned_data.get("team_a_1"), form.cleaned_data.get("team_a_2")) if p]
+    team_b = [p for p in (form.cleaned_data.get("team_b_1"), form.cleaned_data.get("team_b_2")) if p]
+    last_round = event.matches.aggregate(mx=Max("round_number"))["mx"] or 1
+    event_date = timezone.localdate(event.starts_at) if timezone.is_aware(event.starts_at) else event.starts_at.date()
+    played_date = min(event_date, timezone.localdate())
+
+    with transaction.atomic():
+        match = Match.objects.create(
+            club=club,
+            event=event,
+            source=Match.Source.CLUB_EVENT,
+            round_number=last_round,
+            court_number=1,
+            submitted_by=request.user,
+            match_type=event.format,
+            played_at=played_date,
+            location=event.location,
+            status=Match.Status.SCHEDULED,
+        )
+        MatchParticipant.objects.bulk_create(
+            [MatchParticipant(match=match, player=u, team=MatchParticipant.Team.TEAM_A) for u in team_a]
+            + [MatchParticipant(match=match, player=u, team=MatchParticipant.Team.TEAM_B) for u in team_b]
+        )
+    messages.success(request, "Custom matchup added to the board.")
+    return redirect("clubs:event_detail", slug=club.slug, event_id=event.pk)
+
+
+@login_required
+@require_POST
+def event_record_score(request, slug, event_id, match_id):
+    club = get_object_or_404(Club, slug=slug)
+    _require_club_manager(club, request.user)
+    event = get_object_or_404(ClubEvent, pk=event_id, club=club)
+    match = get_object_or_404(Match, pk=match_id, event=event, club=club)
+
+    form = EventScoreForm(request.POST)
+    if not form.is_valid():
+        errors = "; ".join(str(e) for errs in form.errors.values() for e in errs)
+        messages.error(request, errors or "Invalid pickleball score.")
+        return redirect("clubs:event_detail", slug=club.slug, event_id=event.pk)
+
+    was_already_verified = match.status == Match.Status.VERIFIED
+    match.team_a_score = form.cleaned_data["team_a_score"]
+    match.team_b_score = form.cleaned_data["team_b_score"]
+    match.game_2_team_a = form.cleaned_data["game_2_team_a"]
+    match.game_2_team_b = form.cleaned_data["game_2_team_b"]
+    match.game_3_team_a = form.cleaned_data["game_3_team_a"]
+    match.game_3_team_b = form.cleaned_data["game_3_team_b"]
+    match.status = Match.Status.VERIFIED
+    match.verified_by = request.user
+    match.verified_at = timezone.now()
+    match.save()
+
+    sync_event_games_played(event)
+    _sync_ratings(match=match, full_recalc=was_already_verified)
+
+    messages.success(
+        request,
+        f"Score {match.score_display} saved & verified!",
+    )
+    return redirect("clubs:event_detail", slug=club.slug, event_id=event.pk)
+
+
+@login_required
+@require_POST
+def event_delete_match(request, slug, event_id, match_id):
+    club = get_object_or_404(Club, slug=slug)
+    _require_club_manager(club, request.user)
+    event = get_object_or_404(ClubEvent, pk=event_id, club=club)
+    match = get_object_or_404(Match, pk=match_id, event=event, club=club)
+
+    was_verified = match.status == Match.Status.VERIFIED
+    match.delete()
+    sync_event_games_played(event)
+    if was_verified:
+        _sync_ratings(full_recalc=True)
+    messages.success(request, "Match removed from session.")
+    return redirect("clubs:event_detail", slug=club.slug, event_id=event.pk)
+
+
+@login_required
+@require_POST
+def event_status(request, slug, event_id):
+    club = get_object_or_404(Club, slug=slug)
+    _require_club_manager(club, request.user)
+    event = get_object_or_404(ClubEvent, pk=event_id, club=club)
+    new_status = (request.POST.get("status") or "").strip()
+    valid = {choice.value for choice in ClubEvent.Status}
+    if new_status in valid:
+        event.status = new_status
+        event.save(update_fields=["status", "updated_at"])
+        messages.success(request, f"Session marked as {event.get_status_display()}.")
+    return redirect("clubs:event_detail", slug=club.slug, event_id=event.pk)
 
 
 @login_required

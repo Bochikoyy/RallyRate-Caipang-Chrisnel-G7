@@ -4,13 +4,9 @@
 {% block content %}
 <section class="ws-page-head">
   <div>
-    <h1>{% if is_organizer %}Club match history{% else %}Match history{% endif %}</h1>
+    <h1>Match history</h1>
     <p class="ws-page-sub">
-      {% if is_organizer %}
-        Review logged results across the club, confirm pending scores, and resolve disputes.
-      {% else %}
-        Every recorded game, verification status, and confirmed score in one place.
-      {% endif %}
+      Every club game, peer match, verification status, and confirmed score in one place.
     </p>
   </div>
   <a class="ws-btn ws-btn-primary" href="{% url 'matches:create' %}">Record a match</a>
@@ -20,6 +16,11 @@
   <a class="ws-filter-pill {% if status_filter == 'all' %}active{% endif %}" href="{% url 'matches:list' %}">
     All <span>{{ counts.all }}</span>
   </a>
+  {% if counts.scheduled %}
+    <a class="ws-filter-pill {% if status_filter == 'scheduled' %}active{% endif %}" href="{% url 'matches:list' %}?status=scheduled">
+      Scheduled <span>{{ counts.scheduled }}</span>
+    </a>
+  {% endif %}
   <a class="ws-filter-pill {% if status_filter == 'pending' %}active{% endif %}" href="{% url 'matches:list' %}?status=pending">
     Pending <span>{{ counts.pending }}</span>
   </a>
@@ -38,8 +39,8 @@
         <tr>
           <th>DATE</th>
           <th>FORMAT</th>
-          <th>PARTNER / OPPONENTS</th>
-          <th>COURT</th>
+          <th>PLAYERS</th>
+          <th>CLUB / COURT</th>
           <th>SCORE</th>
           <th>STATUS</th>
           <th class="ws-align-right">ACTION</th>
@@ -49,19 +50,25 @@
         {% for match in matches %}
           <tr>
             <td class="ws-td-muted">{{ match.played_at|date:"M j, Y" }}</td>
-            <td class="ws-td-muted">{{ match.get_match_type_display }}</td>
+            <td class="ws-td-muted">
+              {{ match.get_match_type_display }}
+              <div class="ws-row-sub">{{ match.get_source_display }}</div>
+            </td>
             <td>
               <a class="ws-row-primary" href="{% url 'matches:detail' match.pk %}">{{ match.partner_line }}</a>
               <div class="ws-row-sub">{{ match.opponents_line }}</div>
             </td>
-            <td class="ws-td-muted">{{ match.location }}</td>
+            <td class="ws-td-muted">
+              {% if match.club %}{{ match.club.name }}{% else %}{{ match.location }}{% endif %}
+              {% if match.club %}<div class="ws-row-sub">{{ match.location }}</div>{% endif %}
+            </td>
             <td class="ws-td-score">{{ match.score_display }}</td>
             <td>
               <span class="status-badge status-{{ match.status }}">
                 {% if match.status == 'verified' %}Confirmed{% else %}{{ match.get_status_display }}{% endif %}
               </span>
               {% if match.needs_action %}
-                <span class="action-pill">{% if is_organizer %}Review{% else %}Confirm{% endif %}</span>
+                <span class="action-pill">Action</span>
               {% endif %}
             </td>
             <td class="ws-align-right">
@@ -81,7 +88,7 @@
       <h2>{% if status_filter == 'all' %}Your match history starts here.{% else %}No {{ status_filter }} matches found.{% endif %}</h2>
       <p class="ws-hero-copy">
         {% if status_filter == 'all' %}
-          Record a singles or doubles match after you step off court and ask your opponents to confirm the result.
+          Join an open-play club session or record a casual match after stepping off court.
         {% else %}
           Switch filters above or record a new match to get started.
         {% endif %}
