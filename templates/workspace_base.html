@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#591736">
   <title>{% block title %}RallyRate{% endblock %}</title>
-  <link rel="stylesheet" href="{% static 'css/site.css' %}?v=20261126-mobile-p3">
+  <link rel="stylesheet" href="{% static 'css/site.css' %}?v=20261126-float-dock">
 </head>
 <body class="ws-body {% block body_class %}{% endblock %}">
   {% if messages %}
@@ -23,23 +23,12 @@
     </div>
   {% endif %}
 
+  {% url 'ratings:history' as rating_history_url %}
+  {% url 'ratings:rules' as rules_url %}
+  {% url 'clubs:leaderboard' as leaderboard_url %}
+
   <header class="ws-topbar">
     <div class="ws-brand-cell">
-      <button
-        type="button"
-        class="ws-menu-toggle"
-        id="ws-menu-toggle"
-        aria-label="Open workspace menu"
-        aria-expanded="false"
-        aria-controls="ws-sidebar"
-      >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
-          <line x1="3" y1="6" x2="21" y2="6"></line>
-          <line x1="3" y1="12" x2="21" y2="12"></line>
-          <line x1="3" y1="18" x2="21" y2="18"></line>
-        </svg>
-      </button>
-
       <a class="ws-brand" href="{% url 'accounts:dashboard' %}">
         <img class="ws-brand-mascot" src="{% static 'images/rallyraye.png' %}" alt="RallyRaye mascot">
         <span class="ws-brand-text">RallyRate</span>
@@ -48,35 +37,45 @@
 
     <div class="ws-topbar-main">
       <span class="ws-club-title">{{ request.user.home_court|default:"RallyRate Pickleball Club" }}</span>
-      <div class="ws-user-meta">
-        <span class="ws-user-name">{{ request.user.get_full_name|default:request.user.first_name|default:request.user.email|default:request.user.username }}</span>
-        <span class="ws-user-role">{{ request.user.get_role_display|upper }}</span>
+
+      <div class="ws-account-wrap">
+        <button
+          type="button"
+          class="ws-user-trigger"
+          id="ws-user-trigger"
+          aria-expanded="false"
+          aria-controls="ws-user-popover"
+        >
+          <span class="ws-user-meta">
+            <span class="ws-user-name">{{ request.user.get_full_name|default:request.user.first_name|default:request.user.email|default:request.user.username }}</span>
+            <span class="ws-user-role">{{ request.user.get_role_display|upper }}</span>
+          </span>
+          <svg class="ws-user-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </button>
+
+        <div class="ws-user-popover" id="ws-user-popover" hidden>
+          <div class="ws-popover-head">
+            <strong>{{ request.user.get_full_name|default:request.user.first_name|default:request.user.email|default:request.user.username }}</strong>
+            <span>{{ request.user.home_court|default:"RallyRate Pickleball Club" }}</span>
+          </div>
+          <a class="ws-popover-link" href="{{ rating_history_url|default:'#' }}">Rating history</a>
+          <a class="ws-popover-link" href="{{ rules_url|default:'#' }}">Help &amp; rating rules</a>
+          <form method="post" action="{% url 'accounts:logout' %}">
+            {% csrf_token %}
+            <button class="ws-popover-logout" type="submit">Log out</button>
+          </form>
+        </div>
       </div>
     </div>
   </header>
 
-  <div class="ws-backdrop" id="ws-backdrop" hidden></div>
-
   <div class="ws-frame">
-    <aside class="ws-sidebar" id="ws-sidebar" aria-label="Workspace navigation">
+    <aside class="ws-sidebar" aria-label="Workspace navigation">
       <div class="ws-nav-group">
-        <div class="ws-drawer-head">
-          <a class="ws-brand" href="{% url 'accounts:dashboard' %}">
-            <img class="ws-brand-mascot" src="{% static 'images/rallyraye.png' %}" alt="">
-            <span class="ws-brand-text">RallyRate</span>
-          </a>
-          <button type="button" class="ws-drawer-close" id="ws-drawer-close" aria-label="Close workspace menu">✕</button>
-        </div>
-
-        <div class="ws-drawer-user">
-          <strong>{{ request.user.get_full_name|default:request.user.first_name|default:request.user.email|default:request.user.username }}</strong>
-          <span>{{ request.user.get_role_display }} · {{ request.user.home_court|default:"RallyRate Pickleball Club" }}</span>
-        </div>
-
         <p class="ws-nav-heading">YOUR WORKSPACE</p>
         <nav class="ws-nav">
-          {% url 'ratings:history' as rating_history_url %}
-          {% url 'clubs:leaderboard' as leaderboard_url %}
           <a class="ws-nav-link {% block nav_overview %}{% endblock %}" href="{% url 'accounts:dashboard' %}">Overview</a>
           <a class="ws-nav-link {% block nav_record %}{% endblock %}" href="{% url 'matches:create' %}">Record match</a>
           <a class="ws-nav-link {% block nav_history %}{% endblock %}" href="{% url 'matches:list' %}">Match history</a>
@@ -91,7 +90,6 @@
         <p class="ws-club-eyebrow">{{ request.user.home_court|default:"RALLYRATE CLUB"|upper }}</p>
         <p class="ws-club-tagline">Local ratings.<br>Verified results.</p>
         <div class="ws-foot-links">
-          {% url 'ratings:rules' as rules_url %}
           <a class="ws-help-link" href="{{ rules_url|default:'#' }}">Help &amp; rating rules</a>
           <form method="post" action="{% url 'accounts:logout' %}">
             {% csrf_token %}
@@ -112,30 +110,103 @@
     </main>
   </div>
 
+  <!-- Mobile Expanding-Label Floating Bottom Navigation -->
+  {% with ns=request.resolver_match.namespace url_name=request.resolver_match.url_name %}
+  <nav class="ws-float-dock" aria-label="Primary mobile navigation">
+    <a
+      class="ws-dock-item {% if ns == 'accounts' and url_name != 'profile' %}active{% endif %}"
+      href="{% url 'accounts:dashboard' %}"
+      aria-label="Overview"
+    >
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M3 10.5L12 3l9 7.5"></path>
+        <path d="M5 9.5V19a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9.5"></path>
+        <path d="M9.5 21v-6h5v6"></path>
+      </svg>
+      <span class="ws-dock-label">Home</span>
+    </a>
+
+    <a
+      class="ws-dock-item {% if ns == 'matches' and url_name == 'create' %}active{% endif %}"
+      href="{% url 'matches:create' %}"
+      aria-label="Record match"
+    >
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="9"></circle>
+        <line x1="12" y1="8" x2="12" y2="16"></line>
+        <line x1="8" y1="12" x2="16" y2="12"></line>
+      </svg>
+      <span class="ws-dock-label">Record</span>
+    </a>
+
+    <a
+      class="ws-dock-item {% if ns == 'matches' and url_name != 'create' %}active{% endif %}"
+      href="{% url 'matches:list' %}"
+      aria-label="Match history"
+    >
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="4" y="3" width="16" height="18" rx="2.5"></rect>
+        <line x1="8" y1="8" x2="16" y2="8"></line>
+        <line x1="8" y1="12" x2="16" y2="12"></line>
+        <line x1="8" y1="16" x2="13" y2="16"></line>
+      </svg>
+      <span class="ws-dock-label">Matches</span>
+    </a>
+
+    <a
+      class="ws-dock-item {% if ns == 'clubs' or ns == 'ratings' %}active{% endif %}"
+      href="{{ leaderboard_url|default:'#' }}"
+      aria-label="Leaderboard and ratings"
+    >
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+        <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+        <path d="M4 22h16"></path>
+        <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
+        <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
+        <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
+      </svg>
+      <span class="ws-dock-label">Ranks</span>
+    </a>
+
+    <a
+      class="ws-dock-item {% if ns == 'accounts' and url_name == 'profile' %}active{% endif %}"
+      href="{% url 'accounts:profile' %}"
+      aria-label="Profile"
+    >
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="8" r="4"></circle>
+        <path d="M5 20a7 7 0 0 1 14 0"></path>
+      </svg>
+      <span class="ws-dock-label">Profile</span>
+    </a>
+  </nav>
+  {% endwith %}
+
   <script>
     (function () {
-      const toggleBtn = document.getElementById('ws-menu-toggle');
-      const closeBtn = document.getElementById('ws-drawer-close');
-      const sidebar = document.getElementById('ws-sidebar');
-      const backdrop = document.getElementById('ws-backdrop');
-      if (!toggleBtn || !sidebar || !backdrop) return;
+      const userTrigger = document.getElementById('ws-user-trigger');
+      const userPopover = document.getElementById('ws-user-popover');
 
-      function setDrawer(open) {
-        document.body.classList.toggle('ws-drawer-open', open);
-        toggleBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
-        backdrop.hidden = !open;
+      if (userTrigger && userPopover) {
+        function setPopover(open) {
+          userPopover.hidden = !open;
+          userTrigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+        }
+        userTrigger.addEventListener('click', function (e) {
+          if (window.innerWidth > 920) return;
+          e.stopPropagation();
+          setPopover(userPopover.hidden);
+        });
+        document.addEventListener('click', function (e) {
+          if (!userPopover.hidden && !userPopover.contains(e.target) && e.target !== userTrigger) {
+            setPopover(false);
+          }
+        });
+        document.addEventListener('keydown', function (e) {
+          if (e.key === 'Escape') setPopover(false);
+        });
       }
-
-      toggleBtn.addEventListener('click', function () {
-        setDrawer(!document.body.classList.contains('ws-drawer-open'));
-      });
-      if (closeBtn) {
-        closeBtn.addEventListener('click', function () { setDrawer(false); });
-      }
-      backdrop.addEventListener('click', function () { setDrawer(false); });
-      document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape') setDrawer(false);
-      });
 
       document.querySelectorAll('#ws-toast-stack .rr-toast').forEach(function (toast) {
         function hideToast() {

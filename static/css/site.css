@@ -466,42 +466,42 @@
   font-weight: 600;
 }
 
-.ws-menu-toggle,
-.ws-drawer-head,
-.ws-drawer-user,
-.ws-backdrop {
+.ws-account-wrap {
+  position: relative;
+}
+
+.ws-user-trigger {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: default;
+}
+
+.ws-user-chevron,
+.ws-user-popover,
+.ws-float-dock,
+.ws-mobile-signout-card {
   display: none;
 }
 
 @media (max-width: 920px) {
-  body.ws-drawer-open {
-    overflow: hidden;
-  }
   .ws-topbar {
     position: sticky;
     top: 0;
     z-index: 40;
-    height: 62px;
+    height: 60px;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     grid-template-columns: auto minmax(0, 1fr);
   }
   .ws-brand-cell {
-    padding: 0 0 0 14px;
-    gap: 8px;
-  }
-  .ws-menu-toggle {
-    display: inline-grid;
-    place-items: center;
-    width: 40px;
-    height: 40px;
-    border: 1px solid var(--ws-border);
-    border-radius: 9px;
-    background: #ffffff;
-    color: var(--ws-plum);
-    cursor: pointer;
-    flex: none;
-  }
-  .ws-menu-toggle:active {
-    background: var(--ws-blush);
+    padding: 0 0 0 18px;
   }
   .ws-brand-mascot {
     display: none;
@@ -510,7 +510,7 @@
     gap: 0;
   }
   .ws-brand-text {
-    font-size: 19px;
+    font-size: 20px;
   }
   .ws-topbar-main {
     padding: 0 16px 0 12px;
@@ -520,144 +520,205 @@
   .ws-club-title {
     display: none;
   }
+  .ws-user-trigger {
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--ws-border);
+    background: #ffffff;
+    cursor: pointer;
+    max-width: 100%;
+  }
+  .ws-user-trigger:active {
+    background: var(--ws-blush);
+  }
+  .ws-user-chevron {
+    display: block;
+    color: var(--ws-muted);
+    flex: none;
+  }
   .ws-user-meta {
     min-width: 0;
   }
   .ws-user-name {
-    max-width: 155px;
+    max-width: 138px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-size: 12.5px;
+    font-size: 12px;
   }
   .ws-user-role {
-    font-size: 9.5px;
+    font-size: 9px;
   }
-  .ws-backdrop {
+
+  /* Account Popover Menu */
+  .ws-user-popover {
     display: block;
-    position: fixed;
-    inset: 0;
-    z-index: 50;
-    background: rgba(36, 30, 34, 0.42);
-    backdrop-filter: blur(1px);
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 70;
+    width: 220px;
+    padding: 8px;
+    border-radius: 14px;
+    background: #ffffff;
+    border: 1px solid var(--ws-border);
+    box-shadow: 0 18px 42px rgba(36, 30, 34, 0.16);
   }
-  .ws-backdrop[hidden] {
+  .ws-user-popover[hidden] {
+    display: none;
+  }
+  .ws-popover-head {
+    padding: 8px 10px 10px;
+    margin-bottom: 4px;
+    border-bottom: 1px solid #f2ecef;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .ws-popover-head strong {
+    font-size: 13px;
+    color: var(--ws-ink);
+  }
+  .ws-popover-head span {
+    font-size: 11.5px;
+    color: var(--ws-muted);
+  }
+  .ws-popover-link {
+    display: flex;
+    align-items: center;
+    height: 38px;
+    padding: 0 10px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #4f454b;
+  }
+  .ws-popover-link:hover,
+  .ws-popover-link:active {
+    background: #f8f4f6;
+    color: var(--ws-plum);
+  }
+  .ws-user-popover form {
+    margin: 4px 0 0;
+    padding-top: 4px;
+    border-top: 1px solid #f2ecef;
+  }
+  .ws-popover-logout {
+    width: 100%;
+    height: 38px;
+    padding: 0 10px;
+    border: 0;
+    border-radius: 8px;
+    background: none;
+    text-align: left;
+    font: 600 13px 'Inter', 'DM Sans', sans-serif;
+    color: var(--ws-red-ink);
+    cursor: pointer;
+  }
+  .ws-popover-logout:hover,
+  .ws-popover-logout:active {
+    background: var(--ws-red-bg);
+  }
+
+  /* Hide desktop left sidebar on mobile */
+  .ws-sidebar {
     display: none;
   }
   .ws-frame {
     grid-template-columns: 1fr;
-    min-height: calc(100vh - 62px);
-  }
-  .ws-sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    z-index: 60;
-    width: min(292px, 84vw);
-    border-right: 1px solid var(--ws-border);
-    padding: 18px 18px 24px;
-    gap: 24px;
-    overflow-y: auto;
-    transform: translateX(-104%);
-    transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
-    box-shadow: 0 20px 50px rgba(36, 30, 34, 0.18);
-  }
-  body.ws-drawer-open .ws-sidebar {
-    transform: translateX(0);
-  }
-  .ws-drawer-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 4px 14px;
-    margin-bottom: 14px;
-    border-bottom: 1px solid var(--ws-border);
-  }
-  .ws-drawer-close {
-    width: 36px;
-    height: 36px;
-    border: 1px solid var(--ws-border);
-    border-radius: 8px;
-    background: #ffffff;
-    color: var(--ws-ink);
-    font-size: 15px;
-    cursor: pointer;
-    display: inline-grid;
-    place-items: center;
-  }
-  .ws-drawer-user {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    padding: 12px 14px;
-    margin-bottom: 16px;
-    border-radius: 10px;
-    background: var(--ws-blush);
-  }
-  .ws-drawer-user strong {
-    font-size: 13.5px;
-    color: var(--ws-ink);
-  }
-  .ws-drawer-user span {
-    font-size: 11.5px;
-    color: var(--ws-muted);
-  }
-  .ws-nav-link {
-    min-height: 44px;
-    font-size: 14px;
-  }
-  .ws-sidebar-foot {
-    padding: 0 2px;
-  }
-  .ws-club-tagline {
-    margin-bottom: 14px;
-  }
-  .ws-foot-links {
-    gap: 8px;
-  }
-  .ws-help-link {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    min-height: 42px;
-    padding: 0 14px;
-    border: 1px solid var(--ws-border);
-    border-radius: 9px;
-    background: #ffffff;
-    font-size: 13px;
-  }
-  .ws-logout-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    min-height: 42px;
-    padding: 0 14px;
-    border: 1px solid #e5d8df;
-    border-radius: 9px;
-    background: var(--ws-blush);
-    color: var(--ws-plum);
-    font-size: 13px;
-    font-weight: 600;
+    min-height: calc(100vh - 60px);
   }
   .ws-disclaimer {
     display: none;
   }
   .ws-main {
-    padding: 22px 16px 28px;
+    padding: 20px 16px calc(104px + env(safe-area-inset-bottom, 0px));
     gap: 24px;
   }
   .ws-page-head {
     flex-direction: column;
     align-items: stretch;
     gap: 14px;
-    margin-bottom: 22px;
+    margin-bottom: 20px;
   }
   .ws-page-head h1 {
     font-size: 25px;
   }
+
+  /* Expanding-Label Floating Capsule Bottom Dock */
+  .ws-float-dock {
+    position: fixed;
+    left: 50%;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    transform: translateX(-50%);
+    z-index: 65;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 9px;
+    max-width: calc(100vw - 24px);
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(232, 223, 228, 0.95);
+    border-radius: 999px;
+    box-shadow:
+      0 14px 36px rgba(36, 30, 34, 0.15),
+      0 2px 8px rgba(36, 30, 34, 0.06);
+  }
+  .ws-dock-item {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 42px;
+    min-width: 42px;
+    padding: 0 11px;
+    border-radius: 999px;
+    color: #554a51;
+    text-decoration: none;
+    transition:
+      background 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+      color 0.18s ease,
+      padding 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .ws-dock-item svg {
+    flex: none;
+  }
+  .ws-dock-label {
+    display: none;
+    white-space: nowrap;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: -0.1px;
+  }
+  .ws-dock-item.active {
+    background: var(--ws-plum);
+    color: #ffffff;
+    padding: 0 16px;
+    gap: 8px;
+    box-shadow: 0 4px 12px rgba(89, 23, 54, 0.24);
+  }
+  .ws-dock-item.active .ws-dock-label {
+    display: inline-block;
+  }
+
+  /* Profile mobile signout card */
+  .ws-mobile-signout-card {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 18px;
+  }
+  .ws-mobile-signout-card form {
+    margin: 0;
+  }
+  .ws-btn-signout {
+    width: 100%;
+    background: var(--ws-red-bg);
+    border-color: #f1cfd4;
+    color: var(--ws-red-ink);
+  }
+}
 }
 
 
@@ -2509,7 +2570,7 @@
 
 @media (max-width: 640px) {
   .ws-main {
-    padding: 18px 14px calc(36px + env(safe-area-inset-bottom, 0px));
+    padding: 18px 14px calc(104px + env(safe-area-inset-bottom, 0px));
   }
   .ws-page-head h1 {
     font-size: 23px;
