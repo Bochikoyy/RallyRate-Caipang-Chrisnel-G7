@@ -5,36 +5,42 @@
 <section class="ws-page-head">
   <div>
     <h1>Clubs &amp; open play</h1>
-    <p class="ws-page-sub">Join a local club, host open-play games, and compete on club leaderboards.</p>
+    <p class="ws-page-sub">Join a local club, host open-play games, and compete on club &amp; local leaderboards.</p>
   </div>
   <a class="ws-btn ws-btn-primary" href="{% url 'clubs:create' %}">Create a club</a>
 </section>
 
-<section class="ws-detail-grid" style="margin-bottom: 30px;">
-  <div>
+<section class="ws-aligned-two-col">
+  <div class="ws-aligned-col">
     <div class="ws-section-head">
       <h2>Your clubs</h2>
+      {% if my_memberships %}
+        <span class="ws-td-muted">{{ my_memberships|length }} joined</span>
+      {% endif %}
     </div>
+
     {% if my_memberships %}
       <div class="ws-club-grid">
         {% for m in my_memberships %}
           <article class="ws-setup-card ws-club-card">
-            <div class="ws-club-card-top">
-              <div>
-                <p class="ws-eyebrow" style="margin-bottom: 6px;">{{ m.club.home_court }}</p>
-                <h3 style="margin: 0; font-size: 19px;">
-                  <a class="ws-row-primary" href="{% url 'clubs:detail' m.club.slug %}">{{ m.club.name }}</a>
-                </h3>
+            <div>
+              <div class="ws-club-card-top">
+                <div>
+                  <p class="ws-eyebrow" style="margin-bottom: 6px;">{{ m.club.home_court }}</p>
+                  <h3 style="margin: 0; font-size: 18px;">
+                    <a class="ws-row-primary" href="{% url 'clubs:detail' m.club.slug %}">{{ m.club.name }}</a>
+                  </h3>
+                </div>
+                <span class="status-badge {% if m.status == 'pending' %}status-pending{% elif m.role == 'host' or m.role == 'co_host' %}status-verified{% else %}ws-inprogress-pill{% endif %}">
+                  {% if m.status == 'pending' %}Pending{% else %}{{ m.get_role_display }}{% endif %}
+                </span>
               </div>
-              <span class="status-badge {% if m.status == 'pending' %}status-pending{% elif m.role == 'host' or m.role == 'co_host' %}status-verified{% else %}ws-inprogress-pill{% endif %}">
-                {% if m.status == 'pending' %}Pending{% else %}{{ m.get_role_display }}{% endif %}
-              </span>
+              {% if m.club.description %}
+                <p class="ws-muted-small" style="margin: 10px 0 16px; line-height: 1.55;">{{ m.club.description|truncatechars:120 }}</p>
+              {% else %}
+                <p class="ws-muted-small" style="margin: 10px 0 16px;">Local club standings &amp; open-play sessions.</p>
+              {% endif %}
             </div>
-            {% if m.club.description %}
-              <p class="ws-muted-small" style="margin: 10px 0 16px; line-height: 1.55;">{{ m.club.description|truncatechars:120 }}</p>
-            {% else %}
-              <p class="ws-muted-small" style="margin: 10px 0 16px;">Local club standings &amp; open-play sessions.</p>
-            {% endif %}
             <div class="ws-club-card-foot">
               <span class="ws-td-muted">{{ m.active_member_count }} member{{ m.active_member_count|pluralize }}</span>
               <div class="ws-inline-actions">
@@ -46,37 +52,49 @@
         {% endfor %}
       </div>
     {% else %}
-      <section class="ws-hero-card">
+      <article class="ws-hero-card">
         <div>
           <p class="ws-eyebrow">NO CLUBS JOINED YET</p>
           <h2>Find your home court.</h2>
-          <p class="ws-hero-copy">
-            Enter an invite code from your organizer, join a public club below, or start your own club as Host.
+          <p class="ws-hero-copy" style="margin-bottom: 0;">
+            Enter an invite code from your host on the right, join an open public club below, or start a new club for your regular group.
           </p>
-          <a class="ws-btn ws-btn-primary" href="{% url 'clubs:create' %}">Start a club</a>
         </div>
-      </section>
+        <p class="ws-hero-foot">Club hosts can add co-hosts, schedule open-play games, and generate balanced court matchups.</p>
+      </article>
     {% endif %}
   </div>
 
-  <aside class="ws-setup-card">
-    <h2>Join with invite code</h2>
-    <p class="ws-muted-small" style="margin: 0 0 16px; line-height: 1.55;">
-      Have a code like <strong>RR-7K4M9P</strong> from a club host? Enter it below for instant membership.
-    </p>
-    <form method="post" action="{% url 'clubs:join_by_code' %}" novalidate>
-      {% csrf_token %}
-      <div class="ws-field" style="margin-bottom: 14px;">
-        <label for="{{ code_form.join_code.id_for_label }}">{{ code_form.join_code.label }}</label>
-        {{ code_form.join_code }}
+  <aside class="ws-aligned-col">
+    <div class="ws-section-head">
+      <h2>Have an invite code?</h2>
+    </div>
+
+    <div class="ws-invite-card">
+      <div>
+        <p class="ws-eyebrow">INSTANT MEMBERSHIP</p>
+        <h3>Join with club code</h3>
+        <p>
+          Got a code like <strong>RR-7K4M9P</strong> from a club host? Enter it below to join their roster right away.
+        </p>
       </div>
-      <button class="ws-btn ws-btn-primary ws-submit-full" type="submit">Join club</button>
-    </form>
+      <form method="post" action="{% url 'clubs:join_by_code' %}" class="ws-invite-form" novalidate>
+        {% csrf_token %}
+        <div class="ws-field">
+          <label for="{{ code_form.join_code.id_for_label }}">{{ code_form.join_code.label }}</label>
+          {{ code_form.join_code }}
+        </div>
+        <button class="ws-btn ws-btn-primary ws-submit-full" type="submit">Join club</button>
+      </form>
+    </div>
   </aside>
 </section>
 
 <div class="ws-section-head">
   <h2>Discover public clubs</h2>
+  {% if discover_clubs %}
+    <span class="ws-td-muted">{{ discover_clubs|length }} available</span>
+  {% endif %}
 </div>
 
 {% if discover_clubs %}
@@ -114,8 +132,8 @@
   </div>
 {% else %}
   <section class="ws-empty-inline">
-    <p>No additional public clubs to discover right now. Want to run games at your court?</p>
-    <a class="ws-text-link" href="{% url 'clubs:create' %}">Create a new club →</a>
+    <p>No public clubs listed yet. Start the first club for your local court and invite your group!</p>
+    <a class="ws-text-link" href="{% url 'clubs:create' %}">Create a club →</a>
   </section>
 {% endif %}
 {% endblock %}

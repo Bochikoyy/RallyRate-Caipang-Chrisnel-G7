@@ -159,13 +159,13 @@ class ClubEventAndGeneratorTests(TestCase):
         self.host.rating_profile.refresh_from_db()
         self.assertGreater(self.host.rating_profile.doubles_rating, Decimal("4.200"))
 
-        # Dual leaderboards: Club Leaderboard shows club members; Global shows all 5 players
+        # Dual leaderboards: Club Leaderboard shows club members; Local shows all 5 players
         club_lb = self.client.get(reverse("clubs:club_leaderboard", args=[club.slug]))
         self.assertEqual(club_lb.status_code, 200)
         self.assertEqual(club_lb.context["scope"], "club")
         self.assertEqual(club_lb.context["player_count"], 5)
 
-        global_lb = self.client.get(reverse("global_leaderboard"))
-        self.assertEqual(global_lb.status_code, 200)
-        self.assertEqual(global_lb.context["scope"], "global")
-        self.assertEqual(global_lb.context["rows"][0]["user_id"], self.host.id)
+        local_lb = self.client.get(reverse("global_leaderboard"))
+        self.assertEqual(local_lb.status_code, 200)
+        self.assertEqual(local_lb.context["scope"], "local")
+        self.assertEqual(local_lb.context["rows"][0]["user_id"], self.host.id)

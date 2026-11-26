@@ -7,7 +7,7 @@ Django full-stack pickleball club, open-play matchmaking, and **1.000–8.000 DU
 ### 1. Player Accounts & Unified Workspace (`apps.accounts`)
 - **Player-First Registration (`/accounts/signup/`):** Every member registers directly as a player starting at **3.000** on the `1.000–8.000` rating scale (separate Doubles & Singles ratings).
 - **Email Authentication (`/accounts/login/`, `/accounts/logout/`):** Case-insensitive email sign-in with CSRF-protected session management.
-- **Unified Player Dashboard (`/`):** Live Doubles & Singles ratings, reliability percentages, verified `W–L` record, pending peer confirmations, active club shortcuts, recent match rating deltas, and top global leaders.
+- **Unified Player Dashboard (`/`):** Live Doubles & Singles ratings, reliability percentages, verified `W–L` record, pending peer confirmations, active club shortcuts, recent match rating deltas, and top local leaders.
 - **Player Profile (`/accounts/profile/`):** Manage personal details, preferred paddle, home court, and view active club memberships & player rating card.
 
 ### 2. Reclub-Style Clubs, Co-Hosts & Open-Play Match Generator (`apps.clubs`)
@@ -32,7 +32,7 @@ Django full-stack pickleball club, open-play matchmaking, and **1.000–8.000 DU
   - **Source & Reliability Scaling:** Dynamic K-factor scales from `0.40` (new players) to `0.12` (established `100%` reliability players), weighting `club_event` (`1.0x`) above `casual_peer` (`0.6x`).
   - **Zero-Drift Ledger:** Immutable `RatingHistory` entries per match with full chronological replay when verified scores are edited or removed.
 - **Dual Leaderboards (`/leaderboard/`, `/clubs/<slug>/leaderboard/`):**
-  - Switch between **Global Standings** (all players) and **Club Standings** (club members + club `W–L`), with **Doubles / Singles** and **All / Established (≥30% reliability)** filters.
+  - Switch between **Local Standings** (all players) and **Club Standings** (club members + club `W–L`), with **Doubles / Singles** and **All / Established (≥30% reliability)** filters.
 
 ## Local Setup
 

@@ -867,7 +867,7 @@ def global_leaderboard(request):
         {
             "rows": rows,
             "player_count": len(rows),
-            "scope": "global",
+            "scope": "local",
             "club": None,
             "my_clubs": my_clubs,
             "match_format": match_format,

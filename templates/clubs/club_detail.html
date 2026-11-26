@@ -8,17 +8,19 @@
     <h1>{{ club.name }}</h1>
     {% if club.description %}
       <p class="ws-page-sub">{{ club.description }}</p>
+    {% else %}
+      <p class="ws-page-sub">Club sessions, verified matches, and member standings.</p>
     {% endif %}
   </div>
   <div class="ws-inline-actions" style="flex-wrap: wrap;">
-    <a class="ws-btn ws-btn-outline" href="{% url 'clubs:club_leaderboard' club.slug %}">Club leaderboard</a>
+    <a class="ws-btn ws-btn-outline" href="{% url 'clubs:club_leaderboard' club.slug %}">Club standings</a>
     {% if is_manager %}
       {% url 'clubs:event_create' club.slug as create_event_url %}
       {% if create_event_url %}
-        <a class="ws-btn ws-btn-primary" href="{{ create_event_url }}">Create game / event</a>
+        <a class="ws-btn ws-btn-primary" href="{{ create_event_url }}">Create game</a>
       {% endif %}
       <a class="ws-btn ws-btn-outline" href="{% url 'clubs:manage' club.slug %}">
-        Manage club{% if pending_count %} ({{ pending_count }}){% endif %}
+        Manage{% if pending_count %} ({{ pending_count }}){% endif %}
       </a>
     {% elif not is_member %}
       <form method="post" action="{% url 'clubs:join' club.slug %}" style="margin: 0;">
@@ -62,8 +64,8 @@
   </section>
 {% endif %}
 
-<section class="ws-detail-grid">
-  <div>
+<section class="ws-aligned-two-col ws-aligned-start" style="margin-bottom: 0;">
+  <div class="ws-aligned-col">
     <div class="ws-section-head">
       <h2>Club games &amp; open play</h2>
       {% if is_manager %}
@@ -157,34 +159,36 @@
     {% endif %}
   </div>
 
-  <aside class="ws-setup-card">
+  <aside class="ws-aligned-col">
     <div class="ws-section-head">
       <h2>Club roster</h2>
-      <span class="ws-td-muted">{{ member_count }}</span>
+      <span class="ws-td-muted">{{ member_count }} member{{ member_count|pluralize }}</span>
     </div>
 
-    <ul class="ws-verify-list">
-      {% for m in active_memberships %}
-        <li>
-          <div>
-            <span class="ws-verify-name">{{ m.user.get_full_name|default:m.user.first_name|default:m.user.email|default:m.user.username }}</span>
-            {% if m.user.rating_profile %}
-              <div class="ws-row-sub">DBL {{ m.user.rating_profile.doubles_rating }} · SGL {{ m.user.rating_profile.singles_rating }}</div>
-            {% endif %}
-          </div>
-          <span class="{% if m.role == 'host' or m.role == 'co_host' %}status-badge status-verified{% else %}ws-muted-small{% endif %}">
-            {{ m.get_role_display }}
-          </span>
-        </li>
-      {% endfor %}
-    </ul>
+    <div class="ws-setup-card">
+      <ul class="ws-verify-list" style="margin-bottom: 0;">
+        {% for m in active_memberships %}
+          <li {% if forloop.last %}style="border-bottom: 0; padding-bottom: 0;"{% endif %}>
+            <div>
+              <span class="ws-verify-name">{{ m.user.get_full_name|default:m.user.first_name|default:m.user.email|default:m.user.username }}</span>
+              {% if m.user.rating_profile %}
+                <div class="ws-row-sub">DBL {{ m.user.rating_profile.doubles_rating }} · SGL {{ m.user.rating_profile.singles_rating }}</div>
+              {% endif %}
+            </div>
+            <span class="{% if m.role == 'host' or m.role == 'co_host' %}status-badge status-verified{% else %}ws-muted-small{% endif %}">
+              {{ m.get_role_display }}
+            </span>
+          </li>
+        {% endfor %}
+      </ul>
 
-    {% if is_member and not is_host %}
-      <form method="post" action="{% url 'clubs:leave' club.slug %}" style="margin-top: 16px;">
-        {% csrf_token %}
-        <button class="ws-btn ws-btn-outline ws-submit-full" type="submit">Leave club</button>
-      </form>
-    {% endif %}
+      {% if is_member and not is_host %}
+        <form method="post" action="{% url 'clubs:leave' club.slug %}" style="margin-top: 20px;">
+          {% csrf_token %}
+          <button class="ws-btn ws-btn-outline ws-submit-full" type="submit">Leave club</button>
+        </form>
+      {% endif %}
+    </div>
   </aside>
 </section>
 {% endblock %}

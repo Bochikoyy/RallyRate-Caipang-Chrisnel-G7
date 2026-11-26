@@ -11,7 +11,7 @@
   <a class="ws-btn ws-btn-outline" href="{% if is_edit %}{% url 'clubs:event_detail' club.slug event.pk %}{% else %}{% url 'clubs:detail' club.slug %}{% endif %}">Cancel</a>
 </section>
 
-<div class="ws-detail-grid">
+<div class="ws-profile-grid">
   <section class="ws-setup-card">
     <h2>Session configuration</h2>
     <form method="post" novalidate>

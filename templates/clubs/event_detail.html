@@ -12,6 +12,15 @@
     <p class="ws-page-sub">{{ event.location }} · {{ event.starts_at|date:"M j, Y · g:i A" }} · <span class="status-badge {% if event.status == 'completed' %}status-verified{% elif event.status == 'in_progress' %}status-pending{% else %}ws-inprogress-pill{% endif %}">{{ event.get_status_display }}</span></p>
   </div>
   <div class="ws-inline-actions" style="flex-wrap: wrap;">
+    {% if is_manager and event.status != 'completed' %}
+      <form method="post" action="{% url 'clubs:event_generate_matches' club.slug event.pk %}" style="margin: 0;">
+        {% csrf_token %}
+        <button class="ws-btn ws-btn-primary" type="submit" {% if not can_generate %}disabled title="Need at least {{ event.players_per_court }} players"{% endif %}>
+          Generate next round
+        </button>
+      </form>
+    {% endif %}
+
     {% if my_participation %}
       <form method="post" action="{% url 'clubs:event_leave' club.slug event.pk %}" style="margin: 0;">
         {% csrf_token %}
@@ -30,7 +39,7 @@
         <form method="post" action="{% url 'clubs:event_status' club.slug event.pk %}" style="margin: 0;">
           {% csrf_token %}
           <input type="hidden" name="status" value="completed">
-          <button class="ws-btn ws-btn-outline" type="submit">Complete session</button>
+          <button class="ws-btn ws-btn-outline" type="submit">Complete</button>
         </form>
       {% endif %}
     {% endif %}
@@ -41,24 +50,17 @@
   <div class="ws-detail-notes" style="margin: 0 0 22px;"><strong>Host notes:</strong> {{ event.notes }}</div>
 {% endif %}
 
-<section class="ws-detail-grid">
-  <div>
+<section class="ws-aligned-two-col ws-aligned-start" style="margin-bottom: 0;">
+  <div class="ws-aligned-col">
     <div class="ws-section-head">
       <h2>Court matchups &amp; scores</h2>
-      {% if is_manager and event.status != 'completed' %}
-        <form method="post" action="{% url 'clubs:event_generate_matches' club.slug event.pk %}" style="margin: 0;">
-          {% csrf_token %}
-          <button class="ws-btn ws-btn-primary" style="height: 36px; padding: 0 16px;" type="submit" {% if not can_generate %}disabled title="Need at least {{ event.players_per_court }} players"{% endif %}>
-            + Generate next round
-          </button>
-        </form>
-      {% endif %}
+      <span class="ws-td-muted">{{ event_matches|length }} match{{ event_matches|length|pluralize:"es" }}</span>
     </div>
 
     {% if is_manager and can_generate and custom_match_form %}
-      <details class="ws-setup-card" style="padding: 16px 22px; margin-bottom: 18px;">
+      <details class="ws-setup-card" style="padding: 16px 22px; margin-bottom: 16px; flex: none;">
         <summary style="cursor: pointer; font-weight: 600; font-size: 13.5px; color: var(--ws-plum);">
-          Create manual matchup (pick players directly)
+          + Create manual matchup (pick players directly)
         </summary>
         <form method="post" action="{% url 'clubs:event_custom_match' club.slug event.pk %}" style="margin-top: 14px;">
           {% csrf_token %}
@@ -187,69 +189,72 @@
         <div>
           <p class="ws-eyebrow">COURT BOARD READY</p>
           <h2>No matches generated yet.</h2>
-          <p class="ws-hero-copy">
-            Once at least {{ event.players_per_court }} players join this {{ event.get_format_display|lower }} session ({{ active_roster|length }}/{{ event.max_players }} joined), the host can click <strong>Generate next round</strong> to create court pairings automatically.
+          <p class="ws-hero-copy" style="margin-bottom: 0;">
+            Once at least {{ event.players_per_court }} players join this {{ event.get_format_display|lower }} session ({{ active_roster|length }}/{{ event.max_players }} joined), click <strong>Generate next round</strong> at the top right to create court pairings automatically.
           </p>
         </div>
+        <p class="ws-hero-foot">Host-verified scores carry 1.0x rating weight.</p>
       </section>
     {% endif %}
   </div>
 
-  <aside class="ws-setup-card">
+  <aside class="ws-aligned-col">
     <div class="ws-section-head">
-      <h2>Players ({{ active_roster|length }}/{{ event.max_players }})</h2>
+      <h2>Session roster</h2>
+      <span class="ws-td-muted">{{ active_roster|length }}/{{ event.max_players }} joined</span>
     </div>
 
-    {% if is_manager and unjoined_members %}
-      <form method="post" action="{% url 'clubs:event_add_member' club.slug event.pk %}" style="display: flex; gap: 8px; margin-bottom: 16px;">
-        {% csrf_token %}
-        <select name="user_id" class="field-input" style="height: 38px; padding: 6px 10px;">
-          {% for u in unjoined_members %}
-            <option value="{{ u.pk }}">{{ u.get_full_name|default:u.email|default:u.username }}</option>
-          {% endfor %}
-        </select>
-        <button class="ws-btn ws-btn-outline" style="height: 38px; padding: 0 14px;" type="submit">+ Add</button>
-      </form>
-    {% endif %}
+    <div class="ws-setup-card">
+      {% if is_manager and unjoined_members %}
+        <form method="post" action="{% url 'clubs:event_add_member' club.slug event.pk %}" style="display: flex; gap: 8px; margin-bottom: 16px;">
+          {% csrf_token %}
+          <select name="user_id" class="field-input" style="height: 38px; padding: 6px 10px;">
+            {% for u in unjoined_members %}
+              <option value="{{ u.pk }}">{{ u.get_full_name|default:u.email|default:u.username }}</option>
+            {% endfor %}
+          </select>
+          <button class="ws-btn ws-btn-outline" style="height: 38px; padding: 0 14px;" type="submit">+ Add</button>
+        </form>
+      {% endif %}
 
-    <ul class="ws-verify-list">
-      {% for ep in active_roster %}
-        <li>
-          <div>
-            <span class="ws-verify-name">{{ ep.user.get_full_name|default:ep.user.email|default:ep.user.username }}</span>
-            <div class="ws-row-sub">
-              {% if ep.user.rating_profile %}
-                {% if event.format == 'singles' %}{{ ep.user.rating_profile.singles_rating }}{% else %}{{ ep.user.rating_profile.doubles_rating }}{% endif %} rating ·
-              {% endif %}
-              {{ ep.games_played }} game{{ ep.games_played|pluralize }} played
-            </div>
-          </div>
-          {% if is_manager %}
-            <form method="post" action="{% url 'clubs:event_remove_participant' club.slug event.pk ep.pk %}" style="margin: 0;">
-              {% csrf_token %}
-              <button class="ws-danger-link" style="background: none; border: 0; cursor: pointer;" type="submit">Remove</button>
-            </form>
-          {% else %}
-            <span class="ws-verify-state ws-state-confirmed">In</span>
-          {% endif %}
-        </li>
-      {% empty %}
-        <li class="ws-muted-small">No players have joined yet.</li>
-      {% endfor %}
-    </ul>
-
-    {% if waitlist_roster %}
-      <h3 style="margin: 18px 0 8px; font-size: 13px; color: var(--ws-muted);">WAITLIST ({{ waitlist_roster|length }})</h3>
       <ul class="ws-verify-list" style="margin-bottom: 0;">
-        {% for ep in waitlist_roster %}
-          <li>
-            <span>{{ ep.user.get_full_name|default:ep.user.username }}</span>
-            <span class="ws-verify-state ws-state-awaiting">Waitlist</span>
+        {% for ep in active_roster %}
+          <li {% if forloop.last %}style="border-bottom: 0; padding-bottom: 0;"{% endif %}>
+            <div>
+              <span class="ws-verify-name">{{ ep.user.get_full_name|default:ep.user.email|default:ep.user.username }}</span>
+              <div class="ws-row-sub">
+                {% if ep.user.rating_profile %}
+                  {% if event.format == 'singles' %}{{ ep.user.rating_profile.singles_rating }}{% else %}{{ ep.user.rating_profile.doubles_rating }}{% endif %} rating ·
+                {% endif %}
+                {{ ep.games_played }} game{{ ep.games_played|pluralize }} played
+              </div>
+            </div>
+            {% if is_manager %}
+              <form method="post" action="{% url 'clubs:event_remove_participant' club.slug event.pk ep.pk %}" style="margin: 0;">
+                {% csrf_token %}
+                <button class="ws-danger-link" style="background: none; border: 0; cursor: pointer;" type="submit">Remove</button>
+              </form>
+            {% else %}
+              <span class="ws-verify-state ws-state-confirmed">In</span>
+            {% endif %}
           </li>
+        {% empty %}
+          <li class="ws-muted-small" style="border-bottom: 0;">No players have joined yet.</li>
         {% endfor %}
       </ul>
-    {% endif %}
+
+      {% if waitlist_roster %}
+        <h3 style="margin: 18px 0 8px; font-size: 12px; color: var(--ws-muted);">WAITLIST ({{ waitlist_roster|length }})</h3>
+        <ul class="ws-verify-list" style="margin-bottom: 0;">
+          {% for ep in waitlist_roster %}
+            <li>
+              <span>{{ ep.user.get_full_name|default:ep.user.username }}</span>
+              <span class="ws-verify-state ws-state-awaiting">Waitlist</span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    </div>
   </aside>
 </section>
 {% endblock %}
-

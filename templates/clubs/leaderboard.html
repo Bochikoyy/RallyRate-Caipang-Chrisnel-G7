@@ -1,5 +1,5 @@
 {% extends 'workspace_base.html' %}
-{% block title %}{% if scope == 'club' %}{{ club.name }} Standings{% else %}Global Leaderboard{% endif %} · RallyRate{% endblock %}
+{% block title %}{% if scope == 'club' %}{{ club.name }} Standings{% else %}Local Leaderboard{% endif %} · RallyRate{% endblock %}
 {% block nav_leaderboard %}active{% endblock %}
 {% block content %}
 <section class="ws-page-head">
@@ -7,11 +7,11 @@
     {% if scope == 'club' %}
       <p class="ws-eyebrow" style="margin-bottom: 6px;">CLUB STANDINGS · {{ club.home_court }}</p>
       <h1>{{ club.name }} Leaderboard</h1>
-      <p class="ws-page-sub">Local club standings ranked by 1.000–8.000 {{ match_format }} performance rating.</p>
+      <p class="ws-page-sub">Club member standings ranked by 1.000–8.000 {{ match_format }} performance rating.</p>
     {% else %}
-      <p class="ws-eyebrow" style="margin-bottom: 6px;">ALL RALLYRATE PLAYERS</p>
-      <h1>Global Leaderboard</h1>
-      <p class="ws-page-sub">Community-wide 1.000–8.000 {{ match_format }} rankings across clubs and peer play.</p>
+      <p class="ws-eyebrow" style="margin-bottom: 6px;">LOCAL STANDINGS · ALL PLAYERS</p>
+      <h1>The local leaderboard</h1>
+      <p class="ws-page-sub">Local 1.000–8.000 {{ match_format }} rankings across all clubs and peer play.</p>
     {% endif %}
   </div>
   {% if scope == 'club' %}
@@ -21,10 +21,10 @@
   {% endif %}
 </section>
 
-<!-- Scope Switcher: Global vs Your Clubs -->
+<!-- Scope Switcher: Local (All Players) vs Your Clubs -->
 <nav class="ws-filter-bar" aria-label="Leaderboard scope">
-  <a class="ws-filter-pill {% if scope == 'global' %}active{% endif %}" href="{% url 'clubs:leaderboard' %}?format={{ match_format }}{% if established_only %}&amp;filter=established{% endif %}">
-    Global
+  <a class="ws-filter-pill {% if scope == 'local' %}active{% endif %}" href="{% url 'clubs:leaderboard' %}?format={{ match_format }}{% if established_only %}&amp;filter=established{% endif %}">
+    Local (All players)
   </a>
   {% for c in my_clubs %}
     <a class="ws-filter-pill {% if club and club.pk == c.pk %}active{% endif %}" href="{% url 'clubs:club_leaderboard' c.slug %}?format={{ match_format }}{% if established_only %}&amp;filter=established{% endif %}">
@@ -39,15 +39,23 @@
 <section class="ws-leaderboard-toolbar">
   <div class="ws-toolbar-left">
     {% if scope == 'club' %}
-      <a class="ws-filter-pill {% if match_format == 'doubles' %}active{% endif %}" href="{% url 'clubs:club_leaderboard' club.slug %}?format=doubles{% if established_only %}&amp;filter=established{% endif %}">Doubles</a>
-      <a class="ws-filter-pill {% if match_format == 'singles' %}active{% endif %}" href="{% url 'clubs:club_leaderboard' club.slug %}?format=singles{% if established_only %}&amp;filter=established{% endif %}">Singles</a>
-      <a class="ws-filter-pill {% if not established_only %}active{% endif %}" href="{% url 'clubs:club_leaderboard' club.slug %}?format={{ match_format }}">All members</a>
-      <a class="ws-filter-pill {% if established_only %}active{% endif %}" href="{% url 'clubs:club_leaderboard' club.slug %}?format={{ match_format }}&amp;filter=established">Established (≥30% rel.)</a>
+      <div class="ws-pill-group" role="group" aria-label="Match format">
+        <a class="ws-seg-pill {% if match_format == 'doubles' %}active{% endif %}" href="{% url 'clubs:club_leaderboard' club.slug %}?format=doubles{% if established_only %}&amp;filter=established{% endif %}">Doubles</a>
+        <a class="ws-seg-pill {% if match_format == 'singles' %}active{% endif %}" href="{% url 'clubs:club_leaderboard' club.slug %}?format=singles{% if established_only %}&amp;filter=established{% endif %}">Singles</a>
+      </div>
+      <div class="ws-pill-group" role="group" aria-label="Reliability filter">
+        <a class="ws-seg-pill {% if not established_only %}active{% endif %}" href="{% url 'clubs:club_leaderboard' club.slug %}?format={{ match_format }}">All members</a>
+        <a class="ws-seg-pill {% if established_only %}active{% endif %}" href="{% url 'clubs:club_leaderboard' club.slug %}?format={{ match_format }}&amp;filter=established">Established (≥30%)</a>
+      </div>
     {% else %}
-      <a class="ws-filter-pill {% if match_format == 'doubles' %}active{% endif %}" href="{% url 'clubs:leaderboard' %}?format=doubles{% if established_only %}&amp;filter=established{% endif %}">Doubles</a>
-      <a class="ws-filter-pill {% if match_format == 'singles' %}active{% endif %}" href="{% url 'clubs:leaderboard' %}?format=singles{% if established_only %}&amp;filter=established{% endif %}">Singles</a>
-      <a class="ws-filter-pill {% if not established_only %}active{% endif %}" href="{% url 'clubs:leaderboard' %}?format={{ match_format }}">All players</a>
-      <a class="ws-filter-pill {% if established_only %}active{% endif %}" href="{% url 'clubs:leaderboard' %}?format={{ match_format }}&amp;filter=established">Established (≥30% rel.)</a>
+      <div class="ws-pill-group" role="group" aria-label="Match format">
+        <a class="ws-seg-pill {% if match_format == 'doubles' %}active{% endif %}" href="{% url 'clubs:leaderboard' %}?format=doubles{% if established_only %}&amp;filter=established{% endif %}">Doubles</a>
+        <a class="ws-seg-pill {% if match_format == 'singles' %}active{% endif %}" href="{% url 'clubs:leaderboard' %}?format=singles{% if established_only %}&amp;filter=established{% endif %}">Singles</a>
+      </div>
+      <div class="ws-pill-group" role="group" aria-label="Reliability filter">
+        <a class="ws-seg-pill {% if not established_only %}active{% endif %}" href="{% url 'clubs:leaderboard' %}?format={{ match_format }}">All players</a>
+        <a class="ws-seg-pill {% if established_only %}active{% endif %}" href="{% url 'clubs:leaderboard' %}?format={{ match_format }}&amp;filter=established">Established (≥30%)</a>
+      </div>
     {% endif %}
   </div>
   <span class="ws-td-muted">
@@ -79,7 +87,7 @@
               {% if row.club_role %}
                 <span class="ws-inprogress-pill" style="margin-left: 6px;">{{ row.club_role }}</span>
               {% endif %}
-              {% if scope == 'global' and row.home_court %}
+              {% if scope == 'local' and row.home_court %}
                 <div class="ws-row-sub">{{ row.home_court }}</div>
               {% endif %}
             </td>

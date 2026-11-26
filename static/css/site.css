@@ -2147,3 +2147,98 @@
     padding: 0;
   }
 }
+
+
+/* Aligned two-column workspace sections (Clubs Hub, Club Detail, Event Board) */
+.ws-aligned-two-col {
+  display: grid;
+  grid-template-columns: minmax(0, 1.8fr) minmax(300px, 0.95fr);
+  gap: 22px;
+  align-items: stretch;
+  margin-bottom: 30px;
+}
+
+.ws-aligned-start {
+  align-items: start;
+}
+
+.ws-aligned-col {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.ws-aligned-col > .ws-hero-card,
+.ws-aligned-col > .ws-setup-card,
+.ws-aligned-col > .ws-public-card,
+.ws-aligned-col > .ws-table-card {
+  flex: 1;
+}
+
+.ws-invite-card {
+  background: var(--ws-blush);
+  border: 1px solid var(--ws-blush-strong);
+  border-radius: 12px;
+  padding: 28px 26px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 20px;
+  flex: 1;
+}
+
+.ws-invite-card h3 {
+  margin: 0 0 8px;
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  color: var(--ws-ink);
+}
+
+.ws-invite-card p {
+  margin: 0 0 18px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #6b5e66;
+}
+
+.ws-invite-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ws-pill-group {
+  display: inline-flex;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid var(--ws-border);
+  border-radius: 9px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.ws-seg-pill {
+  padding: 6px 13px;
+  border-radius: 6px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #5c5158;
+  transition: background 0.15s, color 0.15s;
+}
+
+.ws-seg-pill:hover {
+  color: var(--ws-plum);
+}
+
+.ws-seg-pill.active {
+  background: var(--ws-blush);
+  color: var(--ws-plum);
+  font-weight: 600;
+}
+
+@media (max-width: 920px) {
+  .ws-aligned-two-col {
+    grid-template-columns: 1fr;
+  }
+}
