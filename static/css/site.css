@@ -504,10 +504,13 @@
     padding: 0 0 0 18px;
   }
   .ws-brand-mascot {
-    display: none;
+    display: block;
+    width: 58px;
+    height: 58px;
+    margin: -10px -12px -10px -15px;
   }
   .ws-brand {
-    gap: 0;
+    gap: 5px;
   }
   .ws-brand-text {
     font-size: 20px;
@@ -2248,10 +2251,17 @@
   .auth-body .footer {
     display: none;
   }
-  .auth-body .auth-brand-mascot {
-    display: none !important;
+  .signup-body .auth-brand-mascot {
+    display: block;
+    width: 56px;
+    height: 56px;
+    margin: -10px -11px -10px -14px;
   }
-  .auth-body .brand {
+  .signup-body .brand {
+    gap: 5px;
+    font-size: 20px;
+  }
+  .signin-body .brand {
     gap: 0;
     font-size: 20px;
   }
