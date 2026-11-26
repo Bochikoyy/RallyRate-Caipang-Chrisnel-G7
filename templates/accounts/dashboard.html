@@ -17,25 +17,25 @@
     <article class="ws-stat-card ws-stat-tinted">
       <div class="ws-stat-top">
         <p class="ws-stat-label">Starting rating</p>
-        <span class="ws-inprogress-pill ws-pill-white">In progress</span>
+        <span class="ws-inprogress-pill ws-pill-white ws-mobile-only">In progress</span>
       </div>
       <div class="ws-stat-value ws-plum-text">1,000</div>
-      <p class="ws-stat-note ws-plum-note">Your club's starting point</p>
+      <p class="ws-stat-note ws-plum-note">Your club's starting point<span class="ws-desktop-only"> · In progress</span></p>
     </article>
 
     <article class="ws-stat-card">
-      <p class="ws-stat-label">Win–loss</p>
+      <p class="ws-stat-label"><span class="ws-desktop-only">Win–loss record</span><span class="ws-mobile-only">Win–loss</span></p>
       <div class="ws-stat-value">0–0</div>
-      <p class="ws-stat-note">No confirmed matches</p>
+      <p class="ws-stat-note">No confirmed matches<span class="ws-desktop-only"> yet</span></p>
     </article>
 
     <article class="ws-stat-card">
       <div class="ws-stat-top">
-        <p class="ws-stat-label">Standing</p>
-        <span class="ws-inprogress-pill">In progress</span>
+        <p class="ws-stat-label"><span class="ws-desktop-only">Club standing</span><span class="ws-mobile-only">Standing</span></p>
+        <span class="ws-inprogress-pill ws-mobile-only">In progress</span>
       </div>
       <div class="ws-stat-value">Unranked</div>
-      <p class="ws-stat-note">5 matches to rank</p>
+      <p class="ws-stat-note"><span class="ws-desktop-only">Play 5 confirmed matches to rank · In progress</span><span class="ws-mobile-only">5 matches to rank</span></p>
     </article>
   </section>
 
@@ -95,27 +95,27 @@
     <article class="ws-stat-card ws-stat-tinted">
       <div class="ws-stat-top">
         <p class="ws-stat-label">Current rating</p>
-        <span class="ws-inprogress-pill ws-pill-white">In progress</span>
+        <span class="ws-inprogress-pill ws-pill-white ws-mobile-only">In progress</span>
       </div>
       <div class="ws-stat-value ws-plum-text">1,000</div>
-      <p class="ws-stat-note ws-plum-note">Elo engine in progress</p>
+      <p class="ws-stat-note ws-plum-note">Rating calculation · In progress</p>
     </article>
 
     <article class="ws-stat-card">
-      <p class="ws-stat-label">Win–loss</p>
+      <p class="ws-stat-label"><span class="ws-desktop-only">Win–loss record</span><span class="ws-mobile-only">Win–loss</span></p>
       <div class="ws-stat-value">{{ wins }}–{{ losses }}</div>
       <p class="ws-stat-note">
-        {{ verified_count }} confirmed{% if win_rate is not None %} · {{ win_rate }}% wins{% endif %}
+        {{ verified_count }} confirmed<span class="ws-desktop-only"> match{{ verified_count|pluralize:"es" }}</span>{% if win_rate is not None %} · {{ win_rate }}% wins{% endif %}
       </p>
     </article>
 
     <article class="ws-stat-card">
       <div class="ws-stat-top">
-        <p class="ws-stat-label">Standing</p>
-        <span class="ws-inprogress-pill">In progress</span>
+        <p class="ws-stat-label"><span class="ws-desktop-only">Club standing</span><span class="ws-mobile-only">Standing</span></p>
+        <span class="ws-inprogress-pill ws-mobile-only">In progress</span>
       </div>
-      <div class="ws-stat-value">Unranked</div>
-      <p class="ws-stat-note">{{ request.user.home_court|default:"RallyRate Club" }}</p>
+      <div class="ws-stat-value"><span class="ws-desktop-only">In progress</span><span class="ws-mobile-only">Unranked</span></div>
+      <p class="ws-stat-note">{{ request.user.home_court|default:"RallyRate Pickleball Club" }}</p>
     </article>
   </section>
 

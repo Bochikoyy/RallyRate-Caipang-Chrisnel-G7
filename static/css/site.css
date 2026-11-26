@@ -722,7 +722,6 @@
     color: var(--ws-red-ink);
   }
 }
-}
 
 
 /* Player Overview (Empty & Active States) */
@@ -2957,5 +2956,20 @@
   .ws-public-card {
     border-radius: 16px;
     box-shadow: 0 4px 16px rgba(36, 30, 34, 0.03);
+  }
+}
+
+
+/* Strict Desktop vs Mobile visibility helpers */
+.ws-mobile-only {
+  display: none !important;
+}
+
+@media (max-width: 920px) {
+  .ws-desktop-only {
+    display: none !important;
+  }
+  .ws-mobile-only {
+    display: inline-flex !important;
   }
 }
