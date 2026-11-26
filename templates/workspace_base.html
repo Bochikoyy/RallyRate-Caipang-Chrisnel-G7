@@ -6,11 +6,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#591736">
   <title>{% block title %}RallyRate{% endblock %}</title>
-  <link rel="stylesheet" href="{% static 'css/site.css' %}?v=20261126-grid-align">
+  <link rel="stylesheet" href="{% static 'css/site.css' %}?v=20261126-mobile-p1">
 </head>
 <body class="ws-body {% block body_class %}{% endblock %}">
   <header class="ws-topbar">
     <div class="ws-brand-cell">
+      <button
+        type="button"
+        class="ws-menu-toggle"
+        id="ws-menu-toggle"
+        aria-label="Open workspace menu"
+        aria-expanded="false"
+        aria-controls="ws-sidebar"
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+      </button>
+
       <a class="ws-brand" href="{% url 'accounts:dashboard' %}">
         <img class="ws-brand-mascot" src="{% static 'images/rallyraye.png' %}" alt="RallyRaye mascot">
         <span class="ws-brand-text">RallyRate</span>
@@ -26,9 +41,24 @@
     </div>
   </header>
 
+  <div class="ws-backdrop" id="ws-backdrop" hidden></div>
+
   <div class="ws-frame">
-    <aside class="ws-sidebar" aria-label="Workspace navigation">
+    <aside class="ws-sidebar" id="ws-sidebar" aria-label="Workspace navigation">
       <div class="ws-nav-group">
+        <div class="ws-drawer-head">
+          <a class="ws-brand" href="{% url 'accounts:dashboard' %}">
+            <img class="ws-brand-mascot" src="{% static 'images/rallyraye.png' %}" alt="">
+            <span class="ws-brand-text">RallyRate</span>
+          </a>
+          <button type="button" class="ws-drawer-close" id="ws-drawer-close" aria-label="Close workspace menu">✕</button>
+        </div>
+
+        <div class="ws-drawer-user">
+          <strong>{{ request.user.get_full_name|default:request.user.first_name|default:request.user.email|default:request.user.username }}</strong>
+          <span>{{ request.user.get_role_display }} · {{ request.user.home_court|default:"RallyRate Pickleball Club" }}</span>
+        </div>
+
         <p class="ws-nav-heading">YOUR WORKSPACE</p>
         <nav class="ws-nav">
           {% url 'ratings:history' as rating_history_url %}
@@ -74,5 +104,32 @@
       </footer>
     </main>
   </div>
+
+  <script>
+    (function () {
+      const toggleBtn = document.getElementById('ws-menu-toggle');
+      const closeBtn = document.getElementById('ws-drawer-close');
+      const sidebar = document.getElementById('ws-sidebar');
+      const backdrop = document.getElementById('ws-backdrop');
+      if (!toggleBtn || !sidebar || !backdrop) return;
+
+      function setDrawer(open) {
+        document.body.classList.toggle('ws-drawer-open', open);
+        toggleBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        backdrop.hidden = !open;
+      }
+
+      toggleBtn.addEventListener('click', function () {
+        setDrawer(!document.body.classList.contains('ws-drawer-open'));
+      });
+      if (closeBtn) {
+        closeBtn.addEventListener('click', function () { setDrawer(false); });
+      }
+      backdrop.addEventListener('click', function () { setDrawer(false); });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') setDrawer(false);
+      });
+    })();
+  </script>
 </body>
 </html>
