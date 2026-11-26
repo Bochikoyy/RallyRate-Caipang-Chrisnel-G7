@@ -7,6 +7,7 @@
   <!-- New player · empty state (Screen 7) -->
   <section class="ws-page-head">
     <div>
+      <p class="ws-mobile-eyebrow">{{ request.user.home_court|default:"RALLYRATE PICKLEBALL CLUB"|upper }}</p>
       <h1>Welcome to the club, {{ request.user.first_name|default:request.user.username }}</h1>
       <p class="ws-page-sub">Your RallyRate story starts on the court.</p>
     </div>
@@ -14,21 +15,27 @@
 
   <section class="ws-stat-grid">
     <article class="ws-stat-card ws-stat-tinted">
-      <p class="ws-stat-label">Starting rating</p>
+      <div class="ws-stat-top">
+        <p class="ws-stat-label">Starting rating</p>
+        <span class="ws-inprogress-pill ws-pill-white">In progress</span>
+      </div>
       <div class="ws-stat-value ws-plum-text">1,000</div>
-      <p class="ws-stat-note ws-plum-note">Your club's starting point · In progress</p>
+      <p class="ws-stat-note ws-plum-note">Your club's starting point</p>
     </article>
 
     <article class="ws-stat-card">
-      <p class="ws-stat-label">Win–loss record</p>
+      <p class="ws-stat-label">Win–loss</p>
       <div class="ws-stat-value">0–0</div>
-      <p class="ws-stat-note">No confirmed matches yet</p>
+      <p class="ws-stat-note">No confirmed matches</p>
     </article>
 
     <article class="ws-stat-card">
-      <p class="ws-stat-label">Club standing</p>
+      <div class="ws-stat-top">
+        <p class="ws-stat-label">Standing</p>
+        <span class="ws-inprogress-pill">In progress</span>
+      </div>
       <div class="ws-stat-value">Unranked</div>
-      <p class="ws-stat-note">Play 5 confirmed matches to rank · In progress</p>
+      <p class="ws-stat-note">5 matches to rank</p>
     </article>
   </section>
 
@@ -77,6 +84,7 @@
   <!-- Active player dashboard (Screen 1) -->
   <section class="ws-page-head">
     <div>
+      <p class="ws-mobile-eyebrow">{{ request.user.home_court|default:"RALLYRATE PICKLEBALL CLUB"|upper }}</p>
       <h1>{{ greeting }}, {{ request.user.first_name|default:request.user.username }}</h1>
       <p class="ws-page-sub">Here's how your game is shaping up.</p>
     </div>
@@ -85,23 +93,29 @@
 
   <section class="ws-stat-grid">
     <article class="ws-stat-card ws-stat-tinted">
-      <p class="ws-stat-label">Current rating</p>
+      <div class="ws-stat-top">
+        <p class="ws-stat-label">Current rating</p>
+        <span class="ws-inprogress-pill ws-pill-white">In progress</span>
+      </div>
       <div class="ws-stat-value ws-plum-text">1,000</div>
-      <p class="ws-stat-note ws-plum-note">Rating calculation · In progress</p>
+      <p class="ws-stat-note ws-plum-note">Elo engine in progress</p>
     </article>
 
     <article class="ws-stat-card">
-      <p class="ws-stat-label">Win–loss record</p>
+      <p class="ws-stat-label">Win–loss</p>
       <div class="ws-stat-value">{{ wins }}–{{ losses }}</div>
       <p class="ws-stat-note">
-        {{ verified_count }} confirmed match{{ verified_count|pluralize:"es" }}{% if win_rate is not None %} · {{ win_rate }}% wins{% endif %}
+        {{ verified_count }} confirmed{% if win_rate is not None %} · {{ win_rate }}% wins{% endif %}
       </p>
     </article>
 
     <article class="ws-stat-card">
-      <p class="ws-stat-label">Club standing</p>
-      <div class="ws-stat-value">In progress</div>
-      <p class="ws-stat-note">{{ request.user.home_court|default:"RallyRate Pickleball Club" }}</p>
+      <div class="ws-stat-top">
+        <p class="ws-stat-label">Standing</p>
+        <span class="ws-inprogress-pill">In progress</span>
+      </div>
+      <div class="ws-stat-value">Unranked</div>
+      <p class="ws-stat-note">{{ request.user.home_court|default:"RallyRate Club" }}</p>
     </article>
   </section>
 

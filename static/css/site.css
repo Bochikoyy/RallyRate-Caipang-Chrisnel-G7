@@ -2808,3 +2808,144 @@
     line-height: 1.4;
   }
 }
+
+
+/* ==========================================================================
+   Mobile Aesthetic Polish: Circular Avatar, Editorial Header & Bento Depth
+   ========================================================================== */
+.ws-user-avatar,
+.ws-mobile-eyebrow {
+  display: none;
+}
+
+.ws-stat-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.ws-stat-top .ws-stat-label {
+  margin-bottom: 0;
+}
+
+.ws-pill-white {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(89, 23, 54, 0.12);
+}
+
+@media (max-width: 920px) {
+  .ws-topbar {
+    height: 58px;
+    border-bottom-color: rgba(235, 228, 232, 0.75);
+  }
+  .ws-brand-cell {
+    padding: 0 0 0 20px;
+  }
+  .ws-topbar-main {
+    padding: 0 20px 0 12px;
+  }
+
+  /* Replace bulky truncated name pill with sleek circular initials avatar */
+  .ws-user-trigger {
+    padding: 0;
+    border: 0;
+    background: none;
+  }
+  .ws-user-trigger:active {
+    background: none;
+  }
+  .ws-user-meta {
+    display: none;
+  }
+  .ws-user-avatar {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--ws-blush);
+    border: 1.5px solid #decdd6;
+    color: var(--ws-plum);
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    transition: transform 0.14s ease, background 0.14s ease;
+  }
+  .ws-user-trigger:active .ws-user-avatar {
+    transform: scale(0.95);
+    background: var(--ws-blush-strong);
+  }
+
+  /* Editorial mobile page header */
+  .ws-main {
+    padding: 22px 18px calc(108px + env(safe-area-inset-bottom, 0px));
+  }
+  .ws-mobile-eyebrow {
+    display: block;
+    margin: 0 0 6px;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--ws-plum);
+  }
+  .ws-page-head {
+    margin-bottom: 18px;
+  }
+  .ws-page-head h1 {
+    font-size: 24px;
+    letter-spacing: -0.6px;
+    line-height: 1.2;
+    margin-bottom: 5px;
+  }
+  .ws-page-sub {
+    font-size: 13.5px;
+  }
+
+  /* Lock 2-column Bento Stat Grid across mobile/tablet */
+  .ws-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  .ws-stat-card {
+    border-radius: 16px;
+    padding: 18px;
+    box-shadow: 0 4px 16px rgba(36, 30, 34, 0.03);
+  }
+  .ws-stat-card.ws-stat-tinted {
+    grid-column: 1 / -1;
+    padding: 20px 22px;
+    background: linear-gradient(145deg, #f5edf1 0%, #ede0e7 100%);
+    border: 1px solid #e4d4dc;
+  }
+  .ws-stat-card.ws-stat-tinted .ws-stat-value {
+    font-size: 36px;
+    margin-bottom: 8px;
+  }
+  .ws-stat-grid .ws-stat-card:not(.ws-stat-tinted) .ws-stat-top {
+    margin-bottom: 10px;
+  }
+  .ws-stat-grid .ws-stat-card:not(.ws-stat-tinted) .ws-stat-top .ws-inprogress-pill {
+    padding: 2px 7px;
+    font-size: 9.5px;
+  }
+  .ws-stat-grid .ws-stat-card:not(.ws-stat-tinted) .ws-stat-value {
+    font-size: 24px;
+    letter-spacing: -0.7px;
+    margin-bottom: 6px;
+  }
+  .ws-hero-card,
+  .ws-steps-card,
+  .ws-setup-card,
+  .ws-score-card,
+  .ws-detail-card,
+  .ws-verification-card,
+  .ws-public-card {
+    border-radius: 16px;
+    box-shadow: 0 4px 16px rgba(36, 30, 34, 0.03);
+  }
+}

@@ -4,9 +4,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#591736">
+  <meta name="theme-color" content="#ffffff">
   <title>{% block title %}RallyRate{% endblock %}</title>
-  <link rel="stylesheet" href="{% static 'css/site.css' %}?v=20261126-bento-switcher">
+  <link rel="stylesheet" href="{% static 'css/site.css' %}?v=20261126-aesthetic-mobile">
 </head>
 <body class="ws-body {% block body_class %}{% endblock %}">
   {% if messages %}
@@ -43,6 +43,7 @@
           type="button"
           class="ws-user-trigger"
           id="ws-user-trigger"
+          aria-label="Account menu"
           aria-expanded="false"
           aria-controls="ws-user-popover"
         >
@@ -50,15 +51,15 @@
             <span class="ws-user-name">{{ request.user.get_full_name|default:request.user.first_name|default:request.user.email|default:request.user.username }}</span>
             <span class="ws-user-role">{{ request.user.get_role_display|upper }}</span>
           </span>
-          <svg class="ws-user-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <polyline points="6 9 12 15 18 9"></polyline>
-          </svg>
+          <span class="ws-user-avatar" aria-hidden="true">
+            {% if request.user.first_name and request.user.last_name %}{{ request.user.first_name|slice:":1" }}{{ request.user.last_name|slice:":1" }}{% elif request.user.first_name %}{{ request.user.first_name|slice:":2" }}{% else %}{{ request.user.username|slice:":2" }}{% endif %}
+          </span>
         </button>
 
         <div class="ws-user-popover" id="ws-user-popover" hidden>
           <div class="ws-popover-head">
             <strong>{{ request.user.get_full_name|default:request.user.first_name|default:request.user.email|default:request.user.username }}</strong>
-            <span>{{ request.user.home_court|default:"RallyRate Pickleball Club" }}</span>
+            <span>{{ request.user.get_role_display }} · {{ request.user.home_court|default:"RallyRate Pickleball Club" }}</span>
           </div>
           <a class="ws-popover-link" href="{{ rating_history_url|default:'#' }}">Rating history</a>
           <a class="ws-popover-link" href="{{ rules_url|default:'#' }}">Help &amp; rating rules</a>
