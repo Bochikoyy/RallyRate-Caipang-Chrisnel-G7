@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from django.db.models import Case, IntegerField, Q, Value, When
 from django.utils import timezone
 
@@ -5,11 +6,16 @@ from .models import Match, MatchParticipant
 
 
 def _match_queryset():
-    return Match.objects.select_related(
+    qs = Match.objects.select_related(
+        "club",
+        "event",
         "submitted_by",
         "verified_by",
         "disputed_by",
     ).prefetch_related("participants__player")
+    if hasattr(Match, "rating_entries"):
+        qs = qs.prefetch_related("rating_entries")
+    return qs
 
 
 def _display_name(user):
@@ -53,6 +59,9 @@ def _time_greeting():
 
 
 def get_player_dashboard_summary(user):
+    from apps.ratings.engine import get_or_create_profile
+
+    profile = get_or_create_profile(user)
     user_matches = list(
         _match_queryset()
         .filter(Q(submitted_by=user) | Q(participants__player=user))
@@ -69,6 +78,15 @@ def get_player_dashboard_summary(user):
 
     for match in user_matches:
         _decorate_match_for_player(match, user)
+        match.player_delta = None
+        if hasattr(match, "rating_entries"):
+            for entry in match.rating_entries.all():
+                if entry.user_id == user.id:
+                    sign = "+" if entry.delta > 0 else ""
+                    match.player_delta = f"{sign}{entry.delta}"
+                    match.player_delta_num = entry.delta
+                    break
+
         user_team = match.participant_team_for(user)
         if match.status == Match.Status.VERIFIED and user_team is not None:
             verified_count += 1
@@ -85,7 +103,26 @@ def get_player_dashboard_summary(user):
             disputed_count += 1
 
     win_rate = round((wins / verified_count) * 100) if verified_count > 0 else None
-    table_matches = verified_matches[:4] if verified_matches else user_matches[:4]
+    table_matches = verified_matches[:5] if verified_matches else user_matches[:5]
+
+    User = get_user_model()
+    top_profiles = list(
+        User.objects.filter(is_active=True, is_superuser=False)
+        .select_related("rating_profile")
+        .order_by("-rating_profile__doubles_rating", "first_name", "username")[:5]
+    )
+    leaders = []
+    for idx, u in enumerate(top_profiles, start=1):
+        prof = getattr(u, "rating_profile", None)
+        r_val = prof.doubles_rating if prof else "3.000"
+        leaders.append(
+            {
+                "rank": f"{idx:02d}",
+                "name": _display_name(u),
+                "is_you": u.id == user.id,
+                "rating": f"{float(r_val):.3f}",
+            }
+        )
 
     return {
         "greeting": _time_greeting(),
@@ -102,6 +139,15 @@ def get_player_dashboard_summary(user):
         "recent_matches": user_matches[:5],
         "table_matches": table_matches,
         "showing_verified_only": bool(verified_matches),
+        "profile": profile,
+        "doubles_rating": f"{float(profile.doubles_rating):.3f}",
+        "singles_rating": f"{float(profile.singles_rating):.3f}",
+        "doubles_reliability": profile.doubles_reliability,
+        "singles_reliability": profile.singles_reliability,
+        "primary_rating": f"{float(profile.primary_rating):.3f}",
+        "primary_format": profile.primary_format,
+        "primary_reliability": profile.primary_reliability,
+        "leaders": leaders,
     }
 
 
