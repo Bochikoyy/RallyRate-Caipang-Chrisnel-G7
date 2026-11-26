@@ -2,6 +2,11 @@
 {% block title %}Leaderboard · RallyRate{% endblock %}
 {% block nav_leaderboard %}active{% endblock %}
 {% block content %}
+<nav class="ws-mobile-segmented" aria-label="Rankings and rating views">
+  <a class="ws-seg-item active" href="{% url 'clubs:leaderboard' %}">Leaderboard</a>
+  <a class="ws-seg-item" href="{% url 'ratings:history' %}">Rating history</a>
+</nav>
+
 <section class="ws-page-head">
   <div>
     <h1>The local leaderboard</h1>
