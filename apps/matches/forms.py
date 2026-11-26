@@ -302,6 +302,8 @@ class MatchForm(forms.ModelForm):
                 for player in self.cleaned_data["_team_b_players"]
             ]
             MatchParticipant.objects.bulk_create(participants)
+            if hasattr(match, "_prefetched_objects_cache"):
+                match._prefetched_objects_cache.clear()
             return match
 
 

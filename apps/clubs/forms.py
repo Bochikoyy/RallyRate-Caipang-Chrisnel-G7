@@ -107,6 +107,12 @@ class ClubEventForm(forms.ModelForm):
             now_local = timezone.localtime().replace(minute=0, second=0, microsecond=0)
             self.fields["starts_at"].initial = now_local.strftime("%Y-%m-%dT%H:%M")
 
+    def clean_courts_count(self):
+        courts = self.cleaned_data.get("courts_count") or 0
+        if courts < 1:
+            raise forms.ValidationError("At least 1 active court is required.")
+        return courts
+
     def clean_max_players(self):
         val = self.cleaned_data.get("max_players") or 0
         fmt = self.cleaned_data.get("format")

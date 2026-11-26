@@ -169,3 +169,44 @@ class ClubEventAndGeneratorTests(TestCase):
         self.assertEqual(local_lb.status_code, 200)
         self.assertEqual(local_lb.context["scope"], "local")
         self.assertEqual(local_lb.context["rows"][0]["user_id"], self.host.id)
+
+    def test_fair_rotation_across_unscored_rounds_and_club_delete_cleanup(self):
+        club = Club.objects.create(
+            name="Rotation Club",
+            home_court="Court A",
+            is_public=True,
+            created_by=self.host,
+        )
+        ClubMembership.objects.create(club=club, user=self.host, role=ClubMembership.Role.HOST)
+        p6 = User.objects.create_user(email="p6@clubs.test", password=self.password, first_name="Faye")
+
+        event = ClubEvent.objects.create(
+            club=club,
+            title="6-Player Rotation",
+            location="Court A",
+            format=ClubEvent.Format.DOUBLES,
+            matchmaking_mode=ClubEvent.MatchmakingMode.ROUND_ROBIN,
+            courts_count=1,
+            max_players=8,
+            created_by=self.host,
+        )
+        for u in (self.host, self.cohost, self.p3, self.p4, self.p5, p6):
+            EventParticipant.objects.create(event=event, user=u, status=EventParticipant.Status.JOINED)
+
+        # Generate Round 1 (4 players); p5 and p6 sit out
+        self.client.force_login(self.host)
+        self.client.post(reverse("clubs:event_generate_matches", args=[club.slug, event.pk]))
+        r1 = event.matches.get(round_number=1)
+        r1_players = {p.player_id for p in r1.participants.all()}
+        self.assertEqual(len(r1_players), 4)
+
+        # Generate Round 2 BEFORE scoring Round 1 -> sit-outs MUST rotate in!
+        self.client.post(reverse("clubs:event_generate_matches", args=[club.slug, event.pk]))
+        r2 = event.matches.get(round_number=2)
+        r2_players = {p.player_id for p in r2.participants.all()}
+        sat_out_r1 = {self.host.id, self.cohost.id, self.p3.id, self.p4.id, self.p5.id, p6.id} - r1_players
+        self.assertTrue(sat_out_r1.issubset(r2_players))
+
+        # Deleting club removes unplayed SCHEDULED matches cleanly without orphans
+        self.client.post(reverse("clubs:delete", args=[club.slug]))
+        self.assertEqual(Match.objects.filter(status=Match.Status.SCHEDULED).count(), 0)

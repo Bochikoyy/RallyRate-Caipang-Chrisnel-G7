@@ -53,11 +53,19 @@ def sync_event_games_played(event):
 
 
 def generate_event_round(event, submitted_by):
+    assigned_counts = {}
+    for m in event.matches.filter(
+        status__in=[Match.Status.VERIFIED, Match.Status.SCHEDULED]
+    ).prefetch_related("participants"):
+        for p in m.participants.all():
+            assigned_counts[p.player_id] = assigned_counts.get(p.player_id, 0) + 1
+
     eligible = list(
         event.participants.select_related("user")
         .exclude(status=EventParticipant.Status.WAITLIST)
         .order_by("games_played", "joined_at")
     )
+    eligible.sort(key=lambda ep: (assigned_counts.get(ep.user_id, 0), ep.games_played, ep.joined_at))
 
     per_court = event.players_per_court
     if len(eligible) < per_court:
@@ -79,9 +87,7 @@ def generate_event_round(event, submitted_by):
         )
     else:
         random.shuffle(selected_users)
-        selected_users.sort(
-            key=lambda u: next(ep.games_played for ep in selected_entries if ep.user_id == u.id)
-        )
+        selected_users.sort(key=lambda u: assigned_counts.get(u.id, 0))
 
     last_round = event.matches.aggregate(mx=Max("round_number"))["mx"] or 0
     next_round = last_round + 1

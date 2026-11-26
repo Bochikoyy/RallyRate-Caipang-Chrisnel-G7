@@ -395,7 +395,9 @@ def club_delete(request, slug):
     club = get_object_or_404(Club, slug=slug)
     _require_club_host(club, request.user)
     name = club.name
-    club.delete()
+    with transaction.atomic():
+        Match.objects.filter(club=club, status=Match.Status.SCHEDULED).delete()
+        club.delete()
     messages.success(request, f"Deleted club '{name}'.")
     return redirect("clubs:hub")
 
@@ -683,6 +685,9 @@ def event_custom_match(request, slug, event_id):
             [MatchParticipant(match=match, player=u, team=MatchParticipant.Team.TEAM_A) for u in team_a]
             + [MatchParticipant(match=match, player=u, team=MatchParticipant.Team.TEAM_B) for u in team_b]
         )
+        if event.status == ClubEvent.Status.OPEN:
+            event.status = ClubEvent.Status.IN_PROGRESS
+            event.save(update_fields=["status", "updated_at"])
     messages.success(request, "Custom matchup added to the board.")
     return redirect("clubs:event_detail", slug=club.slug, event_id=event.pk)
 
