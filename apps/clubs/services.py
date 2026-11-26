@@ -157,3 +157,4 @@ def generate_event_round(event, submitted_by):
             event.save(update_fields=["status", "updated_at"])
 
     return created_matches
+

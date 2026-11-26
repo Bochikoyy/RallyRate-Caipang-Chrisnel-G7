@@ -2024,3 +2024,126 @@
     padding: 26px 22px;
   }
 }
+
+
+/* ==========================================================================
+   Rebase Flow: Clubs, Open-Play Court Board & Inline Host Scoring
+   ========================================================================== */
+.status-scheduled {
+  background: #eef2ff;
+  color: #3730a3;
+}
+
+.ws-club-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.ws-club-card {
+  padding: 22px 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.ws-club-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ws-club-card-foot {
+  padding-top: 14px;
+  border-top: 1px solid #f2ecef;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ws-court-matchup {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 16px;
+  align-items: center;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: #faf7f9;
+  border: 1px solid var(--ws-border);
+}
+
+.ws-court-side {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 14px;
+}
+
+.ws-court-winner strong {
+  color: var(--ws-plum);
+}
+
+.ws-court-vs {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: var(--ws-muted);
+  text-align: center;
+  padding: 0 8px;
+}
+
+.ws-delta-tag {
+  font-weight: 600;
+  color: var(--ws-green-ink);
+}
+
+.ws-host-score-bar {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #f2ecef;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.ws-host-score-inputs {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.ws-mini-game {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--ws-muted);
+}
+
+.ws-compact-score {
+  width: 58px !important;
+  height: 36px !important;
+  padding: 6px 8px !important;
+  text-align: center;
+  font-weight: 600;
+}
+
+@media (max-width: 760px) {
+  .ws-court-matchup {
+    grid-template-columns: 1fr;
+    text-align: left;
+  }
+  .ws-court-side.ws-align-right {
+    text-align: left !important;
+  }
+  .ws-court-vs {
+    text-align: left;
+    padding: 0;
+  }
+}
