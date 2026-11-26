@@ -755,20 +755,20 @@ def event_status(request, slug, event_id):
     return redirect("clubs:event_detail", slug=club.slug, event_id=event.pk)
 
 
-@login_required
-def global_leaderboard(request):
-    players = list(
-        User.objects.filter(is_active=True, is_superuser=False).order_by(
-            "first_name", "last_name", "username"
-        )
-    )
-    verified_participations = (
+def _build_leaderboard_rows(users, current_user, club=None, match_format="doubles", established_only=False, club_roles=None):
+    user_ids = [u.id for u in users]
+    part_qs = (
         MatchParticipant.objects.select_related("match", "player")
-        .filter(match__status=Match.Status.VERIFIED)
+        .filter(match__status=Match.Status.VERIFIED, player_id__in=user_ids)
         .order_by("-match__played_at", "-match__created_at")
     )
-    stats_by_user = {u.id: {"wins": 0, "losses": 0, "last_match": None} for u in players}
-    for part in verified_participations:
+    if club is not None:
+        part_qs = part_qs.filter(match__club=club)
+    if match_format in (Match.MatchType.SINGLES, Match.MatchType.DOUBLES):
+        part_qs = part_qs.filter(match__match_type=match_format)
+
+    stats_by_user = {u.id: {"wins": 0, "losses": 0, "last_match": None} for u in users}
+    for part in part_qs:
         bucket = stats_by_user.get(part.player_id)
         if bucket is None:
             continue
@@ -781,21 +781,99 @@ def global_leaderboard(request):
             bucket["losses"] += 1
 
     rows = []
-    for idx, u in enumerate(players, start=1):
+    for u in users:
         s = stats_by_user[u.id]
+        profile = getattr(u, "rating_profile", None)
+        if profile is not None:
+            rating_val = (
+                profile.singles_rating if match_format == "singles" else profile.doubles_rating
+            )
+            reliability_val = (
+                profile.singles_reliability
+                if match_format == "singles"
+                else profile.doubles_reliability
+            )
+        else:
+            rating_val = "3.000"
+            reliability_val = 0
+
+        if established_only and reliability_val < 30:
+            continue
+
+        total_games = s["wins"] + s["losses"]
+        win_pct = round((s["wins"] / total_games) * 100) if total_games > 0 else None
+
         rows.append(
             {
-                "rank": f"{idx:02d}",
                 "user_id": u.id,
                 "name": _display_name(u),
-                "is_you": u.id == request.user.id,
+                "home_court": u.home_court,
+                "club_role": (club_roles or {}).get(u.id),
+                "is_you": u.id == current_user.id,
+                "rating": f"{float(rating_val):.3f}",
+                "rating_num": float(rating_val),
+                "reliability": reliability_val,
+                "is_provisional": reliability_val < 30,
                 "wins": s["wins"],
                 "losses": s["losses"],
-                "verified_total": s["wins"] + s["losses"],
+                "verified_total": total_games,
+                "win_pct": win_pct,
                 "last_match": s["last_match"],
             }
         )
-    return render(request, "clubs/leaderboard.html", {"rows": rows, "player_count": len(rows)})
+
+    rows.sort(
+        key=lambda r: (
+            -r["rating_num"],
+            -r["wins"],
+            r["losses"],
+            r["name"].lower(),
+        )
+    )
+    for idx, row in enumerate(rows, start=1):
+        row["rank"] = f"{idx:02d}"
+    return rows
+
+
+@login_required
+def global_leaderboard(request):
+    match_format = request.GET.get("format", "doubles").strip().lower()
+    if match_format not in ("doubles", "singles"):
+        match_format = "doubles"
+    established_only = request.GET.get("filter") == "established"
+
+    players = list(
+        User.objects.filter(is_active=True, is_superuser=False)
+        .select_related("rating_profile")
+        .order_by("first_name", "last_name", "username")
+    )
+
+    rows = _build_leaderboard_rows(
+        players,
+        request.user,
+        club=None,
+        match_format=match_format,
+        established_only=established_only,
+    )
+    my_clubs = list(
+        Club.objects.filter(
+            memberships__user=request.user,
+            memberships__status=ClubMembership.Status.ACTIVE,
+        ).order_by("name")
+    )
+    return render(
+        request,
+        "clubs/leaderboard.html",
+        {
+            "rows": rows,
+            "player_count": len(rows),
+            "scope": "global",
+            "club": None,
+            "my_clubs": my_clubs,
+            "match_format": match_format,
+            "established_only": established_only,
+        },
+    )
 
 
 @login_required
@@ -803,30 +881,55 @@ def club_leaderboard(request, slug):
     club = get_object_or_404(Club, slug=slug)
     if not club.is_public and not club.is_member(request.user):
         raise PermissionDenied("This club's leaderboard is restricted to club members.")
-    players = list(
-        User.objects.filter(
-            is_active=True,
-            is_superuser=False,
-            club_memberships__club=club,
-            club_memberships__status=ClubMembership.Status.ACTIVE,
+
+    match_format = request.GET.get("format", "doubles").strip().lower()
+    if match_format not in ("doubles", "singles"):
+        match_format = "doubles"
+    established_only = request.GET.get("filter") == "established"
+
+    memberships = list(
+        ClubMembership.objects.select_related("user", "user__rating_profile")
+        .filter(
+            club=club,
+            status=ClubMembership.Status.ACTIVE,
+            user__is_active=True,
+            user__is_superuser=False,
         )
-        .distinct()
-        .order_by("first_name", "last_name", "username")
     )
-    rows = [
+    players = [m.user for m in memberships]
+    club_roles = {
+        m.user_id: m.get_role_display()
+        for m in memberships
+        if m.role in (ClubMembership.Role.HOST, ClubMembership.Role.CO_HOST)
+    }
+
+    rows = _build_leaderboard_rows(
+        players,
+        request.user,
+        club=club,
+        match_format=match_format,
+        established_only=established_only,
+        club_roles=club_roles,
+    )
+    my_clubs = list(
+        Club.objects.filter(
+            memberships__user=request.user,
+            memberships__status=ClubMembership.Status.ACTIVE,
+        ).order_by("name")
+    )
+    return render(
+        request,
+        "clubs/leaderboard.html",
         {
-            "rank": f"{idx:02d}",
-            "user_id": u.id,
-            "name": _display_name(u),
-            "is_you": u.id == request.user.id,
-            "wins": 0,
-            "losses": 0,
-            "verified_total": 0,
-            "last_match": None,
-        }
-        for idx, u in enumerate(players, start=1)
-    ]
-    return render(request, "clubs/leaderboard.html", {"rows": rows, "player_count": len(rows), "club": club})
+            "rows": rows,
+            "player_count": len(rows),
+            "scope": "club",
+            "club": club,
+            "my_clubs": my_clubs,
+            "match_format": match_format,
+            "established_only": established_only,
+        },
+    )
 
 
 leaderboard = global_leaderboard

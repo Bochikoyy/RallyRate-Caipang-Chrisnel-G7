@@ -1,21 +1,58 @@
 {% extends 'workspace_base.html' %}
-{% block title %}Leaderboard · RallyRate{% endblock %}
+{% block title %}{% if scope == 'club' %}{{ club.name }} Standings{% else %}Global Leaderboard{% endif %} · RallyRate{% endblock %}
 {% block nav_leaderboard %}active{% endblock %}
 {% block content %}
 <section class="ws-page-head">
   <div>
-    <h1>The local leaderboard</h1>
-    <p class="ws-page-sub">A familiar court. A little friendly competition.</p>
+    {% if scope == 'club' %}
+      <p class="ws-eyebrow" style="margin-bottom: 6px;">CLUB STANDINGS · {{ club.home_court }}</p>
+      <h1>{{ club.name }} Leaderboard</h1>
+      <p class="ws-page-sub">Local club standings ranked by 1.000–8.000 {{ match_format }} performance rating.</p>
+    {% else %}
+      <p class="ws-eyebrow" style="margin-bottom: 6px;">ALL RALLYRATE PLAYERS</p>
+      <h1>Global Leaderboard</h1>
+      <p class="ws-page-sub">Community-wide 1.000–8.000 {{ match_format }} rankings across clubs and peer play.</p>
+    {% endif %}
   </div>
-  <span class="ws-inprogress-pill">Elo rankings · In progress</span>
+  {% if scope == 'club' %}
+    <a class="ws-btn ws-btn-outline" href="{% url 'clubs:detail' club.slug %}">Open club</a>
+  {% else %}
+    <a class="ws-btn ws-btn-outline" href="{% url 'clubs:hub' %}">Browse clubs</a>
+  {% endif %}
 </section>
+
+<!-- Scope Switcher: Global vs Your Clubs -->
+<nav class="ws-filter-bar" aria-label="Leaderboard scope">
+  <a class="ws-filter-pill {% if scope == 'global' %}active{% endif %}" href="{% url 'clubs:leaderboard' %}?format={{ match_format }}{% if established_only %}&amp;filter=established{% endif %}">
+    Global
+  </a>
+  {% for c in my_clubs %}
+    <a class="ws-filter-pill {% if club and club.pk == c.pk %}active{% endif %}" href="{% url 'clubs:club_leaderboard' c.slug %}?format={{ match_format }}{% if established_only %}&amp;filter=established{% endif %}">
+      {{ c.name }}
+    </a>
+  {% endfor %}
+  {% if club and club not in my_clubs %}
+    <span class="ws-filter-pill active">{{ club.name }}</span>
+  {% endif %}
+</nav>
 
 <section class="ws-leaderboard-toolbar">
   <div class="ws-toolbar-left">
-    <div class="ws-club-box">{{ request.user.home_court|default:"RallyRate Pickleball Club" }}</div>
-    <span class="ws-btn ws-btn-outline ws-static-pill">All players</span>
+    {% if scope == 'club' %}
+      <a class="ws-filter-pill {% if match_format == 'doubles' %}active{% endif %}" href="{% url 'clubs:club_leaderboard' club.slug %}?format=doubles{% if established_only %}&amp;filter=established{% endif %}">Doubles</a>
+      <a class="ws-filter-pill {% if match_format == 'singles' %}active{% endif %}" href="{% url 'clubs:club_leaderboard' club.slug %}?format=singles{% if established_only %}&amp;filter=established{% endif %}">Singles</a>
+      <a class="ws-filter-pill {% if not established_only %}active{% endif %}" href="{% url 'clubs:club_leaderboard' club.slug %}?format={{ match_format }}">All members</a>
+      <a class="ws-filter-pill {% if established_only %}active{% endif %}" href="{% url 'clubs:club_leaderboard' club.slug %}?format={{ match_format }}&amp;filter=established">Established (≥30% rel.)</a>
+    {% else %}
+      <a class="ws-filter-pill {% if match_format == 'doubles' %}active{% endif %}" href="{% url 'clubs:leaderboard' %}?format=doubles{% if established_only %}&amp;filter=established{% endif %}">Doubles</a>
+      <a class="ws-filter-pill {% if match_format == 'singles' %}active{% endif %}" href="{% url 'clubs:leaderboard' %}?format=singles{% if established_only %}&amp;filter=established{% endif %}">Singles</a>
+      <a class="ws-filter-pill {% if not established_only %}active{% endif %}" href="{% url 'clubs:leaderboard' %}?format={{ match_format }}">All players</a>
+      <a class="ws-filter-pill {% if established_only %}active{% endif %}" href="{% url 'clubs:leaderboard' %}?format={{ match_format }}&amp;filter=established">Established (≥30% rel.)</a>
+    {% endif %}
   </div>
-  <span class="ws-td-muted">{{ player_count }} club member{{ player_count|pluralize }} · Sorted by confirmed wins while Elo is in progress</span>
+  <span class="ws-td-muted">
+    {{ player_count }} player{{ player_count|pluralize }} · Sorted by {{ match_format }} rating
+  </span>
 </section>
 
 {% if rows %}
@@ -25,8 +62,9 @@
         <tr>
           <th>RANK</th>
           <th>PLAYER</th>
-          <th>RATING</th>
-          <th>RECORD</th>
+          <th>{{ match_format|upper }} RATING</th>
+          <th>RELIABILITY</th>
+          <th>{% if scope == 'club' %}CLUB RECORD{% else %}VERIFIED RECORD{% endif %}</th>
           <th class="ws-align-right">LAST MATCH</th>
         </tr>
       </thead>
@@ -38,9 +76,26 @@
               <span class="{% if row.is_you %}ws-you-name{% else %}ws-row-primary{% endif %}">
                 {{ row.name }}{% if row.is_you %} · you{% endif %}
               </span>
+              {% if row.club_role %}
+                <span class="ws-inprogress-pill" style="margin-left: 6px;">{{ row.club_role }}</span>
+              {% endif %}
+              {% if scope == 'global' and row.home_court %}
+                <div class="ws-row-sub">{{ row.home_court }}</div>
+              {% endif %}
             </td>
-            <td><span class="ws-inprogress-pill">1,000 · In progress</span></td>
-            <td class="ws-td-score">{{ row.wins }}–{{ row.losses }}</td>
+            <td>
+              <strong style="font-size: 15px; color: var(--ws-plum);">{{ row.rating }}</strong>
+            </td>
+            <td>
+              {% if row.is_provisional %}
+                <span class="ws-inprogress-pill">Provisional · {{ row.reliability }}%</span>
+              {% else %}
+                <span class="status-badge status-verified">{{ row.reliability }}%</span>
+              {% endif %}
+            </td>
+            <td class="ws-td-score">
+              {{ row.wins }}–{{ row.losses }}{% if row.win_pct is not None %} <span class="ws-muted-small">({{ row.win_pct }}%)</span>{% endif %}
+            </td>
             <td class="ws-align-right ws-td-muted">
               {% if row.last_match %}{{ row.last_match|date:"M j" }}{% else %}—{% endif %}
             </td>
@@ -49,9 +104,20 @@
       </tbody>
     </table>
   </div>
+{% else %}
+  <section class="ws-empty-inline">
+    <p>No players match the current filter yet. Play verified matches to build reliability above 30%!</p>
+    {% if established_only %}
+      {% if scope == 'club' %}
+        <a class="ws-text-link" href="{% url 'clubs:club_leaderboard' club.slug %}?format={{ match_format }}">Show all members →</a>
+      {% else %}
+        <a class="ws-text-link" href="{% url 'clubs:leaderboard' %}?format={{ match_format }}">Show all players →</a>
+      {% endif %}
+    {% endif %}
+  </section>
 {% endif %}
 
 <p class="ws-leaderboard-foot">
-  Official Elo rankings require 5 confirmed matches (module in progress). Pending and disputed matches are excluded.
+  Ratings span 1.000 to 8.000 (starting at 3.000). Players under 30% reliability carry a Provisional tag. Pending, scheduled, and disputed matches never alter standings.
 </p>
 {% endblock %}
