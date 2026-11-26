@@ -504,9 +504,10 @@
     background: var(--ws-blush);
   }
   .ws-brand-mascot {
-    width: 54px;
-    height: 54px;
-    margin: -8px -11px -8px -12px;
+    display: none;
+  }
+  .ws-brand {
+    gap: 0;
   }
   .ws-brand-text {
     font-size: 19px;
