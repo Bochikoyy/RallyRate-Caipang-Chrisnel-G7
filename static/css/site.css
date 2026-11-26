@@ -607,20 +607,47 @@
     min-height: 44px;
     font-size: 14px;
   }
-  .ws-logout-btn {
-    display: inline-flex;
+  .ws-sidebar-foot {
+    padding: 0 2px;
+  }
+  .ws-club-tagline {
+    margin-bottom: 14px;
+  }
+  .ws-foot-links {
+    gap: 8px;
+  }
+  .ws-help-link {
+    display: flex;
     align-items: center;
-    min-height: 38px;
-    padding: 6px 12px;
+    justify-content: center;
+    width: 100%;
+    min-height: 42px;
+    padding: 0 14px;
     border: 1px solid var(--ws-border);
-    border-radius: 8px;
-    background: #faf7f9;
+    border-radius: 9px;
+    background: #ffffff;
+    font-size: 13px;
+  }
+  .ws-logout-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 42px;
+    padding: 0 14px;
+    border: 1px solid #e5d8df;
+    border-radius: 9px;
+    background: var(--ws-blush);
     color: var(--ws-plum);
+    font-size: 13px;
     font-weight: 600;
   }
+  .ws-disclaimer {
+    display: none;
+  }
   .ws-main {
-    padding: 24px 18px 24px;
-    gap: 28px;
+    padding: 22px 16px 28px;
+    gap: 24px;
   }
   .ws-page-head {
     flex-direction: column;
