@@ -2205,13 +2205,14 @@
     white-space: nowrap;
   }
 
-  /* Sign-In mobile stack: form first, blush mascot card below */
+  /* Sign-In mobile stack */
   .signin-body .auth-shell {
     width: calc(100% - 32px);
     max-width: 480px;
     height: auto;
     min-height: 0;
-    margin: 8px auto 32px;
+    margin: 8px auto 0;
+    padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px));
     display: flex;
     flex-direction: column-reverse;
     gap: 26px;
@@ -2252,7 +2253,7 @@
     width: 100%;
     height: auto;
     min-height: 0;
-    padding: 26px var(--panel-inset) 128px;
+    padding: 26px var(--panel-inset) 20px;
     border-radius: 14px;
   }
   .signin-body .signin-panel-copy .signin-kicker {
@@ -2269,17 +2270,27 @@
     line-height: 1.55;
     max-width: 100%;
   }
+  .signin-body .signin-mascot-row {
+    position: static;
+    height: auto;
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    margin-top: 18px;
+  }
   .signin-body .signin-mascot {
-    left: var(--panel-inset);
-    bottom: 34px;
-    height: 112px;
-    width: auto;
-    transform: translate(-22%, 18%);
+    position: static;
+    transform: none;
+    width: 116px;
+    height: 116px;
+    margin: -22px -20px -22px -30px;
+    flex: none;
   }
   .signin-body .signin-mascot-row p {
-    left: calc(var(--panel-inset) + 64px);
-    bottom: 14px;
-    font-size: 12.5px;
+    position: static;
+    margin: 0 0 2px 0 !important;
+    font-size: 13px;
+    line-height: 1.35;
   }
 
   /* Registration mobile stack */
