@@ -129,7 +129,7 @@
       </div>
 
       <div class="ws-table-card">
-        <table class="ws-table">
+        <table class="ws-table ws-mobile-cards">
           <thead>
             <tr>
               <th>DATE</th>
@@ -141,13 +141,13 @@
           <tbody>
             {% for match in table_matches %}
               <tr>
-                <td class="ws-td-muted">{{ match.played_at|date:"M j" }}</td>
-                <td>
+                <td data-label="Date" class="ws-td-muted">{{ match.played_at|date:"M j" }}</td>
+                <td data-label="Matchup">
                   <a class="ws-row-primary" href="{% url 'matches:detail' match.pk %}">{{ match.partner_line }}</a>
                   <div class="ws-row-sub">{{ match.opponents_line }}</div>
                 </td>
-                <td class="ws-td-score">{{ match.score_display }}</td>
-                <td class="ws-align-right">
+                <td data-label="Score" class="ws-td-score">{{ match.score_display }}</td>
+                <td data-label="Status" class="ws-align-right">
                   {% if match.status == 'verified' %}
                     <span class="ws-inprogress-pill">In progress</span>
                   {% else %}

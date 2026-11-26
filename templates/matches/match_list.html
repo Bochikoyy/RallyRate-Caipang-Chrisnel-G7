@@ -33,7 +33,7 @@
 
 {% if matches %}
   <div class="ws-table-card">
-    <table class="ws-table">
+    <table class="ws-table ws-mobile-cards">
       <thead>
         <tr>
           <th>DATE</th>
@@ -48,15 +48,15 @@
       <tbody>
         {% for match in matches %}
           <tr>
-            <td class="ws-td-muted">{{ match.played_at|date:"M j, Y" }}</td>
-            <td class="ws-td-muted">{{ match.get_match_type_display }}</td>
-            <td>
+            <td data-label="Date" class="ws-td-muted">{{ match.played_at|date:"M j, Y" }}</td>
+            <td data-label="Format" class="ws-td-muted">{{ match.get_match_type_display }}</td>
+            <td data-label="Players">
               <a class="ws-row-primary" href="{% url 'matches:detail' match.pk %}">{{ match.partner_line }}</a>
               <div class="ws-row-sub">{{ match.opponents_line }}</div>
             </td>
-            <td class="ws-td-muted">{{ match.location }}</td>
-            <td class="ws-td-score">{{ match.score_display }}</td>
-            <td>
+            <td data-label="Court" class="ws-td-muted">{{ match.location }}</td>
+            <td data-label="Score" class="ws-td-score">{{ match.score_display }}</td>
+            <td data-label="Status">
               <span class="status-badge status-{{ match.status }}">
                 {% if match.status == 'verified' %}Confirmed{% else %}{{ match.get_status_display }}{% endif %}
               </span>
@@ -64,7 +64,7 @@
                 <span class="action-pill">{% if is_organizer %}Review{% else %}Confirm{% endif %}</span>
               {% endif %}
             </td>
-            <td class="ws-align-right">
+            <td data-label="Action" class="ws-align-right">
               <a class="ws-text-link" href="{% url 'matches:detail' match.pk %}">
                 {% if match.needs_action %}Review →{% else %}View →{% endif %}
               </a>

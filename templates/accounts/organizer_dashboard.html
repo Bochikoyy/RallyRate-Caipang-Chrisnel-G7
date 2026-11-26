@@ -40,7 +40,7 @@
 
 {% if review_queue %}
   <div class="ws-table-card">
-    <table class="ws-table">
+    <table class="ws-table ws-mobile-cards">
       <thead>
         <tr>
           <th>DATE</th>
@@ -54,17 +54,17 @@
       <tbody>
         {% for match in review_queue %}
           <tr>
-            <td class="ws-td-muted">{{ match.played_at|date:"M j, Y" }}</td>
-            <td>
+            <td data-label="Date" class="ws-td-muted">{{ match.played_at|date:"M j, Y" }}</td>
+            <td data-label="Court">
               <a class="ws-row-primary" href="{% url 'matches:detail' match.pk %}">{{ match.location }}</a>
               {% if match.dispute_reason %}
                 <div class="ws-row-sub">Issue: {{ match.dispute_reason|truncatechars:70 }}</div>
               {% endif %}
             </td>
-            <td class="ws-td-muted">{{ match.submitted_by.get_full_name|default:match.submitted_by.email|default:match.submitted_by.username }}</td>
-            <td class="ws-td-score">{{ match.score_display }}</td>
-            <td><span class="status-badge status-{{ match.status }}">{{ match.get_status_display }}</span></td>
-            <td class="ws-align-right"><a class="ws-text-link" href="{% url 'matches:detail' match.pk %}">Inspect &amp; resolve →</a></td>
+            <td data-label="Submitted by" class="ws-td-muted">{{ match.submitted_by.get_full_name|default:match.submitted_by.email|default:match.submitted_by.username }}</td>
+            <td data-label="Score" class="ws-td-score">{{ match.score_display }}</td>
+            <td data-label="Status"><span class="status-badge status-{{ match.status }}">{{ match.get_status_display }}</span></td>
+            <td data-label="Action" class="ws-align-right"><a class="ws-text-link" href="{% url 'matches:detail' match.pk %}">Inspect &amp; resolve →</a></td>
           </tr>
         {% endfor %}
       </tbody>

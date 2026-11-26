@@ -2452,3 +2452,234 @@
     width: auto;
   }
 }
+
+
+/* ==========================================================================
+   Phase 3: Workspace Toasts, Mobile Forms, Scoreboards & Card-Tables
+   ========================================================================== */
+.rr-toast-stack {
+  position: fixed;
+  top: 20px;
+  right: 24px;
+  z-index: 120;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(390px, calc(100vw - 32px));
+}
+
+.rr-toast-stack .rr-toast {
+  position: relative;
+  top: auto;
+  right: auto;
+  width: 100%;
+}
+
+.rr-toast-success {
+  border-color: #bfe0cb;
+  border-left-color: var(--ws-green-ink);
+}
+
+.rr-toast-success .rr-toast-icon {
+  background: var(--ws-green-bg);
+  color: var(--ws-green-ink);
+}
+
+.rr-toast-warn {
+  border-color: #ebd6a7;
+  border-left-color: var(--ws-amber-ink);
+}
+
+.rr-toast-warn .rr-toast-icon {
+  background: var(--ws-amber-bg);
+  color: var(--ws-amber-ink);
+}
+
+@media (max-width: 900px) {
+  .rr-toast-stack {
+    top: 12px;
+    left: 14px;
+    right: 14px;
+    width: auto;
+  }
+  .ws-body .field-input {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 640px) {
+  .ws-main {
+    padding: 18px 14px calc(36px + env(safe-area-inset-bottom, 0px));
+  }
+  .ws-page-head h1 {
+    font-size: 23px;
+  }
+  .ws-page-head > .ws-btn,
+  .ws-page-head > .ws-inline-actions {
+    width: 100%;
+  }
+  .ws-page-head > .ws-inline-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .ws-page-head > .ws-inline-actions .ws-btn {
+    width: 100%;
+    padding: 0 12px;
+  }
+
+  /* Stat & Hero Cards */
+  .ws-stat-grid {
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  .ws-stat-card {
+    padding: 18px 20px;
+  }
+  .ws-stat-value {
+    font-size: 30px;
+    margin-bottom: 8px;
+  }
+  .ws-hero-card {
+    padding: 24px 20px;
+    gap: 24px;
+  }
+  .ws-hero-card h2 {
+    font-size: 20px;
+  }
+  .ws-hero-card .ws-btn {
+    width: 100%;
+  }
+  .ws-steps-card,
+  .ws-public-card {
+    padding: 22px 20px;
+  }
+  .ws-amber-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 14px 16px;
+  }
+
+  /* Record Match & Profile Forms */
+  .ws-setup-card,
+  .ws-score-card,
+  .ws-detail-card,
+  .ws-verification-card {
+    padding: 20px 18px;
+  }
+  .ws-format-tabs {
+    gap: 0;
+  }
+  .ws-format-tab {
+    flex: 1;
+    text-align: center;
+    padding: 4px 0 12px;
+  }
+  .ws-score-row .field-input {
+    min-height: 44px;
+    text-align: center;
+    padding: 8px 10px;
+  }
+  .ws-profile-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .ws-profile-actions .ws-btn {
+    width: 100%;
+  }
+
+  /* Match Details Scoreboard */
+  .ws-series-score {
+    font-size: 36px;
+  }
+  .ws-breakdown-wrap {
+    overflow-x: auto;
+  }
+  .ws-breakdown-table td {
+    font-size: 13.5px;
+    padding: 12px 4px 12px 0;
+  }
+  .ws-game-cell {
+    width: 52px;
+    font-size: 17px !important;
+    padding-left: 8px !important;
+  }
+  .ws-detail-foot {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  /* Leaderboard & Rating History Toolbars */
+  .ws-toolbar-left {
+    width: 100%;
+  }
+  .ws-club-box {
+    min-width: 0;
+    flex: 1;
+  }
+  .ws-big-rating {
+    font-size: 32px;
+  }
+
+  /* Mobile Stacked Card-Tables */
+  .ws-table-card {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    overflow: visible;
+  }
+  .ws-mobile-cards,
+  .ws-mobile-cards tbody {
+    display: block;
+    width: 100%;
+  }
+  .ws-mobile-cards thead {
+    display: none;
+  }
+  .ws-mobile-cards tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .ws-mobile-cards tbody tr {
+    display: block;
+    background: #ffffff;
+    border: 1px solid var(--ws-border);
+    border-radius: 12px;
+    padding: 14px 16px;
+  }
+  .ws-mobile-cards tbody tr.ws-you-row {
+    background: var(--ws-blush);
+    border-color: var(--ws-blush-strong);
+  }
+  .ws-mobile-cards td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 7px 0;
+    border-top: 1px solid #f4eef1;
+    text-align: right !important;
+    white-space: normal;
+  }
+  .ws-mobile-cards td:first-child {
+    border-top: 0;
+    padding-top: 0;
+  }
+  .ws-mobile-cards td:last-child {
+    padding-bottom: 0;
+  }
+  .ws-mobile-cards td::before {
+    content: attr(data-label);
+    flex: none;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: var(--ws-muted);
+    text-align: left;
+  }
+}

@@ -36,7 +36,7 @@
 
 {% if verified_matches %}
   <div class="ws-table-card">
-    <table class="ws-table">
+    <table class="ws-table ws-mobile-cards">
       <thead>
         <tr>
           <th>DATE</th>
@@ -50,14 +50,14 @@
       <tbody>
         {% for match in verified_matches %}
           <tr>
-            <td class="ws-td-muted">{{ match.played_at|date:"M j" }}</td>
-            <td><strong>{{ match.player_result }}</strong></td>
-            <td>
+            <td data-label="Date" class="ws-td-muted">{{ match.played_at|date:"M j" }}</td>
+            <td data-label="Result"><strong>{{ match.player_result }}</strong></td>
+            <td data-label="Opponents">
               <a class="ws-row-primary" href="{% url 'matches:detail' match.pk %}">{{ match.opponents_line }}</a>
             </td>
-            <td class="ws-td-muted">1,000</td>
-            <td><span class="ws-inprogress-pill">In progress</span></td>
-            <td class="ws-align-right ws-td-muted">1,000</td>
+            <td data-label="Before" class="ws-td-muted">1,000</td>
+            <td data-label="Change"><span class="ws-inprogress-pill">In progress</span></td>
+            <td data-label="After" class="ws-align-right ws-td-muted">1,000</td>
           </tr>
         {% endfor %}
       </tbody>
