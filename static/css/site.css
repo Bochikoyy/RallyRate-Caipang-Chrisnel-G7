@@ -2178,3 +2178,155 @@
     padding: 26px 22px;
   }
 }
+
+
+/* ==========================================================================
+   Phase 2: Mobile Sign-In & Registration Responsiveness
+   ========================================================================== */
+@media (max-width: 900px) {
+  .auth-body .footer {
+    display: none;
+  }
+  .auth-body .auth-brand-mascot {
+    display: none !important;
+  }
+  .auth-body .brand {
+    gap: 0;
+    font-size: 20px;
+  }
+  .signin-body .auth-topbar,
+  .signup-body .auth-topbar {
+    height: 62px;
+    width: 100%;
+    padding: 0 20px;
+  }
+  .signup-header-action {
+    font-size: 12.5px;
+    white-space: nowrap;
+  }
+
+  /* Sign-In mobile stack: form first, blush mascot card below */
+  .signin-body .auth-shell {
+    width: calc(100% - 32px);
+    max-width: 480px;
+    height: auto;
+    min-height: 0;
+    margin: 8px auto 32px;
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 26px;
+  }
+  .signin-body .signin-form-wrap {
+    padding: 4px 2px 0;
+  }
+  .signin-body .signin-form-inner {
+    max-width: 100%;
+  }
+  .signin-body .signin-form-inner h2 {
+    font-size: 27px;
+  }
+  .signin-body .signin-status {
+    height: auto;
+    min-height: 24px;
+    margin-bottom: 16px;
+  }
+  .signin-body .signin-field {
+    margin-bottom: 16px;
+  }
+  .signin-body .signin-field + .signin-field {
+    margin-bottom: 20px;
+  }
+  .signin-body .signin-field .field-input,
+  .signup-body .field-input {
+    font-size: 16px;
+  }
+  .signin-body .signin-create {
+    margin-top: 20px;
+  }
+  .signin-body .signin-tagline {
+    margin-top: 24px;
+    padding-top: 14px;
+  }
+  .signin-body .signin-panel {
+    --panel-inset: 22px;
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    padding: 26px var(--panel-inset) 128px;
+    border-radius: 14px;
+  }
+  .signin-body .signin-panel-copy .signin-kicker {
+    margin-bottom: 10px;
+    font-size: 10.5px;
+  }
+  .signin-body .signin-panel h1 {
+    font-size: 28px;
+    line-height: 1.18;
+    margin-bottom: 12px;
+  }
+  .signin-body .signin-description {
+    font-size: 14px;
+    line-height: 1.55;
+    max-width: 100%;
+  }
+  .signin-body .signin-mascot {
+    left: var(--panel-inset);
+    bottom: 34px;
+    height: 112px;
+    width: auto;
+    transform: translate(-22%, 18%);
+  }
+  .signin-body .signin-mascot-row p {
+    left: calc(var(--panel-inset) + 64px);
+    bottom: 14px;
+    font-size: 12.5px;
+  }
+
+  /* Registration mobile stack */
+  .signup-body .signup-shell {
+    width: calc(100% - 28px);
+    max-width: 540px;
+    margin: 8px auto 34px;
+  }
+  .signup-grid {
+    gap: 20px;
+  }
+  .signup-card {
+    padding: 24px 20px;
+    border-radius: 12px;
+  }
+  .signup-card h1 {
+    font-size: 25px;
+  }
+  .signup-lead {
+    margin-bottom: 20px;
+    font-size: 13.5px;
+  }
+  .signup-side-card {
+    padding: 24px 20px;
+    border-radius: 12px;
+    gap: 22px;
+  }
+  .signup-start-rating {
+    font-size: 38px;
+  }
+}
+
+@media (max-width: 420px) {
+  .signin-body .auth-topbar,
+  .signup-body .auth-topbar {
+    padding: 0 16px;
+  }
+  .signup-header-action {
+    font-size: 12px;
+  }
+  .signup-header-action a {
+    margin-left: 4px;
+  }
+  .signin-body .signin-panel h1 {
+    font-size: 25px;
+  }
+  .signin-body .signin-mascot-row p {
+    font-size: 11.5px;
+  }
+}
