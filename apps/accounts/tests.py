@@ -256,3 +256,21 @@ class AccountAndDashboardTests(TestCase):
         )
         self.assertEqual(bad_dup.status_code, 200)
         self.assertIn("email", bad_dup.context["form"].errors)
+
+
+    def test_mobile_floating_dock_avatar_and_toast_markup(self):
+        # Sign-in validation failure renders floating toast popup
+        bad_login = self.client.post(reverse("accounts:login"), {"username": "", "password": ""})
+        self.assertEqual(bad_login.status_code, 200)
+        self.assertContains(bad_login, 'id="signin-toast"')
+
+        # Workspace pages render floating bottom dock, initials avatar, and active states
+        self.client.force_login(self.player)
+        overview_resp = self.client.get(reverse("accounts:player_dashboard"))
+        self.assertContains(overview_resp, 'class="ws-float-dock"')
+        self.assertContains(overview_resp, 'class="ws-user-avatar"')
+        self.assertContains(overview_resp, "MR")
+
+        ranks_resp = self.client.get(reverse("clubs:leaderboard"))
+        self.assertContains(ranks_resp, 'class="ws-mobile-segmented"')
+        self.assertContains(ranks_resp, "Ranks")

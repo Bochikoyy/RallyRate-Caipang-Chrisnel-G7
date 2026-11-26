@@ -2,6 +2,11 @@
 {% block title %}Leaderboard · RallyRate{% endblock %}
 {% block nav_leaderboard %}active{% endblock %}
 {% block content %}
+<nav class="ws-mobile-segmented" aria-label="Rankings and rating views">
+  <a class="ws-seg-item active" href="{% url 'clubs:leaderboard' %}">Leaderboard</a>
+  <a class="ws-seg-item" href="{% url 'ratings:history' %}">Rating history</a>
+</nav>
+
 <section class="ws-page-head">
   <div>
     <h1>The local leaderboard</h1>
@@ -20,7 +25,7 @@
 
 {% if rows %}
   <div class="ws-table-card">
-    <table class="ws-table">
+    <table class="ws-table ws-mobile-cards">
       <thead>
         <tr>
           <th>RANK</th>
@@ -33,15 +38,15 @@
       <tbody>
         {% for row in rows %}
           <tr class="{% if row.is_you %}ws-you-row{% endif %}">
-            <td class="ws-td-muted">{{ row.rank }}</td>
-            <td>
+            <td data-label="Rank" class="ws-td-muted">{{ row.rank }}</td>
+            <td data-label="Player">
               <span class="{% if row.is_you %}ws-you-name{% else %}ws-row-primary{% endif %}">
                 {{ row.name }}{% if row.is_you %} · you{% endif %}
               </span>
             </td>
-            <td><span class="ws-inprogress-pill">1,000 · In progress</span></td>
-            <td class="ws-td-score">{{ row.wins }}–{{ row.losses }}</td>
-            <td class="ws-align-right ws-td-muted">
+            <td data-label="Rating"><span class="ws-inprogress-pill">1,000 · In progress</span></td>
+            <td data-label="Record" class="ws-td-score">{{ row.wins }}–{{ row.losses }}</td>
+            <td data-label="Last match" class="ws-align-right ws-td-muted">
               {% if row.last_match %}{{ row.last_match|date:"M j" }}{% else %}—{% endif %}
             </td>
           </tr>
