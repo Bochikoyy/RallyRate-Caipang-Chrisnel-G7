@@ -101,4 +101,13 @@
     <p class="ws-public-foot">1.000 – 8.000 performance rating scale.</p>
   </aside>
 </section>
+
+<section class="ws-mobile-signout-card">
+  {% url 'ratings:rules' as rules_url %}
+  <a class="ws-btn ws-btn-outline" href="{{ rules_url|default:'#' }}">Help &amp; rating rules</a>
+  <form method="post" action="{% url 'accounts:logout' %}">
+    {% csrf_token %}
+    <button class="ws-btn ws-btn-signout" type="submit">Log out of RallyRate</button>
+  </form>
+</section>
 {% endblock %}

@@ -34,7 +34,7 @@
 
 {% if matches %}
   <div class="ws-table-card">
-    <table class="ws-table">
+    <table class="ws-table ws-mobile-cards">
       <thead>
         <tr>
           <th>DATE</th>
@@ -49,29 +49,37 @@
       <tbody>
         {% for match in matches %}
           <tr>
-            <td class="ws-td-muted">{{ match.played_at|date:"M j, Y" }}</td>
-            <td class="ws-td-muted">
-              {{ match.get_match_type_display }}
-              <div class="ws-row-sub">{{ match.get_source_display }}</div>
+            <td data-label="Date" class="ws-td-muted">{{ match.played_at|date:"M j, Y" }}</td>
+            <td data-label="Format" class="ws-td-muted">
+              <div>
+                {{ match.get_match_type_display }}
+                <div class="ws-row-sub">{{ match.get_source_display }}</div>
+              </div>
             </td>
-            <td>
-              <a class="ws-row-primary" href="{% url 'matches:detail' match.pk %}">{{ match.partner_line }}</a>
-              <div class="ws-row-sub">{{ match.opponents_line }}</div>
+            <td data-label="Players">
+              <div>
+                <a class="ws-row-primary" href="{% url 'matches:detail' match.pk %}">{{ match.partner_line }}</a>
+                <div class="ws-row-sub">{{ match.opponents_line }}</div>
+              </div>
             </td>
-            <td class="ws-td-muted">
-              {% if match.club %}{{ match.club.name }}{% else %}{{ match.location }}{% endif %}
-              {% if match.club %}<div class="ws-row-sub">{{ match.location }}</div>{% endif %}
+            <td data-label="Club / Court" class="ws-td-muted">
+              <div>
+                {% if match.club %}{{ match.club.name }}{% else %}{{ match.location }}{% endif %}
+                {% if match.club %}<div class="ws-row-sub">{{ match.location }}</div>{% endif %}
+              </div>
             </td>
-            <td class="ws-td-score">{{ match.score_display }}</td>
-            <td>
-              <span class="status-badge status-{{ match.status }}">
-                {% if match.status == 'verified' %}Confirmed{% else %}{{ match.get_status_display }}{% endif %}
+            <td data-label="Score" class="ws-td-score">{{ match.score_display }}</td>
+            <td data-label="Status">
+              <span>
+                <span class="status-badge status-{{ match.status }}">
+                  {% if match.status == 'verified' %}Confirmed{% else %}{{ match.get_status_display }}{% endif %}
+                </span>
+                {% if match.needs_action %}
+                  <span class="action-pill">Action</span>
+                {% endif %}
               </span>
-              {% if match.needs_action %}
-                <span class="action-pill">Action</span>
-              {% endif %}
             </td>
-            <td class="ws-align-right">
+            <td data-label="Action" class="ws-align-right">
               <a class="ws-text-link" href="{% url 'matches:detail' match.pk %}">
                 {% if match.needs_action %}Review →{% else %}View →{% endif %}
               </a>

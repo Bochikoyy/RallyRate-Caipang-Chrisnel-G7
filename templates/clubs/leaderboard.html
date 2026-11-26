@@ -2,6 +2,11 @@
 {% block title %}{% if scope == 'club' %}{{ club.name }} Standings{% else %}Local Leaderboard{% endif %} · RallyRate{% endblock %}
 {% block nav_leaderboard %}active{% endblock %}
 {% block content %}
+<nav class="ws-mobile-segmented" aria-label="Rankings and rating views">
+  <a class="ws-seg-item active" href="{% url 'clubs:leaderboard' %}">Ranks</a>
+  <a class="ws-seg-item" href="{% url 'ratings:history' %}">Rating history</a>
+</nav>
+
 <section class="ws-page-head">
   <div>
     {% if scope == 'club' %}
@@ -65,7 +70,7 @@
 
 {% if rows %}
   <div class="ws-table-card">
-    <table class="ws-table">
+    <table class="ws-table ws-mobile-cards">
       <thead>
         <tr>
           <th>RANK</th>
@@ -79,32 +84,34 @@
       <tbody>
         {% for row in rows %}
           <tr class="{% if row.is_you %}ws-you-row{% endif %}">
-            <td class="ws-td-muted">{{ row.rank }}</td>
-            <td>
-              <span class="{% if row.is_you %}ws-you-name{% else %}ws-row-primary{% endif %}">
-                {{ row.name }}{% if row.is_you %} · you{% endif %}
-              </span>
-              {% if row.club_role %}
-                <span class="ws-inprogress-pill" style="margin-left: 6px;">{{ row.club_role }}</span>
-              {% endif %}
-              {% if scope == 'local' and row.home_court %}
-                <div class="ws-row-sub">{{ row.home_court }}</div>
-              {% endif %}
+            <td data-label="Rank" class="ws-td-muted">{{ row.rank }}</td>
+            <td data-label="Player">
+              <div>
+                <span class="{% if row.is_you %}ws-you-name{% else %}ws-row-primary{% endif %}">
+                  {{ row.name }}{% if row.is_you %} · you{% endif %}
+                </span>
+                {% if row.club_role %}
+                  <span class="ws-inprogress-pill" style="margin-left: 6px;">{{ row.club_role }}</span>
+                {% endif %}
+                {% if scope == 'local' and row.home_court %}
+                  <div class="ws-row-sub">{{ row.home_court }}</div>
+                {% endif %}
+              </div>
             </td>
-            <td>
+            <td data-label="Rating">
               <strong style="font-size: 15px; color: var(--ws-plum);">{{ row.rating }}</strong>
             </td>
-            <td>
+            <td data-label="Reliability">
               {% if row.is_provisional %}
                 <span class="ws-inprogress-pill">Provisional · {{ row.reliability }}%</span>
               {% else %}
                 <span class="status-badge status-verified">{{ row.reliability }}%</span>
               {% endif %}
             </td>
-            <td class="ws-td-score">
+            <td data-label="Record" class="ws-td-score">
               {{ row.wins }}–{{ row.losses }}{% if row.win_pct is not None %} <span class="ws-muted-small">({{ row.win_pct }}%)</span>{% endif %}
             </td>
-            <td class="ws-align-right ws-td-muted">
+            <td data-label="Last match" class="ws-align-right ws-td-muted">
               {% if row.last_match %}{{ row.last_match|date:"M j" }}{% else %}—{% endif %}
             </td>
           </tr>

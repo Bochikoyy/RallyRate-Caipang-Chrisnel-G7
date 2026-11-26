@@ -70,7 +70,7 @@
     <h2>Pending join requests ({{ pending_memberships|length }})</h2>
   </div>
   <div class="ws-table-card" style="margin-bottom: 26px;">
-    <table class="ws-table">
+    <table class="ws-table ws-mobile-cards">
       <thead>
         <tr>
           <th>PLAYER</th>
@@ -81,9 +81,9 @@
       <tbody>
         {% for pm in pending_memberships %}
           <tr>
-            <td class="ws-row-primary">{{ pm.user.get_full_name|default:pm.user.username }}</td>
-            <td class="ws-td-muted">{{ pm.user.email }}</td>
-            <td class="ws-align-right">
+            <td data-label="Player" class="ws-row-primary">{{ pm.user.get_full_name|default:pm.user.username }}</td>
+            <td data-label="Email" class="ws-td-muted">{{ pm.user.email }}</td>
+            <td data-label="Actions" class="ws-align-right">
               <form method="post" action="{% url 'clubs:approve_member' club.slug pm.pk %}" style="display: inline;">
                 {% csrf_token %}
                 <button class="ws-btn ws-btn-primary" style="height: 32px; padding: 0 12px;" type="submit">Approve</button>
@@ -104,7 +104,7 @@
   <h2>Members &amp; co-hosts ({{ active_memberships|length }})</h2>
 </div>
 <div class="ws-table-card">
-  <table class="ws-table">
+  <table class="ws-table ws-mobile-cards">
     <thead>
       <tr>
         <th>MEMBER</th>
@@ -116,17 +116,19 @@
     <tbody>
       {% for m in active_memberships %}
         <tr>
-          <td>
-            <span class="ws-row-primary">{{ m.user.get_full_name|default:m.user.username }}</span>
-            {% if m.user_id == request.user.id %}<span class="ws-muted-small"> · you</span>{% endif %}
+          <td data-label="Member">
+            <span>
+              <span class="ws-row-primary">{{ m.user.get_full_name|default:m.user.username }}</span>
+              {% if m.user_id == request.user.id %}<span class="ws-muted-small"> · you</span>{% endif %}
+            </span>
           </td>
-          <td class="ws-td-muted">{{ m.user.email|default:"—" }}</td>
-          <td>
+          <td data-label="Contact" class="ws-td-muted">{{ m.user.email|default:"—" }}</td>
+          <td data-label="Role">
             <span class="{% if m.role == 'host' or m.role == 'co_host' %}status-badge status-verified{% else %}ws-inprogress-pill{% endif %}">
               {{ m.get_role_display }}
             </span>
           </td>
-          <td class="ws-align-right">
+          <td data-label="Manage" class="ws-align-right">
             {% if is_host and m.role != 'host' %}
               <div class="ws-inline-actions" style="justify-content: flex-end;">
                 {% if m.role == 'member' %}

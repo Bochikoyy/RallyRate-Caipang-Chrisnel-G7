@@ -2,6 +2,11 @@
 {% block title %}Rating history · RallyRate{% endblock %}
 {% block nav_ratings %}active{% endblock %}
 {% block content %}
+<nav class="ws-mobile-segmented" aria-label="Rankings and rating views">
+  <a class="ws-seg-item" href="{% url 'clubs:leaderboard' %}">Ranks</a>
+  <a class="ws-seg-item active" href="{% url 'ratings:history' %}">Rating history</a>
+</nav>
+
 <section class="ws-page-head">
   <div>
     <h1>Your rating, over time</h1>
@@ -60,7 +65,7 @@
 
 {% if history_entries %}
   <div class="ws-table-card">
-    <table class="ws-table">
+    <table class="ws-table ws-mobile-cards">
       <thead>
         <tr>
           <th>DATE</th>
@@ -75,21 +80,21 @@
       <tbody>
         {% for entry in history_entries %}
           <tr>
-            <td class="ws-td-muted">{{ entry.match.played_at|date:"M j" }}</td>
-            <td><strong>{{ entry.player_result }}</strong> <span class="ws-muted-small">({{ entry.match.score_display }})</span></td>
-            <td>
+            <td data-label="Date" class="ws-td-muted">{{ entry.match.played_at|date:"M j" }}</td>
+            <td data-label="Result"><span><strong>{{ entry.player_result }}</strong> <span class="ws-muted-small">({{ entry.match.score_display }})</span></span></td>
+            <td data-label="Opponents">
               <a class="ws-row-primary" href="{% url 'matches:detail' entry.match.pk %}">{{ entry.match.opponents_line }}</a>
             </td>
-            <td class="ws-td-muted">
+            <td data-label="Source" class="ws-td-muted">
               {% if entry.source == 'club_event' %}Club event (1.0x){% else %}Peer match (0.6x){% endif %}
             </td>
-            <td class="ws-td-muted">{{ entry.rating_before }}</td>
-            <td>
+            <td data-label="Before" class="ws-td-muted">{{ entry.rating_before }}</td>
+            <td data-label="Change">
               <span class="status-badge {% if entry.delta > 0 %}status-verified{% elif entry.delta < 0 %}status-disputed{% else %}ws-inprogress-pill{% endif %}">
                 {% if entry.delta > 0 %}+{% endif %}{{ entry.delta }}{% if entry.mismatch_protected %} · Protected{% endif %}
               </span>
             </td>
-            <td class="ws-align-right ws-td-score">{{ entry.rating_after }}</td>
+            <td data-label="After" class="ws-align-right ws-td-score">{{ entry.rating_after }}</td>
           </tr>
         {% endfor %}
       </tbody>

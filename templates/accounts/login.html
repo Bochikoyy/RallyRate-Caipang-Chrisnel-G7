@@ -6,14 +6,64 @@
 {% block page_class %}auth-shell signin-shell{% endblock %}
 {% block header_actions %}{% endblock %}
 {% block content %}
+{% if form.errors %}
+  <div class="rr-toast rr-toast-error" id="signin-toast" role="alert" aria-live="assertive">
+    <span class="rr-toast-icon" aria-hidden="true">!</span>
+    <div class="rr-toast-body">
+      <strong>Unable to sign in</strong>
+      {% if form.username.errors and form.password.errors %}
+        <p>Please enter both your email address and password.</p>
+      {% else %}
+        {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+        {% for field in form %}{% for error in field.errors %}<p>{{ field.label }}: {{ error }}</p>{% endfor %}{% endfor %}
+      {% endif %}
+    </div>
+    <button type="button" class="rr-toast-close" id="signin-toast-close" aria-label="Dismiss notification">✕</button>
+  </div>
+{% endif %}
+
 <section class="signin-panel" aria-label="About RallyRate">
   <div class="signin-panel-copy"><p class="signin-kicker">LOCAL GAMES. LASTING PROGRESS.</p><h1>Good games.<br>Better together.</h1><p class="signin-description">Record your matches, confirm the score, and see<br class="desktop-break"> your local game grow. No noise. Just pickleball.</p></div>
   <div class="signin-mascot-row"><img class="signin-mascot" src="{% static 'images/rallyraye.png' %}" alt="RallyRaye, RallyRate's pickleball wildcat mascot, holding a paddle"><p>Built for the people you play with.</p></div>
 </section>
-<section class="signin-form-wrap" aria-labelledby="signin-title"><div class="signin-form-inner"><p class="signin-kicker">WELCOME BACK</p><h2 id="signin-title">Sign in to RallyRate</h2><div class="signin-status" aria-live="polite">{% if form.errors %}<div class="signin-alert" role="alert">{% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}{% for field in form %}{% for error in field.errors %}<div>{{ field.label }}: {{ error }}</div>{% endfor %}{% endfor %}</div>{% else %}<p class="signin-subtitle">Your next match starts here.</p>{% endif %}</div>
-<form method="post" class="signin-form" novalidate>{% csrf_token %}
-<div class="signin-field"><label for="{{ form.username.id_for_label }}">Email address</label>{{ form.username }}</div>
-<div class="signin-field"><label for="{{ form.password.id_for_label }}">Password</label>{{ form.password }}</div><input type="hidden" name="next" value="{{ next }}"><button class="signin-submit" type="submit">Sign in</button></form>
-<p class="signin-create">New to the club? <a href="{% url 'accounts:signup' %}">Create an account</a></p><div class="signin-tagline">One account. Your club. Every verified match.</div></div></section>
+
+<section class="signin-form-wrap" aria-labelledby="signin-title">
+  <div class="signin-form-inner">
+    <p class="signin-kicker">WELCOME BACK</p>
+    <h2 id="signin-title">Sign in to RallyRate</h2>
+    <p class="signin-subtitle">Your next match starts here.</p>
+
+    <form method="post" class="signin-form" novalidate>
+      {% csrf_token %}
+      <div class="signin-field"><label for="{{ form.username.id_for_label }}">Email address</label>{{ form.username }}</div>
+      <div class="signin-field"><label for="{{ form.password.id_for_label }}">Password</label>{{ form.password }}</div>
+      <input type="hidden" name="next" value="{{ next }}">
+      <button class="signin-submit" type="submit">Sign in</button>
+    </form>
+
+    <p class="signin-create">New to the club? <a href="{% url 'accounts:signup' %}">Create an account</a></p>
+    <div class="signin-tagline">One account. Your club. Every verified match.</div>
+  </div>
+</section>
+
+{% if form.errors %}
+<script>
+  (function () {
+    const toast = document.getElementById('signin-toast');
+    const closeBtn = document.getElementById('signin-toast-close');
+    if (!toast) return;
+
+    function dismiss() {
+      toast.classList.add('is-hiding');
+      setTimeout(function () { toast.remove(); }, 220);
+    }
+
+    let timer = setTimeout(dismiss, 5000);
+    toast.addEventListener('mouseenter', function () { clearTimeout(timer); });
+    toast.addEventListener('mouseleave', function () { timer = setTimeout(dismiss, 3000); });
+    if (closeBtn) closeBtn.addEventListener('click', dismiss);
+  })();
+</script>
+{% endif %}
 {% endblock %}
 {% block footer %}{% endblock %}

@@ -99,7 +99,7 @@
 
 {% if discover_clubs %}
   <div class="ws-table-card">
-    <table class="ws-table">
+    <table class="ws-table ws-mobile-cards">
       <thead>
         <tr>
           <th>CLUB</th>
@@ -111,15 +111,17 @@
       <tbody>
         {% for club in discover_clubs %}
           <tr>
-            <td>
-              <a class="ws-row-primary" href="{% url 'clubs:detail' club.slug %}">{{ club.name }}</a>
-              {% if club.description %}
-                <div class="ws-row-sub">{{ club.description|truncatechars:80 }}</div>
-              {% endif %}
+            <td data-label="Club">
+              <div>
+                <a class="ws-row-primary" href="{% url 'clubs:detail' club.slug %}">{{ club.name }}</a>
+                {% if club.description %}
+                  <div class="ws-row-sub">{{ club.description|truncatechars:80 }}</div>
+                {% endif %}
+              </div>
             </td>
-            <td class="ws-td-muted">{{ club.home_court }}</td>
-            <td class="ws-td-muted">{{ club.active_member_count }}</td>
-            <td class="ws-align-right">
+            <td data-label="Home court" class="ws-td-muted">{{ club.home_court }}</td>
+            <td data-label="Members" class="ws-td-muted">{{ club.active_member_count }}</td>
+            <td data-label="Action" class="ws-align-right">
               <form method="post" action="{% url 'clubs:join' club.slug %}" style="display: inline;">
                 {% csrf_token %}
                 <button class="ws-btn ws-btn-outline" style="height: 34px; padding: 0 14px;" type="submit">Join</button>

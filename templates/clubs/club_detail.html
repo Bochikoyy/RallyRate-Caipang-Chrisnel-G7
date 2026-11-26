@@ -78,7 +78,7 @@
 
     {% if events %}
       <div class="ws-table-card" style="margin-bottom: 26px;">
-        <table class="ws-table">
+        <table class="ws-table ws-mobile-cards">
           <thead>
             <tr>
               <th>GAME / SESSION</th>
@@ -91,14 +91,16 @@
           <tbody>
             {% for ev in events %}
               <tr>
-                <td>
-                  <a class="ws-row-primary" href="{% url 'clubs:event_detail' club.slug ev.pk %}">{{ ev.title }}</a>
-                  <div class="ws-row-sub">{{ ev.starts_at|date:"M j, Y · g:i A" }}</div>
+                <td data-label="Session">
+                  <div>
+                    <a class="ws-row-primary" href="{% url 'clubs:event_detail' club.slug ev.pk %}">{{ ev.title }}</a>
+                    <div class="ws-row-sub">{{ ev.starts_at|date:"M j, Y · g:i A" }}</div>
+                  </div>
                 </td>
-                <td class="ws-td-muted">{{ ev.get_format_display }}</td>
-                <td class="ws-td-muted">{{ ev.location }}</td>
-                <td><span class="status-badge {% if ev.status == 'completed' %}status-verified{% elif ev.status == 'in_progress' %}status-pending{% else %}ws-inprogress-pill{% endif %}">{{ ev.get_status_display }}</span></td>
-                <td class="ws-align-right">
+                <td data-label="Format" class="ws-td-muted">{{ ev.get_format_display }}</td>
+                <td data-label="Court" class="ws-td-muted">{{ ev.location }}</td>
+                <td data-label="Status"><span class="status-badge {% if ev.status == 'completed' %}status-verified{% elif ev.status == 'in_progress' %}status-pending{% else %}ws-inprogress-pill{% endif %}">{{ ev.get_status_display }}</span></td>
+                <td data-label="Action" class="ws-align-right">
                   <a class="ws-text-link" href="{% url 'clubs:event_detail' club.slug ev.pk %}">Open →</a>
                 </td>
               </tr>
@@ -124,7 +126,7 @@
 
     {% if club_matches %}
       <div class="ws-table-card">
-        <table class="ws-table">
+        <table class="ws-table ws-mobile-cards">
           <thead>
             <tr>
               <th>DATE</th>
@@ -136,17 +138,19 @@
           <tbody>
             {% for m in club_matches %}
               <tr>
-                <td class="ws-td-muted">{{ m.played_at|date:"M j" }}</td>
-                <td>
-                  <a class="ws-row-primary" href="{% url 'matches:detail' m.pk %}">
-                    {% for p in m.team_a_participants %}{{ p.player.get_full_name|default:p.player.username }}{% if not forloop.last %} &amp; {% endif %}{% endfor %}
-                    vs
-                    {% for p in m.team_b_participants %}{{ p.player.get_full_name|default:p.player.username }}{% if not forloop.last %} &amp; {% endif %}{% endfor %}
-                  </a>
-                  {% if m.event %}<div class="ws-row-sub">{{ m.event.title }}</div>{% endif %}
+                <td data-label="Date" class="ws-td-muted">{{ m.played_at|date:"M j" }}</td>
+                <td data-label="Players">
+                  <div>
+                    <a class="ws-row-primary" href="{% url 'matches:detail' m.pk %}">
+                      {% for p in m.team_a_participants %}{{ p.player.get_full_name|default:p.player.username }}{% if not forloop.last %} &amp; {% endif %}{% endfor %}
+                      vs
+                      {% for p in m.team_b_participants %}{{ p.player.get_full_name|default:p.player.username }}{% if not forloop.last %} &amp; {% endif %}{% endfor %}
+                    </a>
+                    {% if m.event %}<div class="ws-row-sub">{{ m.event.title }}</div>{% endif %}
+                  </div>
                 </td>
-                <td class="ws-td-score">{{ m.score_display }}</td>
-                <td class="ws-align-right"><span class="status-badge status-{{ m.status }}">{{ m.get_status_display }}</span></td>
+                <td data-label="Score" class="ws-td-score">{{ m.score_display }}</td>
+                <td data-label="Status" class="ws-align-right"><span class="status-badge status-{{ m.status }}">{{ m.get_status_display }}</span></td>
               </tr>
             {% endfor %}
           </tbody>
