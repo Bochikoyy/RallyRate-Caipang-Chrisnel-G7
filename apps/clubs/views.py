@@ -5,9 +5,12 @@ from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import Count, Max, Q
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
+from apps.accounts.models import Notification
+from apps.accounts.notifications import notify_user, notify_users
 from apps.matches.models import Match, MatchParticipant
 
 from .forms import ClubEventForm, ClubForm, CustomEventMatchForm, EventScoreForm, JoinClubCodeForm
@@ -30,6 +33,16 @@ def _require_club_manager(club, user):
 def _require_club_host(club, user):
     if not club.is_host(user):
         raise PermissionDenied("Only the club host can perform this action.")
+
+
+def _club_managers(club):
+    return [
+        m.user
+        for m in club.memberships.select_related("user").filter(
+            status=ClubMembership.Status.ACTIVE,
+            role__in=[ClubMembership.Role.HOST, ClubMembership.Role.CO_HOST],
+        )
+    ]
 
 
 def _sync_ratings(match=None, full_recalc=False):
@@ -103,6 +116,18 @@ def club_create(request):
             if not request.user.home_court:
                 request.user.home_court = club.name
                 request.user.save(update_fields=["home_court"])
+        if club.is_public:
+            other_players = list(
+                User.objects.filter(is_active=True, is_superuser=False).exclude(pk=request.user.pk)[:100]
+            )
+            notify_users(
+                other_players,
+                category=Notification.Category.CLUB_CREATED,
+                title=f"New club '{club.name}' opened at {club.home_court}",
+                body=f"Started by {_display_name(request.user)}. Tap to view or join the roster.",
+                target_url=reverse("clubs:detail", kwargs={"slug": club.slug}),
+                actor=request.user,
+            )
         messages.success(request, f"Created {club.name}! Share invite code {club.join_code} with your players.")
         return redirect("clubs:detail", slug=club.slug)
 
@@ -134,8 +159,22 @@ def join_by_code(request):
     if not created and membership.status == ClubMembership.Status.PENDING:
         membership.status = ClubMembership.Status.ACTIVE
         membership.save(update_fields=["status"])
+        notify_users(
+            _club_managers(club),
+            category=Notification.Category.CLUB_MEMBER,
+            title=f"{_display_name(request.user)} joined {club.name} via invite code",
+            target_url=reverse("clubs:detail", kwargs={"slug": club.slug}),
+            actor=request.user,
+        )
         messages.success(request, f"Invite code accepted! You are now an active member of {club.name}.")
     elif created:
+        notify_users(
+            _club_managers(club),
+            category=Notification.Category.CLUB_MEMBER,
+            title=f"{_display_name(request.user)} joined {club.name}",
+            target_url=reverse("clubs:detail", kwargs={"slug": club.slug}),
+            actor=request.user,
+        )
         messages.success(request, f"Welcome to {club.name}!")
     else:
         messages.info(request, f"You are already a member of {club.name}.")
@@ -162,6 +201,13 @@ def join_club(request, slug):
             role=ClubMembership.Role.MEMBER,
             status=ClubMembership.Status.ACTIVE,
         )
+        notify_users(
+            _club_managers(club),
+            category=Notification.Category.CLUB_MEMBER,
+            title=f"{_display_name(request.user)} joined {club.name}",
+            target_url=reverse("clubs:detail", kwargs={"slug": club.slug}),
+            actor=request.user,
+        )
         messages.success(request, f"You joined {club.name}!")
         return redirect("clubs:detail", slug=club.slug)
 
@@ -170,6 +216,14 @@ def join_club(request, slug):
         user=request.user,
         role=ClubMembership.Role.MEMBER,
         status=ClubMembership.Status.PENDING,
+    )
+    notify_users(
+        _club_managers(club),
+        category=Notification.Category.CLUB_MEMBER,
+        title=f"{_display_name(request.user)} requested to join {club.name}",
+        body="Review and approve their membership request.",
+        target_url=reverse("clubs:manage", kwargs={"slug": club.slug}),
+        actor=request.user,
     )
     messages.success(request, f"Join request sent to {club.name}'s hosts.")
     return redirect("clubs:hub")
@@ -333,6 +387,13 @@ def update_member_role(request, slug, membership_id):
                 my_membership.save(update_fields=["role"])
             target.role = ClubMembership.Role.HOST
             target.save(update_fields=["role"])
+        notify_user(
+            target.user,
+            category=Notification.Category.CLUB_MEMBER,
+            title=f"You are now the Host of {club.name}",
+            target_url=reverse("clubs:detail", kwargs={"slug": club.slug}),
+            actor=request.user,
+        )
         messages.success(request, f"Transferred Host role to {_display_name(target.user)}.")
         return redirect("clubs:detail", slug=club.slug)
 
@@ -343,6 +404,13 @@ def update_member_role(request, slug, membership_id):
     if new_role in (ClubMembership.Role.CO_HOST, ClubMembership.Role.MEMBER):
         target.role = new_role
         target.save(update_fields=["role"])
+        notify_user(
+            target.user,
+            category=Notification.Category.CLUB_MEMBER,
+            title=f"Your role in {club.name} was updated to {target.get_role_display()}",
+            target_url=reverse("clubs:detail", kwargs={"slug": club.slug}),
+            actor=request.user,
+        )
         messages.success(
             request,
             f"Updated {_display_name(target.user)} to {target.get_role_display()}.",
@@ -362,6 +430,13 @@ def approve_member(request, slug, membership_id):
     )
     target.status = ClubMembership.Status.ACTIVE
     target.save(update_fields=["status"])
+    notify_user(
+        target.user,
+        category=Notification.Category.CLUB_MEMBER,
+        title=f"Your request to join {club.name} was approved!",
+        target_url=reverse("clubs:detail", kwargs={"slug": club.slug}),
+        actor=request.user,
+    )
     messages.success(request, f"Approved {_display_name(target.user)} to join {club.name}.")
     return redirect("clubs:manage", slug=club.slug)
 
@@ -395,7 +470,9 @@ def club_delete(request, slug):
     club = get_object_or_404(Club, slug=slug)
     _require_club_host(club, request.user)
     name = club.name
+    club_prefix = reverse("clubs:detail", kwargs={"slug": club.slug})
     with transaction.atomic():
+        Notification.objects.filter(target_url__startswith=club_prefix).delete()
         Match.objects.filter(club=club, status=Match.Status.SCHEDULED).delete()
         club.delete()
     messages.success(request, f"Deleted club '{name}'.")
@@ -424,6 +501,18 @@ def event_create(request, slug):
                 user=request.user,
                 status=EventParticipant.Status.CHECKED_IN,
             )
+        club_members = [
+            m.user
+            for m in club.memberships.select_related("user").filter(status=ClubMembership.Status.ACTIVE)
+        ]
+        notify_users(
+            club_members,
+            category=Notification.Category.EVENT_CREATED,
+            title=f"New session '{event.title}' in {club.name}",
+            body=f"{event.get_format_display()} at {event.location}. Tap to join the roster!",
+            target_url=reverse("clubs:event_detail", kwargs={"slug": club.slug, "event_id": event.pk}),
+            actor=request.user,
+        )
         messages.success(request, f"Created game session '{event.title}'. Players can now join!")
         return redirect("clubs:event_detail", slug=club.slug, event_id=event.pk)
 
@@ -642,6 +731,17 @@ def event_generate_matches(request, slug, event_id):
             f"Need at least {event.players_per_court} active players in the session to generate a {event.get_format_display().lower()} match.",
         )
     else:
+        event_url = reverse("clubs:event_detail", kwargs={"slug": club.slug, "event_id": event.pk})
+        for m in created:
+            players_in_match = [p.player for p in m.participants.select_related("player").all()]
+            notify_users(
+                players_in_match,
+                category=Notification.Category.MATCH_GENERATED,
+                title=f"You're up on Court {m.court_number or 1} (Round {m.round_number or 1})",
+                body=f"{event.title} · {club.name}",
+                target_url=event_url,
+                actor=request.user,
+            )
         messages.success(
             request,
             f"Generated {len(created)} match{'es' if len(created) != 1 else ''} for Round {created[0].round_number}! Enter scores below as games finish.",
@@ -688,6 +788,14 @@ def event_custom_match(request, slug, event_id):
         if event.status == ClubEvent.Status.OPEN:
             event.status = ClubEvent.Status.IN_PROGRESS
             event.save(update_fields=["status", "updated_at"])
+    notify_users(
+        team_a + team_b,
+        category=Notification.Category.MATCH_GENERATED,
+        title=f"New court matchup in {event.title}",
+        body=f"{club.name} · {event.location}",
+        target_url=reverse("clubs:event_detail", kwargs={"slug": club.slug, "event_id": event.pk}),
+        actor=request.user,
+    )
     messages.success(request, "Custom matchup added to the board.")
     return redirect("clubs:event_detail", slug=club.slug, event_id=event.pk)
 
@@ -720,6 +828,16 @@ def event_record_score(request, slug, event_id, match_id):
 
     sync_event_games_played(event)
     _sync_ratings(match=match, full_recalc=was_already_verified)
+
+    match_players = [p.player for p in match.participants.select_related("player").all()]
+    notify_users(
+        match_players,
+        category=Notification.Category.MATCH_VERIFIED,
+        title=f"Score {match.score_display} verified in {event.title}",
+        body="Recorded by host — your 1.0–8.0 rating has been updated.",
+        target_url=reverse("matches:detail", kwargs={"pk": match.pk}),
+        actor=request.user,
+    )
 
     messages.success(
         request,

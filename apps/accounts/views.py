@@ -1,12 +1,15 @@
 from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
+from django.utils.http import url_has_allowed_host_and_scheme
+from django.views.decorators.http import require_POST
 
 from apps.clubs.models import ClubMembership
 from apps.matches.services import get_player_dashboard_summary
 
 from .forms import ProfileForm, SignUpForm
+from .models import Notification
 
 
 def signup(request):
@@ -70,3 +73,51 @@ def profile(request):
             "memberships": memberships,
         },
     )
+
+
+@login_required
+def notifications_list(request):
+    filter_mode = request.GET.get("filter", "all").strip().lower()
+    qs = Notification.objects.filter(recipient=request.user).select_related("actor")
+    unread_total = qs.filter(is_read=False).count()
+    all_total = qs.count()
+
+    if filter_mode == "unread":
+        notifications = list(qs.filter(is_read=False)[:60])
+    else:
+        filter_mode = "all"
+        notifications = list(qs[:60])
+
+    return render(
+        request,
+        "accounts/notifications.html",
+        {
+            "notifications": notifications,
+            "filter_mode": filter_mode,
+            "unread_total": unread_total,
+            "all_total": all_total,
+        },
+    )
+
+
+@login_required
+def notification_open(request, pk):
+    notif = get_object_or_404(Notification, pk=pk, recipient=request.user)
+    if not notif.is_read:
+        notif.is_read = True
+        notif.save(update_fields=["is_read"])
+
+    target = (notif.target_url or "").strip()
+    if target and url_has_allowed_host_and_scheme(target, allowed_hosts={request.get_host()}):
+        return redirect(target)
+    return redirect("accounts:notifications")
+
+
+@login_required
+@require_POST
+def notifications_mark_all_read(request):
+    Notification.objects.filter(recipient=request.user, is_read=False).update(is_read=True)
+    next_url = (request.POST.get("next") or "").strip()
+    if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
+        return redirect(next_url)
+    return redirect("accounts:notifications")

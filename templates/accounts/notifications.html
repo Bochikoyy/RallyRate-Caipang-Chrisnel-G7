@@ -1,0 +1,66 @@
+{% extends 'workspace_base.html' %}
+{% block title %}Notifications · RallyRate{% endblock %}
+{% block nav_notifications %}active{% endblock %}
+{% block content %}
+<section class="ws-page-head">
+  <div>
+    <p class="ws-mobile-eyebrow">ACTIVITY &amp; ALERTS</p>
+    <h1>Notifications</h1>
+    <p class="ws-page-sub">Match review requests, court assignments, club sessions, and community updates.</p>
+  </div>
+  {% if unread_total %}
+    <form method="post" action="{% url 'accounts:notifications_mark_all_read' %}" style="margin: 0;">
+      {% csrf_token %}
+      <button class="ws-btn ws-btn-outline" type="submit">Mark all read ({{ unread_total }})</button>
+    </form>
+  {% endif %}
+</section>
+
+<nav class="ws-filter-bar" aria-label="Filter notifications">
+  <a class="ws-filter-pill {% if filter_mode == 'all' %}active{% endif %}" href="{% url 'accounts:notifications' %}">
+    All <span>{{ all_total }}</span>
+  </a>
+  <a class="ws-filter-pill {% if filter_mode == 'unread' %}active{% endif %}" href="{% url 'accounts:notifications' %}?filter=unread">
+    Unread <span>{{ unread_total }}</span>
+  </a>
+</nav>
+
+{% if notifications %}
+  <div class="ws-session-stack" style="margin-bottom: 0;">
+    {% for n in notifications %}
+      <article class="ws-session-card ws-notif-card {% if not n.is_read %}is-unread{% endif %}">
+        <div class="ws-session-left">
+          <span class="ws-notif-card-dot {% if not n.is_read %}active{% endif %}" aria-hidden="true"></span>
+          <div class="ws-session-info">
+            <div class="ws-session-meta" style="margin-bottom: 4px;">
+              <span class="status-badge {% if n.category == 'match_disputed' %}status-disputed{% elif n.category == 'match_verified' %}status-verified{% elif n.category == 'match_review' or n.category == 'match_generated' %}status-pending{% else %}ws-inprogress-pill{% endif %}">
+                {{ n.get_category_display }}
+              </span>
+              <span>{{ n.created_at|timesince }} ago</span>
+            </div>
+            <a class="ws-session-title" href="{% url 'accounts:notification_open' n.pk %}">{{ n.title }}</a>
+            {% if n.body %}
+              <div class="ws-row-sub">{{ n.body }}</div>
+            {% endif %}
+          </div>
+        </div>
+        <div class="ws-session-right">
+          <a class="ws-btn {% if not n.is_read %}ws-btn-primary{% else %}ws-btn-outline{% endif %}" style="height: 36px; padding: 0 16px;" href="{% url 'accounts:notification_open' n.pk %}">
+            {% if n.category == 'match_review' %}Review →{% else %}Open →{% endif %}
+          </a>
+        </div>
+      </article>
+    {% endfor %}
+  </div>
+{% else %}
+  <section class="ws-hero-card">
+    <div>
+      <p class="ws-eyebrow">{% if filter_mode == 'unread' %}ZERO UNREAD{% else %}INBOX CLEAR{% endif %}</p>
+      <h2>You're all caught up.</h2>
+      <p class="ws-hero-copy" style="margin-bottom: 0;">
+        Whenever an opponent submits a score for you to confirm, a host generates court matchups, or a new club opens, it will appear right here.
+      </p>
+    </div>
+  </section>
+{% endif %}
+{% endblock %}

@@ -9,6 +9,8 @@ from apps.clubs.models import Club, ClubMembership
 from apps.matches.models import Match, MatchParticipant
 from apps.ratings.engine import process_verified_match
 
+from .models import Notification
+
 User = get_user_model()
 
 
@@ -197,3 +199,56 @@ class AccountAndDashboardTests(TestCase):
         ranks_resp = self.client.get(reverse("clubs:leaderboard"))
         self.assertContains(ranks_resp, 'class="ws-mobile-segmented"')
         self.assertContains(ranks_resp, "Ranks")
+
+    def test_notifications_across_match_review_clubs_and_sessions(self):
+        # 1. Player submits peer match -> Opponent receives MATCH_REVIEW notification & unread badge
+        self.client.force_login(self.player)
+        self.client.post(
+            reverse("matches:create"),
+            {
+                "match_type": Match.MatchType.SINGLES,
+                "played_at": timezone.localdate().isoformat(),
+                "location": "Court 1",
+                "opponent_1": self.opponent.pk,
+                "team_a_score": 11,
+                "team_b_score": 7,
+            },
+        )
+        match = Match.objects.first()
+        opp_notif = Notification.objects.get(recipient=self.opponent, category=Notification.Category.MATCH_REVIEW)
+        self.assertFalse(opp_notif.is_read)
+
+        # Opponent sees unread bell badge & clicking notification marks read + redirects to match
+        self.client.force_login(self.opponent)
+        dash = self.client.get(reverse("accounts:dashboard"))
+        self.assertContains(dash, 'class="ws-notif-badge"')
+        open_resp = self.client.get(reverse("accounts:notification_open", args=[opp_notif.pk]))
+        self.assertRedirects(open_resp, reverse("matches:detail", args=[match.pk]))
+        opp_notif.refresh_from_db()
+        self.assertTrue(opp_notif.is_read)
+
+        # 2. Creating a public club notifies other active players (CLUB_CREATED)
+        self.client.force_login(self.player)
+        self.client.post(
+            reverse("clubs:create"),
+            {
+                "name": "Notif Smash Club",
+                "home_court": "Ulrak Hub",
+                "description": "Open play",
+                "is_public": True,
+            },
+        )
+        self.assertTrue(
+            Notification.objects.filter(
+                recipient=self.opponent,
+                category=Notification.Category.CLUB_CREATED,
+            ).exists()
+        )
+
+        # Mark all read clears unread notifications
+        self.client.force_login(self.opponent)
+        self.client.post(reverse("accounts:notifications_mark_all_read"))
+        self.assertEqual(
+            Notification.objects.filter(recipient=self.opponent, is_read=False).count(),
+            0,
+        )

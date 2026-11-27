@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.db import models
@@ -61,3 +62,46 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.email or self.username
+
+
+class Notification(models.Model):
+    class Category(models.TextChoices):
+        MATCH_REVIEW = "match_review", "Match review"
+        MATCH_VERIFIED = "match_verified", "Match confirmed"
+        MATCH_DISPUTED = "match_disputed", "Match disputed"
+        MATCH_GENERATED = "match_generated", "Court matchup"
+        EVENT_CREATED = "event_created", "Club session"
+        CLUB_CREATED = "club_created", "New club"
+        CLUB_MEMBER = "club_member", "Club update"
+
+    recipient = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="notifications",
+    )
+    actor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="triggered_notifications",
+    )
+    category = models.CharField(
+        max_length=24,
+        choices=Category.choices,
+        default=Category.MATCH_REVIEW,
+    )
+    title = models.CharField(max_length=160)
+    body = models.CharField(max_length=280, blank=True)
+    target_url = models.CharField(max_length=255, blank=True)
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("-created_at", "-id")
+        indexes = [
+            models.Index(fields=["recipient", "is_read", "-created_at"]),
+        ]
+
+    def __str__(self):
+        return f"[{self.get_category_display()}] {self.recipient}: {self.title}"

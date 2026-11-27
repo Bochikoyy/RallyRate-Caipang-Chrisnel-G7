@@ -3,9 +3,12 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
+from apps.accounts.models import Notification
+from apps.accounts.notifications import display_name as _notif_name, notify_users
 from apps.clubs.models import Club, ClubMembership
 
 from .forms import MatchDisputeForm, MatchForm
@@ -138,6 +141,27 @@ def match_create(request):
     form = MatchForm(request.POST or None, user=request.user)
     if request.method == "POST" and form.is_valid():
         match = form.save_with_participants(submitted_by=request.user)
+        detail_url = reverse("matches:detail", kwargs={"pk": match.pk})
+        actor_label = _notif_name(request.user)
+        opponents = [p.player for p in match.team_b_participants]
+        teammates = [p.player for p in match.team_a_participants if p.player_id != request.user.id]
+        notify_users(
+            opponents,
+            category=Notification.Category.MATCH_REVIEW,
+            title=f"{actor_label} submitted a {match.get_match_type_display().lower()} match ({match.score_display})",
+            body="Review and confirm the final score so ratings can update.",
+            target_url=detail_url,
+            actor=request.user,
+        )
+        if teammates:
+            notify_users(
+                teammates,
+                category=Notification.Category.MATCH_REVIEW,
+                title=f"{actor_label} logged your doubles match ({match.score_display})",
+                body="Waiting for an opposing player to confirm the result.",
+                target_url=detail_url,
+                actor=request.user,
+            )
         messages.success(request, "Match logged and submitted for opponent verification.")
         return redirect("matches:detail", pk=match.pk)
 
@@ -204,6 +228,8 @@ def match_delete(request, pk):
     if request.method == "POST":
         was_verified = match.status == Match.Status.VERIFIED
         event = match.event
+        detail_url = reverse("matches:detail", kwargs={"pk": match.pk})
+        Notification.objects.filter(target_url=detail_url).delete()
         match.delete()
         if event is not None:
             from apps.clubs.services import sync_event_games_played
@@ -234,6 +260,19 @@ def match_verify(request, pk):
     match.save(update_fields=["status", "verified_by", "verified_at", "updated_at"])
 
     _trigger_rating_sync(match=match)
+
+    detail_url = reverse("matches:detail", kwargs={"pk": match.pk})
+    Notification.objects.filter(recipient=request.user, target_url=detail_url, is_read=False).update(is_read=True)
+    actor_label = _notif_name(request.user)
+    involved_users = [p.player for p in match.participants.all()] + [match.submitted_by]
+    notify_users(
+        involved_users,
+        category=Notification.Category.MATCH_VERIFIED,
+        title=f"{actor_label} confirmed match {match.match_code} ({match.score_display})",
+        body="Your 1.0–8.0 performance rating has been updated.",
+        target_url=detail_url,
+        actor=request.user,
+    )
 
     if was_disputed:
         messages.success(request, "Dispute resolved, match verified, and ratings updated.")
@@ -268,6 +307,28 @@ def match_dispute(request, pk):
                 "verified_at",
                 "updated_at",
             ]
+        )
+        detail_url = reverse("matches:detail", kwargs={"pk": match.pk})
+        Notification.objects.filter(recipient=request.user, target_url=detail_url, is_read=False).update(is_read=True)
+        actor_label = _notif_name(request.user)
+        recipients = [p.player for p in match.participants.all()] + [match.submitted_by]
+        if match.club_id:
+            mgr_users = [
+                m.user
+                for m in ClubMembership.objects.select_related("user").filter(
+                    club_id=match.club_id,
+                    status=ClubMembership.Status.ACTIVE,
+                    role__in=[ClubMembership.Role.HOST, ClubMembership.Role.CO_HOST],
+                )
+            ]
+            recipients.extend(mgr_users)
+        notify_users(
+            recipients,
+            category=Notification.Category.MATCH_DISPUTED,
+            title=f"{actor_label} flagged an issue on match {match.match_code}",
+            body=match.dispute_reason[:180],
+            target_url=detail_url,
+            actor=request.user,
         )
         messages.success(request, "Match marked as disputed for review.")
         return redirect("matches:detail", pk=match.pk)
