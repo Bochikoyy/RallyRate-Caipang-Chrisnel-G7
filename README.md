@@ -1,6 +1,6 @@
 # RallyRate
 
-Django full-stack pickleball club, open-play matchmaking, and **1.000–8.000 DUPR-style performance rating** platform. Server-rendered Django templates power the frontend and Supabase PostgreSQL serves as the database.
+Django full-stack pickleball club, open-play matchmaking, and **1.000–8.000 performance rating** platform. Server-rendered Django templates power the frontend and Supabase PostgreSQL serves as the database.
 
 ## Implemented Features
 
@@ -25,14 +25,14 @@ Django full-stack pickleball club, open-play matchmaking, and **1.000–8.000 DU
   - Opponents confirm `Pending` scores (`0.6x` peer weight) or flag an issue (`Disputed`).
   - Club Hosts and Co-hosts oversee club matches, resolve disputes, and edit/delete records with automatic chronological rating recalculation.
 
-### 4. 1.000–8.000 DUPR-Style Rating Engine & Dual Leaderboards (`apps.ratings`, `apps.clubs`)
+### 4. 1.000–8.000 Performance Rating Engine & Dual Leaderboards (`apps.ratings`, `apps.clubs`)
 - **Performance vs. Expectation Engine (`apps/ratings/engine.py`):**
   - Evaluates team rating averages, expected score share, and **margin of victory** (point share + outcome).
   - **0.500 Mismatch Protection:** When opposing teams differ by `>= 0.500` and the favorite wins, ratings remain unchanged (`0.000` delta); underdog upsets earn full rewards.
-  - **Source & Reliability Scaling:** Dynamic K-factor scales from `0.40` (new players) to `0.12` (established `100%` reliability players), weighting `club_event` (`1.0x`) above `casual_peer` (`0.6x`).
+  - **Source & Reliability Scaling:** Dynamic K-factor scales from `0.40` (new players) to `0.12` (`100%` reliability players), weighting `club_event` (`1.0x`) above `casual_peer` (`0.6x`).
   - **Zero-Drift Ledger:** Immutable `RatingHistory` entries per match with full chronological replay when verified scores are edited or removed.
 - **Dual Leaderboards (`/leaderboard/`, `/clubs/<slug>/leaderboard/`):**
-  - Switch between **Local Standings** (all players) and **Club Standings** (club members + club `W–L`), with **Doubles / Singles** and **All / Established (≥30% reliability)** filters.
+  - Switch between **Local Standings** (all players) and **Club Standings** (club members + club `W–L`), with **Doubles / Singles** toggles.
 
 ## Local Setup
 

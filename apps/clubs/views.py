@@ -760,7 +760,7 @@ def event_status(request, slug, event_id):
     return redirect("clubs:event_detail", slug=club.slug, event_id=event.pk)
 
 
-def _build_leaderboard_rows(users, current_user, club=None, match_format="doubles", established_only=False, club_roles=None):
+def _build_leaderboard_rows(users, current_user, club=None, match_format="doubles", club_roles=None):
     user_ids = [u.id for u in users]
     part_qs = (
         MatchParticipant.objects.select_related("match", "player")
@@ -802,9 +802,6 @@ def _build_leaderboard_rows(users, current_user, club=None, match_format="double
             rating_val = "3.000"
             reliability_val = 0
 
-        if established_only and reliability_val < 30:
-            continue
-
         total_games = s["wins"] + s["losses"]
         win_pct = round((s["wins"] / total_games) * 100) if total_games > 0 else None
 
@@ -818,7 +815,6 @@ def _build_leaderboard_rows(users, current_user, club=None, match_format="double
                 "rating": f"{float(rating_val):.3f}",
                 "rating_num": float(rating_val),
                 "reliability": reliability_val,
-                "is_provisional": reliability_val < 30,
                 "wins": s["wins"],
                 "losses": s["losses"],
                 "verified_total": total_games,
@@ -845,7 +841,6 @@ def global_leaderboard(request):
     match_format = request.GET.get("format", "doubles").strip().lower()
     if match_format not in ("doubles", "singles"):
         match_format = "doubles"
-    established_only = request.GET.get("filter") == "established"
 
     players = list(
         User.objects.filter(is_active=True, is_superuser=False)
@@ -858,7 +853,6 @@ def global_leaderboard(request):
         request.user,
         club=None,
         match_format=match_format,
-        established_only=established_only,
     )
     my_clubs = list(
         Club.objects.filter(
@@ -876,7 +870,6 @@ def global_leaderboard(request):
             "club": None,
             "my_clubs": my_clubs,
             "match_format": match_format,
-            "established_only": established_only,
         },
     )
 
@@ -890,7 +883,6 @@ def club_leaderboard(request, slug):
     match_format = request.GET.get("format", "doubles").strip().lower()
     if match_format not in ("doubles", "singles"):
         match_format = "doubles"
-    established_only = request.GET.get("filter") == "established"
 
     memberships = list(
         ClubMembership.objects.select_related("user", "user__rating_profile")
@@ -913,7 +905,6 @@ def club_leaderboard(request, slug):
         request.user,
         club=club,
         match_format=match_format,
-        established_only=established_only,
         club_roles=club_roles,
     )
     my_clubs = list(
@@ -932,7 +923,6 @@ def club_leaderboard(request, slug):
             "club": club,
             "my_clubs": my_clubs,
             "match_format": match_format,
-            "established_only": established_only,
         },
     )
 

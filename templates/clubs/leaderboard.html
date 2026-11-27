@@ -28,11 +28,11 @@
 
 <!-- Scope Switcher: Local (All Players) vs Your Clubs -->
 <nav class="ws-filter-bar" aria-label="Leaderboard scope">
-  <a class="ws-filter-pill {% if scope == 'local' %}active{% endif %}" href="{% url 'clubs:leaderboard' %}?format={{ match_format }}{% if established_only %}&amp;filter=established{% endif %}">
+  <a class="ws-filter-pill {% if scope == 'local' %}active{% endif %}" href="{% url 'clubs:leaderboard' %}?format={{ match_format }}">
     Local (All players)
   </a>
   {% for c in my_clubs %}
-    <a class="ws-filter-pill {% if club and club.pk == c.pk %}active{% endif %}" href="{% url 'clubs:club_leaderboard' c.slug %}?format={{ match_format }}{% if established_only %}&amp;filter=established{% endif %}">
+    <a class="ws-filter-pill {% if club and club.pk == c.pk %}active{% endif %}" href="{% url 'clubs:club_leaderboard' c.slug %}?format={{ match_format }}">
       {{ c.name }}
     </a>
   {% endfor %}
@@ -45,21 +45,13 @@
   <div class="ws-toolbar-left">
     {% if scope == 'club' %}
       <div class="ws-pill-group" role="group" aria-label="Match format">
-        <a class="ws-seg-pill {% if match_format == 'doubles' %}active{% endif %}" href="{% url 'clubs:club_leaderboard' club.slug %}?format=doubles{% if established_only %}&amp;filter=established{% endif %}">Doubles</a>
-        <a class="ws-seg-pill {% if match_format == 'singles' %}active{% endif %}" href="{% url 'clubs:club_leaderboard' club.slug %}?format=singles{% if established_only %}&amp;filter=established{% endif %}">Singles</a>
-      </div>
-      <div class="ws-pill-group" role="group" aria-label="Reliability filter">
-        <a class="ws-seg-pill {% if not established_only %}active{% endif %}" href="{% url 'clubs:club_leaderboard' club.slug %}?format={{ match_format }}">All members</a>
-        <a class="ws-seg-pill {% if established_only %}active{% endif %}" href="{% url 'clubs:club_leaderboard' club.slug %}?format={{ match_format }}&amp;filter=established">Established (≥30%)</a>
+        <a class="ws-seg-pill {% if match_format == 'doubles' %}active{% endif %}" href="{% url 'clubs:club_leaderboard' club.slug %}?format=doubles">Doubles</a>
+        <a class="ws-seg-pill {% if match_format == 'singles' %}active{% endif %}" href="{% url 'clubs:club_leaderboard' club.slug %}?format=singles">Singles</a>
       </div>
     {% else %}
       <div class="ws-pill-group" role="group" aria-label="Match format">
-        <a class="ws-seg-pill {% if match_format == 'doubles' %}active{% endif %}" href="{% url 'clubs:leaderboard' %}?format=doubles{% if established_only %}&amp;filter=established{% endif %}">Doubles</a>
-        <a class="ws-seg-pill {% if match_format == 'singles' %}active{% endif %}" href="{% url 'clubs:leaderboard' %}?format=singles{% if established_only %}&amp;filter=established{% endif %}">Singles</a>
-      </div>
-      <div class="ws-pill-group" role="group" aria-label="Reliability filter">
-        <a class="ws-seg-pill {% if not established_only %}active{% endif %}" href="{% url 'clubs:leaderboard' %}?format={{ match_format }}">All players</a>
-        <a class="ws-seg-pill {% if established_only %}active{% endif %}" href="{% url 'clubs:leaderboard' %}?format={{ match_format }}&amp;filter=established">Established (≥30%)</a>
+        <a class="ws-seg-pill {% if match_format == 'doubles' %}active{% endif %}" href="{% url 'clubs:leaderboard' %}?format=doubles">Doubles</a>
+        <a class="ws-seg-pill {% if match_format == 'singles' %}active{% endif %}" href="{% url 'clubs:leaderboard' %}?format=singles">Singles</a>
       </div>
     {% endif %}
   </div>
@@ -102,11 +94,7 @@
               <strong style="font-size: 15px; color: var(--ws-plum);">{{ row.rating }}</strong>
             </td>
             <td data-label="Reliability">
-              {% if row.is_provisional %}
-                <span class="ws-inprogress-pill">Provisional · {{ row.reliability }}%</span>
-              {% else %}
-                <span class="status-badge status-verified">{{ row.reliability }}%</span>
-              {% endif %}
+              <span class="{% if row.reliability >= 30 %}status-badge status-verified{% else %}ws-inprogress-pill{% endif %}">{{ row.reliability }}%</span>
             </td>
             <td data-label="Record" class="ws-td-score">
               {{ row.wins }}–{{ row.losses }}{% if row.win_pct is not None %} <span class="ws-muted-small">({{ row.win_pct }}%)</span>{% endif %}
@@ -121,18 +109,11 @@
   </div>
 {% else %}
   <section class="ws-empty-inline">
-    <p>No players match the current filter yet. Play verified matches to build reliability above 30%!</p>
-    {% if established_only %}
-      {% if scope == 'club' %}
-        <a class="ws-text-link" href="{% url 'clubs:club_leaderboard' club.slug %}?format={{ match_format }}">Show all members →</a>
-      {% else %}
-        <a class="ws-text-link" href="{% url 'clubs:leaderboard' %}?format={{ match_format }}">Show all players →</a>
-      {% endif %}
-    {% endif %}
+    <p>No players found in this leaderboard yet.</p>
   </section>
 {% endif %}
 
 <p class="ws-leaderboard-foot">
-  Ratings span 1.000 to 8.000 (starting at 3.000). Players under 30% reliability carry a Provisional tag. Pending, scheduled, and disputed matches never alter standings.
+  Ratings span 1.000 to 8.000 (starting at 3.000). Pending, scheduled, and disputed matches never alter standings.
 </p>
 {% endblock %}

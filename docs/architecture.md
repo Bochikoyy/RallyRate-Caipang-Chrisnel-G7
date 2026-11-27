@@ -7,7 +7,7 @@ RallyRate is a Django modular monolith. A single Django project serves the full 
 - `apps.accounts`: player registration, email/username authentication, unified player dashboard, and profile management.
 - `apps.clubs`: Reclub-style clubs, `Host` / `Co-host` / `Member` roles, invite codes, `ClubEvent` open-play sessions, balanced/round-robin match generation, direct host score entry, and Club + Local leaderboards.
 - `apps.matches`: Singles/Doubles match records (`club_event` and `casual_peer` sources), pickleball score validation, opponent verification, and host dispute resolution.
-- `apps.ratings`: `1.000–8.000` DUPR-style performance rating engine (`PlayerRatingProfile`, `RatingHistory`), `0.500` mismatch protection, reliability scaling, chronological recalculation, and rating progression charts.
+- `apps.ratings`: `1.000–8.000` performance rating engine (`PlayerRatingProfile`, `RatingHistory`), `0.500` mismatch protection, reliability scaling, chronological recalculation, and rating progression charts.
 - `apps.imports`: reserved module for future CSV and external roster/event imports.
 
 ## Repository map

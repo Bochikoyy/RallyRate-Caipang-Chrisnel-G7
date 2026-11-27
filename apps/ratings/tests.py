@@ -13,7 +13,7 @@ from .models import PlayerRatingProfile, RatingHistory
 User = get_user_model()
 
 
-class DuprRatingEngineTests(TestCase):
+class PerformanceRatingEngineTests(TestCase):
     def setUp(self):
         self.p1 = User.objects.create_user(email="r1@test.com", password="pw", first_name="A")
         self.p2 = User.objects.create_user(email="r2@test.com", password="pw", first_name="B")

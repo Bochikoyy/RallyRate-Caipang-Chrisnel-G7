@@ -42,7 +42,7 @@ def _clamp_rating(val):
 @transaction.atomic
 def process_verified_match(match):
     """
-    Apply DUPR-style 1.000-8.000 rating updates for a verified match.
+    Apply 1.000-8.000 performance rating updates for a verified match.
     Idempotent: if RatingHistory rows already exist for this match, returns them.
     """
     if match.status != Match.Status.VERIFIED or not match.has_scores:
