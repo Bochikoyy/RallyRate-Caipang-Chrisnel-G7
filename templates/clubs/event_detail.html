@@ -2,55 +2,81 @@
 {% block title %}{{ event.title }} · {{ club.name }}{% endblock %}
 {% block nav_clubs %}active{% endblock %}
 {% block content %}
-<section class="ws-page-head">
-  <div>
-    <p class="ws-eyebrow" style="margin-bottom: 6px;">
-      <a href="{% url 'clubs:detail' club.slug %}" style="text-decoration: underline;">{{ club.name }}</a>
-      · {{ event.get_format_display|upper }} · {{ event.get_matchmaking_mode_display|upper }}
-    </p>
-    <h1>{{ event.title }}</h1>
-    <p class="ws-page-sub">{{ event.location }} · {{ event.starts_at|date:"M j, Y · g:i A" }} · <span class="status-badge {% if event.status == 'completed' %}status-verified{% elif event.status == 'in_progress' %}status-pending{% else %}ws-inprogress-pill{% endif %}">{{ event.get_status_display }}</span></p>
-  </div>
-  <div class="ws-inline-actions" style="flex-wrap: wrap;">
-    {% if is_manager and event.status != 'completed' %}
-      <form method="post" action="{% url 'clubs:event_generate_matches' club.slug event.pk %}" style="margin: 0;">
-        {% csrf_token %}
-        <button class="ws-btn ws-btn-primary" type="submit" {% if not can_generate %}disabled title="Need at least {{ event.players_per_court }} players"{% endif %}>
-          Generate next round
-        </button>
-      </form>
-    {% endif %}
 
-    {% if my_participation %}
-      <form method="post" action="{% url 'clubs:event_leave' club.slug event.pk %}" style="margin: 0;">
-        {% csrf_token %}
-        <button class="ws-btn ws-btn-outline" type="submit">Leave session</button>
-      </form>
-    {% elif event.status != 'completed' and event.status != 'cancelled' %}
-      <form method="post" action="{% url 'clubs:event_join' club.slug event.pk %}" style="margin: 0;">
-        {% csrf_token %}
-        <button class="ws-btn ws-btn-primary" type="submit">Join game</button>
-      </form>
-    {% endif %}
+<!-- Session Hero Card -->
+<section class="ws-club-hero">
+  <div class="ws-club-hero-main">
+    <div class="ws-club-identity">
+      <div class="ws-date-tile" aria-hidden="true" style="width: 54px; height: 56px;">
+        <span class="ws-date-month">{{ event.starts_at|date:"M" }}</span>
+        <span class="ws-date-day">{{ event.starts_at|date:"j" }}</span>
+      </div>
+      <div class="ws-club-title-block">
+        <div class="ws-club-eyebrow-row">
+          <a class="ws-eyebrow" href="{% url 'clubs:detail' club.slug %}" style="text-decoration: underline;">← {{ club.name }}</a>
+          <span class="status-badge {% if event.status == 'completed' %}status-verified{% elif event.status == 'in_progress' %}status-pending{% else %}ws-inprogress-pill{% endif %}">
+            {{ event.get_status_display }}
+          </span>
+        </div>
+        <h1>{{ event.title }}</h1>
+        <p class="ws-club-desc">
+          {{ event.starts_at|date:"l, M j · g:i A" }} · {{ event.location }}
+          {% if event.notes %}<br>{{ event.notes }}{% endif %}
+        </p>
+      </div>
+    </div>
 
-    {% if is_manager %}
-      <a class="ws-btn ws-btn-outline" href="{% url 'clubs:event_update' club.slug event.pk %}">Edit</a>
-      {% if event.status != 'completed' %}
-        <form method="post" action="{% url 'clubs:event_status' club.slug event.pk %}" style="margin: 0;">
+    <div class="ws-hero-actions">
+      {% if is_manager and event.status != 'completed' %}
+        <form method="post" action="{% url 'clubs:event_generate_matches' club.slug event.pk %}" style="margin: 0;">
           {% csrf_token %}
-          <input type="hidden" name="status" value="completed">
-          <button class="ws-btn ws-btn-outline" type="submit">Complete</button>
+          <button class="ws-btn ws-btn-primary" type="submit" {% if not can_generate %}disabled title="Need at least {{ event.players_per_court }} players"{% endif %}>
+            + Generate round
+          </button>
         </form>
       {% endif %}
+
+      {% if my_participation %}
+        <form method="post" action="{% url 'clubs:event_leave' club.slug event.pk %}" style="margin: 0;">
+          {% csrf_token %}
+          <button class="ws-btn ws-btn-outline" type="submit">Leave</button>
+        </form>
+      {% elif event.status != 'completed' and event.status != 'cancelled' %}
+        <form method="post" action="{% url 'clubs:event_join' club.slug event.pk %}" style="margin: 0;">
+          {% csrf_token %}
+          <button class="ws-btn ws-btn-primary" type="submit">Join game</button>
+        </form>
+      {% endif %}
+
+      {% if is_manager %}
+        <a class="ws-btn ws-btn-outline" href="{% url 'clubs:event_update' club.slug event.pk %}">Settings</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="ws-club-meta-strip">
+    <div class="ws-meta-pills">
+      <span class="ws-meta-item"><strong>{{ event.get_format_display }}</strong></span>
+      <span class="ws-meta-item">·</span>
+      <span class="ws-meta-item">{{ event.get_matchmaking_mode_display }}</span>
+      <span class="ws-meta-item">·</span>
+      <span class="ws-meta-item"><strong>{{ event.courts_count }}</strong> court{{ event.courts_count|pluralize }}</span>
+      <span class="ws-meta-item">·</span>
+      <span class="ws-meta-item"><strong>{{ active_roster|length }}/{{ event.max_players }}</strong> players</span>
+    </div>
+
+    {% if is_manager and event.status != 'completed' %}
+      <form method="post" action="{% url 'clubs:event_status' club.slug event.pk %}" style="margin: 0;">
+        {% csrf_token %}
+        <input type="hidden" name="status" value="completed">
+        <button type="submit" class="ws-copy-btn">Mark session complete ✓</button>
+      </form>
     {% endif %}
   </div>
 </section>
 
-{% if event.notes %}
-  <div class="ws-detail-notes" style="margin: 0 0 22px;"><strong>Host notes:</strong> {{ event.notes }}</div>
-{% endif %}
-
 <section class="ws-aligned-two-col ws-aligned-start" style="margin-bottom: 0;">
+  <!-- Left Column: Live Court Matchups -->
   <div class="ws-aligned-col">
     <div class="ws-section-head">
       <h2>Court matchups &amp; scores</h2>
@@ -58,7 +84,7 @@
     </div>
 
     {% if is_manager and can_generate and custom_match_form %}
-      <details class="ws-setup-card" style="padding: 16px 22px; margin-bottom: 16px; flex: none;">
+      <details class="ws-setup-card" style="padding: 15px 20px; margin-bottom: 16px; flex: none;">
         <summary style="cursor: pointer; font-weight: 600; font-size: 13.5px; color: var(--ws-plum);">
           + Create manual matchup (pick players directly)
         </summary>
@@ -80,7 +106,7 @@
     {% if event_matches %}
       <div class="ws-event-match-stack">
         {% for m in event_matches %}
-          <article class="ws-setup-card ws-court-card" style="padding: 20px 24px; margin-bottom: 14px;">
+          <article class="ws-setup-card ws-court-card" style="padding: 20px 22px; margin-bottom: 14px;">
             <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; flex-wrap: wrap;">
               <span class="ws-eyebrow" style="margin: 0;">
                 ROUND {{ m.round_number|default:1 }} · COURT {{ m.court_number|default:1 }} · {{ m.get_match_type_display|upper }}
@@ -132,24 +158,30 @@
                   <div class="ws-host-score-inputs">
                     <div class="ws-mini-game">
                       <span>G1</span>
-                      <input type="number" name="team_a_score" min="0" max="99" placeholder="A" class="field-input ws-compact-score" required>
-                      <span>–</span>
-                      <input type="number" name="team_b_score" min="0" max="99" placeholder="B" class="field-input ws-compact-score" required>
+                      <div class="ws-mini-game-pair">
+                        <input type="number" name="team_a_score" min="0" max="99" placeholder="A" class="field-input ws-compact-score" required>
+                        <span>–</span>
+                        <input type="number" name="team_b_score" min="0" max="99" placeholder="B" class="field-input ws-compact-score" required>
+                      </div>
                     </div>
                     <div class="ws-mini-game">
                       <span>G2</span>
-                      <input type="number" name="game_2_team_a" min="0" max="99" placeholder="—" class="field-input ws-compact-score">
-                      <span>–</span>
-                      <input type="number" name="game_2_team_b" min="0" max="99" placeholder="—" class="field-input ws-compact-score">
+                      <div class="ws-mini-game-pair">
+                        <input type="number" name="game_2_team_a" min="0" max="99" placeholder="—" class="field-input ws-compact-score">
+                        <span>–</span>
+                        <input type="number" name="game_2_team_b" min="0" max="99" placeholder="—" class="field-input ws-compact-score">
+                      </div>
                     </div>
                     <div class="ws-mini-game">
                       <span>G3</span>
-                      <input type="number" name="game_3_team_a" min="0" max="99" placeholder="—" class="field-input ws-compact-score">
-                      <span>–</span>
-                      <input type="number" name="game_3_team_b" min="0" max="99" placeholder="—" class="field-input ws-compact-score">
+                      <div class="ws-mini-game-pair">
+                        <input type="number" name="game_3_team_a" min="0" max="99" placeholder="—" class="field-input ws-compact-score">
+                        <span>–</span>
+                        <input type="number" name="game_3_team_b" min="0" max="99" placeholder="—" class="field-input ws-compact-score">
+                      </div>
                     </div>
                   </div>
-                  <button class="ws-btn ws-btn-primary" style="height: 36px; padding: 0 16px;" type="submit">Save &amp; verify score</button>
+                  <button class="ws-btn ws-btn-primary" style="height: 38px; padding: 0 18px;" type="submit">Save &amp; verify score</button>
                 </form>
               {% else %}
                 <details style="margin-top: 10px;">
@@ -159,24 +191,30 @@
                     <div class="ws-host-score-inputs">
                       <div class="ws-mini-game">
                         <span>G1</span>
-                        <input type="number" name="team_a_score" value="{{ m.team_a_score }}" min="0" max="99" class="field-input ws-compact-score" required>
-                        <span>–</span>
-                        <input type="number" name="team_b_score" value="{{ m.team_b_score }}" min="0" max="99" class="field-input ws-compact-score" required>
+                        <div class="ws-mini-game-pair">
+                          <input type="number" name="team_a_score" value="{{ m.team_a_score }}" min="0" max="99" class="field-input ws-compact-score" required>
+                          <span>–</span>
+                          <input type="number" name="team_b_score" value="{{ m.team_b_score }}" min="0" max="99" class="field-input ws-compact-score" required>
+                        </div>
                       </div>
                       <div class="ws-mini-game">
                         <span>G2</span>
-                        <input type="number" name="game_2_team_a" value="{{ m.game_2_team_a|default_if_none:'' }}" min="0" max="99" class="field-input ws-compact-score">
-                        <span>–</span>
-                        <input type="number" name="game_2_team_b" value="{{ m.game_2_team_b|default_if_none:'' }}" min="0" max="99" class="field-input ws-compact-score">
+                        <div class="ws-mini-game-pair">
+                          <input type="number" name="game_2_team_a" value="{{ m.game_2_team_a|default_if_none:'' }}" min="0" max="99" class="field-input ws-compact-score">
+                          <span>–</span>
+                          <input type="number" name="game_2_team_b" value="{{ m.game_2_team_b|default_if_none:'' }}" min="0" max="99" class="field-input ws-compact-score">
+                        </div>
                       </div>
                       <div class="ws-mini-game">
                         <span>G3</span>
-                        <input type="number" name="game_3_team_a" value="{{ m.game_3_team_a|default_if_none:'' }}" min="0" max="99" class="field-input ws-compact-score">
-                        <span>–</span>
-                        <input type="number" name="game_3_team_b" value="{{ m.game_3_team_b|default_if_none:'' }}" min="0" max="99" class="field-input ws-compact-score">
+                        <div class="ws-mini-game-pair">
+                          <input type="number" name="game_3_team_a" value="{{ m.game_3_team_a|default_if_none:'' }}" min="0" max="99" class="field-input ws-compact-score">
+                          <span>–</span>
+                          <input type="number" name="game_3_team_b" value="{{ m.game_3_team_b|default_if_none:'' }}" min="0" max="99" class="field-input ws-compact-score">
+                        </div>
                       </div>
                     </div>
-                    <button class="ws-btn ws-btn-outline" style="height: 36px; padding: 0 14px;" type="submit">Update &amp; recalculate</button>
+                    <button class="ws-btn ws-btn-outline" style="height: 38px; padding: 0 16px;" type="submit">Update &amp; recalculate</button>
                   </form>
                 </details>
               {% endif %}
@@ -185,26 +223,31 @@
         {% endfor %}
       </div>
     {% else %}
-      <section class="ws-hero-card">
+      <section class="ws-empty-feature" style="margin-bottom: 0;">
         <div>
-          <p class="ws-eyebrow">COURT BOARD READY</p>
-          <h2>No matches generated yet.</h2>
-          <p class="ws-hero-copy" style="margin-bottom: 0;">
-            Once at least {{ event.players_per_court }} players join this {{ event.get_format_display|lower }} session ({{ active_roster|length }}/{{ event.max_players }} joined), click <strong>Generate next round</strong> at the top right to create court pairings automatically.
+          <h3>Court board ready</h3>
+          <p>
+            Need at least {{ event.players_per_court }} players ({{ active_roster|length }}/{{ event.max_players }} joined) to generate {{ event.get_format_display|lower }} court pairings automatically.
           </p>
         </div>
-        <p class="ws-hero-foot">Host-verified scores carry 1.0x rating weight.</p>
+        {% if is_manager and can_generate %}
+          <form method="post" action="{% url 'clubs:event_generate_matches' club.slug event.pk %}" style="margin: 0;">
+            {% csrf_token %}
+            <button class="ws-btn ws-btn-primary" type="submit">Generate Round 1</button>
+          </form>
+        {% endif %}
       </section>
     {% endif %}
   </div>
 
+  <!-- Right Column: Session Roster -->
   <aside class="ws-aligned-col">
     <div class="ws-section-head">
       <h2>Session roster</h2>
-      <span class="ws-td-muted">{{ active_roster|length }}/{{ event.max_players }} joined</span>
+      <span class="ws-td-muted">{{ active_roster|length }}/{{ event.max_players }} in</span>
     </div>
 
-    <div class="ws-setup-card">
+    <div class="ws-setup-card" style="padding: 22px 24px;">
       {% if is_manager and unjoined_members %}
         <form method="post" action="{% url 'clubs:event_add_member' club.slug event.pk %}" style="display: flex; gap: 8px; margin-bottom: 16px;">
           {% csrf_token %}
@@ -219,14 +262,19 @@
 
       <ul class="ws-verify-list" style="margin-bottom: 0;">
         {% for ep in active_roster %}
-          <li {% if forloop.last %}style="border-bottom: 0; padding-bottom: 0;"{% endif %}>
-            <div>
-              <span class="ws-verify-name">{{ ep.user.get_full_name|default:ep.user.email|default:ep.user.username }}</span>
-              <div class="ws-row-sub">
-                {% if ep.user.rating_profile %}
-                  {% if event.format == 'singles' %}{{ ep.user.rating_profile.singles_rating }}{% else %}{{ ep.user.rating_profile.doubles_rating }}{% endif %} rating ·
-                {% endif %}
-                {{ ep.games_played }} game{{ ep.games_played|pluralize }} played
+          <li {% if forloop.last %}style="border-bottom: 0; padding-bottom: 0;"{% endif %} {% if forloop.first and not unjoined_members %}style="padding-top: 0;"{% endif %}>
+            <div class="ws-member-row">
+              <span class="ws-member-avatar" aria-hidden="true">
+                {% if ep.user.first_name and ep.user.last_name %}{{ ep.user.first_name|slice:":1" }}{{ ep.user.last_name|slice:":1" }}{% elif ep.user.first_name %}{{ ep.user.first_name|slice:":2" }}{% else %}{{ ep.user.username|slice:":2" }}{% endif %}
+              </span>
+              <div class="ws-member-info">
+                <span class="ws-verify-name">{{ ep.user.get_full_name|default:ep.user.email|default:ep.user.username }}</span>
+                <div class="ws-row-sub">
+                  {% if ep.user.rating_profile %}
+                    {% if event.format == 'singles' %}{{ ep.user.rating_profile.singles_rating }}{% else %}{{ ep.user.rating_profile.doubles_rating }}{% endif %} ·
+                  {% endif %}
+                  {{ ep.games_played }} game{{ ep.games_played|pluralize }}
+                </div>
               </div>
             </div>
             {% if is_manager %}

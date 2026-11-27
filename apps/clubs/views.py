@@ -921,6 +921,7 @@ def club_leaderboard(request, slug):
             "player_count": len(rows),
             "scope": "club",
             "club": club,
+            "is_manager": club.is_manager(request.user),
             "my_clubs": my_clubs,
             "match_format": match_format,
         },

@@ -2,12 +2,29 @@
 {% block title %}Manage {{ club.name }} · RallyRate{% endblock %}
 {% block nav_clubs %}active{% endblock %}
 {% block content %}
-<section class="ws-page-head">
-  <div>
-    <h1>Manage {{ club.name }}</h1>
-    <p class="ws-page-sub">Update club details, rotate invite codes, and manage hosts &amp; members.</p>
+
+<section class="ws-club-hero">
+  <div class="ws-club-hero-main">
+    <div class="ws-club-identity">
+      <div class="ws-club-crest" aria-hidden="true">{{ club.name|slice:":2" }}</div>
+      <div class="ws-club-title-block">
+        <div class="ws-club-eyebrow-row">
+          <p class="ws-eyebrow">{{ club.home_court }} · CLUB ADMINISTRATION</p>
+          <span class="status-badge status-verified">{% if is_host %}Host{% else %}Co-host{% endif %}</span>
+        </div>
+        <h1>Manage {{ club.name }}</h1>
+        <p class="ws-club-desc">Update club details, rotate your invite code, and manage co-hosts &amp; member access.</p>
+      </div>
+    </div>
   </div>
-  <a class="ws-btn ws-btn-outline" href="{% url 'clubs:detail' club.slug %}">Back to club</a>
+
+  <nav class="ws-club-tabs" aria-label="Club sections">
+    <a class="ws-club-tab" href="{% url 'clubs:detail' club.slug %}">Overview</a>
+    <a class="ws-club-tab" href="{% url 'clubs:club_leaderboard' club.slug %}">Club standings</a>
+    <a class="ws-club-tab active" href="{% url 'clubs:manage' club.slug %}">
+      Manage club{% if pending_memberships %}<span class="ws-tab-badge">{{ pending_memberships|length }}</span>{% endif %}
+    </a>
+  </nav>
 </section>
 
 <section class="ws-profile-grid" style="margin-bottom: 28px;">
@@ -41,21 +58,24 @@
     </form>
   </div>
 
-  <aside class="ws-setup-card">
-    <h2>Invite code</h2>
-    <p class="ws-muted-small" style="margin: 0 0 12px;">Anyone with this code can join {{ club.name }} immediately.</p>
-    <div class="ws-readonly-box" style="font-weight: 700; font-size: 18px; color: var(--ws-plum); justify-content: center; margin-bottom: 14px;">
-      {{ club.join_code }}
+  <aside class="ws-setup-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+    <div>
+      <h2>Invite code</h2>
+      <p class="ws-muted-small" style="margin: 0 0 14px; line-height: 1.5;">Anyone with this code can join {{ club.name }} immediately.</p>
+      <div class="ws-readonly-box" style="font-weight: 800; font-size: 19px; color: var(--ws-plum); justify-content: space-between; margin-bottom: 12px;">
+        <span>{{ club.join_code }}</span>
+        <button type="button" class="ws-copy-btn" data-copy-code="{{ club.join_code }}">Copy</button>
+      </div>
+      <form method="post" action="{% url 'clubs:regenerate_code' club.slug %}">
+        {% csrf_token %}
+        <button class="ws-btn ws-btn-outline ws-submit-full" type="submit">Rotate invite code</button>
+      </form>
     </div>
-    <form method="post" action="{% url 'clubs:regenerate_code' club.slug %}">
-      {% csrf_token %}
-      <button class="ws-btn ws-btn-outline ws-submit-full" type="submit">Rotate invite code</button>
-    </form>
 
     {% if is_host %}
       <div class="ws-breakdown-wrap" style="margin-top: 24px;">
-        <h3 style="margin: 0 0 8px; font-size: 14px; color: var(--ws-red-ink);">Danger zone</h3>
-        <p class="ws-muted-small" style="margin: 0 0 12px;">Deleting the club removes its events and memberships (verified match history stays preserved).</p>
+        <h3 style="margin: 0 0 6px; font-size: 13.5px; color: var(--ws-red-ink);">Danger zone</h3>
+        <p class="ws-muted-small" style="margin: 0 0 12px;">Deleting the club removes its sessions and memberships while keeping verified match history.</p>
         <form method="post" action="{% url 'clubs:delete' club.slug %}" onsubmit="return confirm('Delete this club permanently?');">
           {% csrf_token %}
           <button class="ws-btn ws-btn-danger ws-submit-full" type="submit">Delete club</button>
@@ -117,10 +137,15 @@
       {% for m in active_memberships %}
         <tr>
           <td data-label="Member">
-            <span>
-              <span class="ws-row-primary">{{ m.user.get_full_name|default:m.user.username }}</span>
-              {% if m.user_id == request.user.id %}<span class="ws-muted-small"> · you</span>{% endif %}
-            </span>
+            <div class="ws-member-row">
+              <span class="ws-member-avatar" aria-hidden="true">
+                {% if m.user.first_name and m.user.last_name %}{{ m.user.first_name|slice:":1" }}{{ m.user.last_name|slice:":1" }}{% elif m.user.first_name %}{{ m.user.first_name|slice:":2" }}{% else %}{{ m.user.username|slice:":2" }}{% endif %}
+              </span>
+              <span>
+                <span class="ws-row-primary">{{ m.user.get_full_name|default:m.user.username }}</span>
+                {% if m.user_id == request.user.id %}<span class="ws-muted-small"> · you</span>{% endif %}
+              </span>
+            </div>
           </td>
           <td data-label="Contact" class="ws-td-muted">{{ m.user.email|default:"—" }}</td>
           <td data-label="Role">
@@ -130,7 +155,7 @@
           </td>
           <td data-label="Manage" class="ws-align-right">
             {% if is_host and m.role != 'host' %}
-              <div class="ws-inline-actions" style="justify-content: flex-end;">
+              <div class="ws-inline-actions" style="justify-content: flex-end; flex-wrap: wrap;">
                 {% if m.role == 'member' %}
                   <form method="post" action="{% url 'clubs:update_member_role' club.slug m.pk %}" style="margin: 0;">
                     {% csrf_token %}

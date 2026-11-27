@@ -2,59 +2,75 @@
 {% block title %}{{ club.name }} · RallyRate{% endblock %}
 {% block nav_clubs %}active{% endblock %}
 {% block content %}
-<section class="ws-page-head">
-  <div>
-    <p class="ws-eyebrow" style="margin-bottom: 6px;">{{ club.home_court }} · {% if club.is_public %}PUBLIC CLUB{% else %}INVITE-ONLY CLUB{% endif %}</p>
-    <h1>{{ club.name }}</h1>
-    {% if club.description %}
-      <p class="ws-page-sub">{{ club.description }}</p>
-    {% else %}
-      <p class="ws-page-sub">Club sessions, verified matches, and member standings.</p>
-    {% endif %}
-  </div>
-  <div class="ws-inline-actions" style="flex-wrap: wrap;">
-    <a class="ws-btn ws-btn-outline" href="{% url 'clubs:club_leaderboard' club.slug %}">Club standings</a>
-    {% if is_manager %}
-      {% url 'clubs:event_create' club.slug as create_event_url %}
-      {% if create_event_url %}
-        <a class="ws-btn ws-btn-primary" href="{{ create_event_url }}">Create game</a>
-      {% endif %}
-      <a class="ws-btn ws-btn-outline" href="{% url 'clubs:manage' club.slug %}">
-        Manage{% if pending_count %} ({{ pending_count }}){% endif %}
-      </a>
-    {% elif not is_member %}
-      <form method="post" action="{% url 'clubs:join' club.slug %}" style="margin: 0;">
-        {% csrf_token %}
-        <button class="ws-btn ws-btn-primary" type="submit">Join club</button>
-      </form>
-    {% endif %}
-  </div>
-</section>
+{% url 'clubs:event_create' club.slug as create_event_url %}
 
-<section class="ws-stat-grid">
-  <article class="ws-stat-card ws-stat-tinted">
-    <p class="ws-stat-label">Club invite code</p>
-    <div class="ws-stat-value ws-plum-text" style="font-size: 28px;">
-      {% if is_member %}{{ club.join_code }}{% else %}Members only{% endif %}
+<!-- Club Identity Hero + Meta Bar + Sub-Navigation -->
+<section class="ws-club-hero">
+  <div class="ws-club-hero-main">
+    <div class="ws-club-identity">
+      <div class="ws-club-crest" aria-hidden="true">{{ club.name|slice:":2" }}</div>
+      <div class="ws-club-title-block">
+        <div class="ws-club-eyebrow-row">
+          <p class="ws-eyebrow">{{ club.home_court }} · {% if club.is_public %}PUBLIC CLUB{% else %}INVITE-ONLY{% endif %}</p>
+          {% if membership %}
+            <span class="status-badge {% if membership.role == 'host' or membership.role == 'co_host' %}status-verified{% else %}ws-inprogress-pill{% endif %}">
+              {{ membership.get_role_display }}
+            </span>
+          {% endif %}
+        </div>
+        <h1>{{ club.name }}</h1>
+        {% if club.description %}
+          <p class="ws-club-desc">{{ club.description }}</p>
+        {% else %}
+          <p class="ws-club-desc">Open-play pickleball sessions, verified match records, and club member standings.</p>
+        {% endif %}
+      </div>
     </div>
-    <p class="ws-stat-note ws-plum-note">
-      {% if is_member %}Share with players to join directly{% else %}Join club to view invite code{% endif %}
-    </p>
-  </article>
 
-  <article class="ws-stat-card">
-    <p class="ws-stat-label">Active members</p>
-    <div class="ws-stat-value">{{ member_count }}</div>
-    <p class="ws-stat-note">
-      {% if membership %}Your role: <strong>{{ membership.get_role_display }}</strong>{% else %}Public visitor{% endif %}
-    </p>
-  </article>
+    <div class="ws-hero-actions">
+      {% if is_manager %}
+        {% url 'clubs:event_create' club.slug as create_event_url %}
+        {% if create_event_url %}
+          <a class="ws-btn ws-btn-primary" href="{{ create_event_url }}">+ Host a game</a>
+        {% endif %}
+        <a class="ws-btn ws-btn-outline" href="{% url 'matches:create' %}?club={{ club.slug }}">Log match</a>
+      {% elif is_member %}
+        <a class="ws-btn ws-btn-primary" href="{% url 'matches:create' %}?club={{ club.slug }}">Log club match</a>
+      {% else %}
+        <form method="post" action="{% url 'clubs:join' club.slug %}" style="margin: 0;">
+          {% csrf_token %}
+          <button class="ws-btn ws-btn-primary" type="submit">Join club</button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
 
-  <article class="ws-stat-card">
-    <p class="ws-stat-label">Club sessions</p>
-    <div class="ws-stat-value">{{ events|length }}</div>
-    <p class="ws-stat-note"><a class="ws-text-link" href="{% url 'clubs:club_leaderboard' club.slug %}">View club standings →</a></p>
-  </article>
+  <div class="ws-club-meta-strip">
+    <div class="ws-meta-pills">
+      <span class="ws-meta-item"><strong>{{ member_count }}</strong> member{{ member_count|pluralize }}</span>
+      <span class="ws-meta-item">·</span>
+      <span class="ws-meta-item"><strong>{{ events|length }}</strong> session{{ events|length|pluralize }}</span>
+      <span class="ws-meta-item">·</span>
+      <span class="ws-meta-item">{{ club.home_court }}</span>
+    </div>
+
+    {% if is_member %}
+      <div class="ws-copy-chip">
+        <span>Invite code: <code>{{ club.join_code }}</code></span>
+        <button type="button" class="ws-copy-btn" data-copy-code="{{ club.join_code }}">Copy</button>
+      </div>
+    {% endif %}
+  </div>
+
+  <nav class="ws-club-tabs" aria-label="Club sections">
+    <a class="ws-club-tab active" href="{% url 'clubs:detail' club.slug %}">Overview</a>
+    <a class="ws-club-tab" href="{% url 'clubs:club_leaderboard' club.slug %}">Club standings</a>
+    {% if is_manager %}
+      <a class="ws-club-tab" href="{% url 'clubs:manage' club.slug %}">
+        Manage club{% if pending_count %}<span class="ws-tab-badge">{{ pending_count }}</span>{% endif %}
+      </a>
+    {% endif %}
+  </nav>
 </section>
 
 {% if is_manager and disputed_club_matches %}
@@ -65,54 +81,64 @@
 {% endif %}
 
 <section class="ws-aligned-two-col ws-aligned-start" style="margin-bottom: 0;">
+  <!-- Left Column: Open-Play Sessions & Recent Matches -->
   <div class="ws-aligned-col">
     <div class="ws-section-head">
-      <h2>Club games &amp; open play</h2>
+      <h2>Open-play sessions</h2>
       {% if is_manager %}
         {% url 'clubs:event_create' club.slug as create_event_url %}
         {% if create_event_url %}
-          <a class="ws-text-link" href="{{ create_event_url }}">+ Host a game</a>
+          <a class="ws-text-link" href="{{ create_event_url }}">+ New session</a>
         {% endif %}
       {% endif %}
     </div>
 
     {% if events %}
-      <div class="ws-table-card" style="margin-bottom: 26px;">
-        <table class="ws-table ws-mobile-cards">
-          <thead>
-            <tr>
-              <th>GAME / SESSION</th>
-              <th>FORMAT</th>
-              <th>COURT</th>
-              <th>STATUS</th>
-              <th class="ws-align-right">ACTION</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for ev in events %}
-              <tr>
-                <td data-label="Session">
-                  <div>
-                    <a class="ws-row-primary" href="{% url 'clubs:event_detail' club.slug ev.pk %}">{{ ev.title }}</a>
-                    <div class="ws-row-sub">{{ ev.starts_at|date:"M j, Y · g:i A" }}</div>
-                  </div>
-                </td>
-                <td data-label="Format" class="ws-td-muted">{{ ev.get_format_display }}</td>
-                <td data-label="Court" class="ws-td-muted">{{ ev.location }}</td>
-                <td data-label="Status"><span class="status-badge {% if ev.status == 'completed' %}status-verified{% elif ev.status == 'in_progress' %}status-pending{% else %}ws-inprogress-pill{% endif %}">{{ ev.get_status_display }}</span></td>
-                <td data-label="Action" class="ws-align-right">
-                  <a class="ws-text-link" href="{% url 'clubs:event_detail' club.slug ev.pk %}">Open →</a>
-                </td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+      <div class="ws-session-stack">
+        {% for ev in events %}
+          <article class="ws-session-card">
+            <div class="ws-session-left">
+              <div class="ws-date-tile" aria-hidden="true">
+                <span class="ws-date-month">{{ ev.starts_at|date:"M" }}</span>
+                <span class="ws-date-day">{{ ev.starts_at|date:"j" }}</span>
+              </div>
+              <div class="ws-session-info">
+                <a class="ws-session-title" href="{% url 'clubs:event_detail' club.slug ev.pk %}">{{ ev.title }}</a>
+                <div class="ws-session-meta">
+                  <span>{{ ev.starts_at|date:"g:i A" }}</span>
+                  <span>·</span>
+                  <span>{{ ev.location }}</span>
+                  <span>·</span>
+                  <span>{{ ev.get_format_display }}</span>
+                </div>
+              </div>
+            </div>
+            <div class="ws-session-right">
+              <span class="ws-td-muted">{{ ev.player_count|default:0 }}/{{ ev.max_players }} in</span>
+              <span class="status-badge {% if ev.status == 'completed' %}status-verified{% elif ev.status == 'in_progress' %}status-pending{% else %}ws-inprogress-pill{% endif %}">
+                {{ ev.get_status_display }}
+              </span>
+              <a class="ws-text-link" href="{% url 'clubs:event_detail' club.slug ev.pk %}">Open →</a>
+            </div>
+          </article>
+        {% endfor %}
       </div>
     {% else %}
-      <section class="ws-empty-inline" style="margin-bottom: 26px;">
-        <p>No scheduled club games yet. {% if is_manager %}Create an open-play session to let members join and auto-generate matchups!{% else %}Check back soon or log a peer match with another member.{% endif %}</p>
-        {% if is_member %}
-          <a class="ws-text-link" href="{% url 'matches:create' %}?club={{ club.slug }}">Log club peer match →</a>
+      <section class="ws-empty-feature">
+        <div>
+          <h3>No open-play games scheduled yet</h3>
+          <p>
+            {% if is_manager %}
+              Host a pickleball session so members can join the roster, auto-generate balanced court pairings, and record scores live.
+            {% else %}
+              Check back when a host posts the next session, or log a peer match with another club member anytime.
+            {% endif %}
+          </p>
+        </div>
+        {% if is_manager and create_event_url %}
+          <a class="ws-btn ws-btn-primary" href="{{ create_event_url }}">Create session</a>
+        {% elif is_member %}
+          <a class="ws-btn ws-btn-outline" href="{% url 'matches:create' %}?club={{ club.slug }}">Log peer match</a>
         {% endif %}
       </section>
     {% endif %}
@@ -120,7 +146,7 @@
     <div class="ws-section-head">
       <h2>Recent club matches</h2>
       {% if is_member %}
-        <a class="ws-text-link" href="{% url 'matches:create' %}?club={{ club.slug }}">Record club match →</a>
+        <a class="ws-text-link" href="{% url 'matches:create' %}?club={{ club.slug }}">Record match →</a>
       {% endif %}
     </div>
 
@@ -130,7 +156,7 @@
           <thead>
             <tr>
               <th>DATE</th>
-              <th>PLAYERS</th>
+              <th>MATCHUP</th>
               <th>SCORE</th>
               <th class="ws-align-right">STATUS</th>
             </tr>
@@ -139,7 +165,7 @@
             {% for m in club_matches %}
               <tr>
                 <td data-label="Date" class="ws-td-muted">{{ m.played_at|date:"M j" }}</td>
-                <td data-label="Players">
+                <td data-label="Matchup">
                   <div>
                     <a class="ws-row-primary" href="{% url 'matches:detail' m.pk %}">
                       {% for p in m.team_a_participants %}{{ p.player.get_full_name|default:p.player.username }}{% if not forloop.last %} &amp; {% endif %}{% endfor %}
@@ -158,26 +184,33 @@
       </div>
     {% else %}
       <section class="ws-empty-inline">
-        <p>No matches logged under this club yet.</p>
+        <p>No matches logged under {{ club.name }} yet.</p>
+        <a class="ws-text-link" href="{% url 'clubs:club_leaderboard' club.slug %}">View club standings →</a>
       </section>
     {% endif %}
   </div>
 
+  <!-- Right Column: Club Roster -->
   <aside class="ws-aligned-col">
     <div class="ws-section-head">
       <h2>Club roster</h2>
-      <span class="ws-td-muted">{{ member_count }} member{{ member_count|pluralize }}</span>
+      <a class="ws-text-link" href="{% url 'clubs:club_leaderboard' club.slug %}">Standings →</a>
     </div>
 
-    <div class="ws-setup-card">
+    <div class="ws-setup-card" style="padding: 22px 24px;">
       <ul class="ws-verify-list" style="margin-bottom: 0;">
         {% for m in active_memberships %}
-          <li {% if forloop.last %}style="border-bottom: 0; padding-bottom: 0;"{% endif %}>
-            <div>
-              <span class="ws-verify-name">{{ m.user.get_full_name|default:m.user.first_name|default:m.user.email|default:m.user.username }}</span>
-              {% if m.user.rating_profile %}
-                <div class="ws-row-sub">DBL {{ m.user.rating_profile.doubles_rating }} · SGL {{ m.user.rating_profile.singles_rating }}</div>
-              {% endif %}
+          <li {% if forloop.last %}style="border-bottom: 0; padding-bottom: 0;"{% endif %} {% if forloop.first %}style="padding-top: 0;"{% endif %}>
+            <div class="ws-member-row">
+              <span class="ws-member-avatar" aria-hidden="true">
+                {% if m.user.first_name and m.user.last_name %}{{ m.user.first_name|slice:":1" }}{{ m.user.last_name|slice:":1" }}{% elif m.user.first_name %}{{ m.user.first_name|slice:":2" }}{% else %}{{ m.user.username|slice:":2" }}{% endif %}
+              </span>
+              <div class="ws-member-info">
+                <span class="ws-verify-name">{{ m.user.get_full_name|default:m.user.first_name|default:m.user.email|default:m.user.username }}</span>
+                {% if m.user.rating_profile %}
+                  <div class="ws-row-sub">DBL {{ m.user.rating_profile.doubles_rating }} · SGL {{ m.user.rating_profile.singles_rating }}</div>
+                {% endif %}
+              </div>
             </div>
             <span class="{% if m.role == 'host' or m.role == 'co_host' %}status-badge status-verified{% else %}ws-muted-small{% endif %}">
               {{ m.get_role_display }}
@@ -186,8 +219,15 @@
         {% endfor %}
       </ul>
 
+      {% if is_member and member_count < 4 %}
+        <div class="ws-roster-invite-box">
+          <span>Invite players with code <strong>{{ club.join_code }}</strong> to fill your first court.</span>
+          <button type="button" class="ws-copy-btn" data-copy-code="{{ club.join_code }}">Copy</button>
+        </div>
+      {% endif %}
+
       {% if is_member and not is_host %}
-        <form method="post" action="{% url 'clubs:leave' club.slug %}" style="margin-top: 20px;">
+        <form method="post" action="{% url 'clubs:leave' club.slug %}" style="margin-top: 18px;">
           {% csrf_token %}
           <button class="ws-btn ws-btn-outline ws-submit-full" type="submit">Leave club</button>
         </form>

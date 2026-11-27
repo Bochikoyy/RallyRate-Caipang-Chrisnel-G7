@@ -3178,3 +3178,540 @@
     text-align: left;
   }
 }
+
+
+/* ==========================================================================
+   Elevated Club, Session & Mobile UI System (Reclub-Grade Polish)
+   ========================================================================== */
+
+/* Club & Session Hero Card */
+.ws-club-hero {
+  background: #ffffff;
+  border: 1px solid var(--ws-border);
+  border-radius: 16px;
+  padding: 28px 30px 0;
+  margin-bottom: 26px;
+  box-shadow: 0 8px 28px rgba(36, 30, 34, 0.035);
+  overflow: hidden;
+}
+
+.ws-club-hero-main {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding-bottom: 22px;
+}
+
+.ws-club-identity {
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+  min-width: 0;
+  flex: 1;
+}
+
+.ws-club-crest {
+  flex: none;
+  width: 54px;
+  height: 54px;
+  border-radius: 14px;
+  background: linear-gradient(145deg, var(--ws-plum) 0%, #7a244e 100%);
+  color: #ffffff;
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 6px 16px rgba(89, 23, 54, 0.2);
+}
+
+.ws-club-crest-sm {
+  width: 42px;
+  height: 42px;
+  border-radius: 11px;
+  font-size: 14.5px;
+}
+
+.ws-club-title-block {
+  min-width: 0;
+  flex: 1;
+}
+
+.ws-club-eyebrow-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.ws-club-eyebrow-row .ws-eyebrow {
+  margin: 0;
+}
+
+.ws-club-title-block h1 {
+  margin: 0 0 8px;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.7px;
+  line-height: 1.15;
+  color: var(--ws-ink);
+}
+
+.ws-club-desc {
+  margin: 0;
+  max-width: 66ch;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ws-muted);
+}
+
+.ws-hero-actions {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Integrated Meta Strip (Invite Code Copy Chip + Quick Metrics) */
+.ws-club-meta-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 14px 30px;
+  margin: 0 -30px;
+  background: #faf7f9;
+  border-top: 1px solid var(--ws-border);
+}
+
+.ws-meta-pills {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: #5c5158;
+}
+
+.ws-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ws-meta-item strong {
+  font-weight: 700;
+  color: var(--ws-ink);
+}
+
+.ws-copy-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 6px 5px 12px;
+  border-radius: 999px;
+  background: #ffffff;
+  border: 1px solid #dfd3da;
+  font-size: 12.5px;
+  color: var(--ws-muted);
+}
+
+.ws-copy-chip code {
+  font-family: 'Inter', monospace;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  color: var(--ws-plum);
+}
+
+.ws-copy-btn {
+  border: 0;
+  border-radius: 999px;
+  padding: 4px 11px;
+  background: var(--ws-blush);
+  color: var(--ws-plum);
+  font: 600 11.5px 'Inter', 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.ws-copy-btn:hover {
+  background: var(--ws-plum);
+  color: #ffffff;
+}
+
+/* Club Sub-Navigation Tabs */
+.ws-club-tabs {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 0 30px;
+  margin: 0 -30px;
+  background: #ffffff;
+  border-top: 1px solid var(--ws-border);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.ws-club-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.ws-club-tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 13px 2px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ws-muted);
+  white-space: nowrap;
+  border-bottom: 2.5px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.ws-club-tab:hover {
+  color: var(--ws-plum);
+}
+
+.ws-club-tab.active {
+  color: var(--ws-plum);
+  border-bottom-color: var(--ws-plum);
+}
+
+.ws-tab-badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 19px;
+  height: 19px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--ws-blush);
+  color: var(--ws-plum);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* Session Cards List (Reclub-style Open Play Feed) */
+.ws-session-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.ws-session-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 20px;
+  background: #ffffff;
+  border: 1px solid var(--ws-border);
+  border-radius: 14px;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+}
+
+.ws-session-card:hover {
+  border-color: #d3beca;
+  box-shadow: 0 8px 22px rgba(56, 21, 40, 0.05);
+}
+
+.ws-session-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+  flex: 1;
+}
+
+.ws-date-tile {
+  flex: none;
+  width: 52px;
+  height: 54px;
+  border-radius: 11px;
+  background: var(--ws-blush);
+  border: 1px solid var(--ws-blush-strong);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.1;
+}
+
+.ws-date-month {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--ws-plum);
+}
+
+.ws-date-day {
+  margin-top: 2px;
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--ws-ink);
+}
+
+.ws-session-info {
+  min-width: 0;
+}
+
+.ws-session-title {
+  display: inline-block;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ws-ink);
+  margin-bottom: 3px;
+}
+
+.ws-session-card:hover .ws-session-title {
+  color: var(--ws-plum);
+}
+
+.ws-session-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 12.5px;
+  color: var(--ws-muted);
+}
+
+.ws-session-right {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Rich Empty Feature Card */
+.ws-empty-feature {
+  background: #ffffff;
+  border: 1px dashed #dccdd5;
+  border-radius: 14px;
+  padding: 26px 26px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 26px;
+}
+
+.ws-empty-feature h3 {
+  margin: 0 0 5px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ws-ink);
+}
+
+.ws-empty-feature p {
+  margin: 0;
+  max-width: 46ch;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ws-muted);
+}
+
+/* Member Roster & Leaderboard Initials Avatars */
+.ws-member-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.ws-member-avatar {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--ws-blush);
+  border: 1px solid #e2d2da;
+  color: var(--ws-plum);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  display: grid;
+  place-items: center;
+}
+
+.ws-member-info {
+  min-width: 0;
+}
+
+.ws-roster-invite-box {
+  margin-top: 18px;
+  padding: 14px 16px;
+  border-radius: 11px;
+  background: #faf6f8;
+  border: 1px dashed #dfd1d8;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.ws-roster-invite-box span {
+  font-size: 12px;
+  line-height: 1.45;
+  color: #6b5e66;
+}
+
+/* Rank Badges */
+.ws-rank-pill {
+  display: inline-grid;
+  place-items: center;
+  min-width: 28px;
+  height: 26px;
+  padding: 0 7px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 700;
+  background: #f4eff2;
+  color: #6b5e66;
+}
+
+.ws-rank-01 {
+  background: #fdf3d7;
+  color: #8a5b0d;
+  border: 1px solid #f2dc9c;
+}
+
+.ws-rank-02 {
+  background: #eef1f5;
+  color: #475569;
+  border: 1px solid #dce2ea;
+}
+
+.ws-rank-03 {
+  background: #faebe4;
+  color: #8c4627;
+  border: 1px solid #efd3c5;
+}
+
+/* Capacity Progress Bar (Event Detail) */
+.ws-capacity-bar {
+  width: 120px;
+  height: 7px;
+  border-radius: 999px;
+  background: #eadfe5;
+  overflow: hidden;
+}
+
+.ws-capacity-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--ws-plum);
+}
+
+/* Mobile Refinements for Club Hero, Sessions, Scoreboard & Cards */
+@media (max-width: 920px) {
+  .ws-club-hero {
+    padding: 20px 18px 0;
+  }
+  .ws-club-hero-main {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+    padding-bottom: 18px;
+  }
+  .ws-club-identity {
+    gap: 14px;
+  }
+  .ws-club-crest {
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    font-size: 16px;
+  }
+  .ws-club-title-block h1 {
+    font-size: 23px;
+  }
+  .ws-club-desc {
+    font-size: 13.5px;
+  }
+  .ws-hero-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
+    gap: 10px;
+  }
+  .ws-hero-actions .ws-btn,
+  .ws-hero-actions form,
+  .ws-hero-actions form .ws-btn {
+    width: 100%;
+    padding: 0 12px;
+  }
+  .ws-club-meta-strip {
+    padding: 12px 18px;
+    margin: 0 -18px;
+    gap: 12px;
+  }
+  .ws-copy-chip {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .ws-club-tabs {
+    padding: 0 18px;
+    margin: 0 -18px;
+    gap: 20px;
+  }
+}
+
+@media (max-width: 640px) {
+  .ws-session-card {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 15px 16px;
+    gap: 12px;
+  }
+  .ws-session-right {
+    padding-top: 10px;
+    border-top: 1px solid #f3edf0;
+    justify-content: space-between;
+  }
+  .ws-empty-feature {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 20px 18px;
+    gap: 14px;
+  }
+  .ws-empty-feature .ws-btn {
+    width: 100%;
+  }
+  .ws-host-score-inputs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .ws-mini-game {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+    background: #faf7f9;
+    padding: 8px;
+    border-radius: 9px;
+    border: 1px solid var(--ws-border);
+    text-align: center;
+  }
+  .ws-mini-game-pair {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+  .ws-compact-score {
+    width: 42px !important;
+    height: 36px !important;
+    padding: 4px !important;
+    font-size: 16px !important;
+  }
+}

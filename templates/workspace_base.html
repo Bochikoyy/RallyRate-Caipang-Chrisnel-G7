@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#ffffff">
   <title>{% block title %}RallyRate{% endblock %}</title>
-  <link rel="stylesheet" href="{% static 'css/site.css' %}?v=20261126-mobile-rebase">
+  <link rel="stylesheet" href="{% static 'css/site.css' %}?v=20261127-reclub-ui">
 </head>
 <body class="ws-body {% block body_class %}{% endblock %}">
   {% if messages %}
@@ -247,6 +247,18 @@
         toast.addEventListener('mouseleave', function () { t = setTimeout(hideToast, 2500); });
         const btn = toast.querySelector('[data-toast-close]');
         if (btn) btn.addEventListener('click', hideToast);
+      });
+
+      document.querySelectorAll('[data-copy-code]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          const code = btn.getAttribute('data-copy-code');
+          if (!code || !navigator.clipboard) return;
+          navigator.clipboard.writeText(code).then(function () {
+            const prev = btn.textContent;
+            btn.textContent = 'Copied!';
+            setTimeout(function () { btn.textContent = prev; }, 1600);
+          });
+        });
       });
     })();
   </script>
