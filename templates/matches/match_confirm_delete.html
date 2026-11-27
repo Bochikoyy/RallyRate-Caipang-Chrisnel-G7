@@ -1,0 +1,26 @@
+{% extends 'workspace_base.html' %}
+{% block title %}Delete match {{ match.match_code }} · RallyRate{% endblock %}
+{% block nav_history %}active{% endblock %}
+{% block content %}
+<section class="ws-page-head">
+  <div>
+    <h1>Delete match {{ match.match_code }}?</h1>
+    <p class="ws-page-sub">This permanently removes the pending match record and its participant entries.</p>
+  </div>
+  <a class="ws-btn ws-btn-outline" href="{% url 'matches:detail' match.pk %}">Back to match</a>
+</section>
+
+<section class="ws-setup-card" style="max-width: 620px;">
+  <p class="ws-eyebrow">{{ match.get_match_type_display|upper }} · {{ match.played_at|date:"F j, Y"|upper }}</p>
+  <h2 style="margin-bottom: 6px;">{{ match.location }} ({{ match.score_display }})</h2>
+  <p class="ws-page-sub" style="margin-bottom: 24px;">Status: {{ match.get_status_display }}</p>
+
+  <form method="post">
+    {% csrf_token %}
+    <div style="display: flex; align-items: center; gap: 14px;">
+      <button class="ws-btn ws-btn-danger" type="submit">Yes, delete match</button>
+      <a class="ws-btn ws-btn-outline" href="{% url 'matches:detail' match.pk %}">Cancel</a>
+    </div>
+  </form>
+</section>
+{% endblock %}

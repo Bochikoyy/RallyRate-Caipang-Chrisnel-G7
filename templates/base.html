@@ -4,17 +4,18 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#311322">
+  <meta name="theme-color" content="#fdfcfb">
   <title>{% block title %}RallyRate{% endblock %}</title>
-  <link rel="stylesheet" href="{% static 'css/site.css' %}?v=20261118-login-fixed-feedback">
+  <link rel="stylesheet" href="{% static 'css/site.css' %}?v=20261126-mobile-rebase">
 </head>
 <body class="{% block body_class %}{% endblock %}">
   <header class="topbar {% block header_class %}{% endblock %}">
-    <a class="brand" href="{% url 'accounts:dashboard' %}"><span class="brand-mark">R</span> RallyRate</a>
+    <a class="brand" href="{% url 'accounts:dashboard' %}"><img class="auth-brand-mascot" src="{% static 'images/rallyraye.png' %}" alt=""><span class="brand-mark">R</span> RallyRate</a>
     {% block header_actions %}
       {% if request.user.is_authenticated %}
         <nav class="nav-links">
           <a href="{% url 'accounts:dashboard' %}">Dashboard</a>
+          <a href="{% url 'matches:list' %}">Matches</a>
           <a href="{% url 'accounts:profile' %}">Profile</a>
           <form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}<button class="nav-button" type="submit">Log out</button></form>
         </nav>
@@ -27,6 +28,6 @@
     {% if messages %}<div class="messages">{% for message in messages %}<div class="message {{ message.tags }}">{{ message }}</div>{% endfor %}</div>{% endif %}
     {% block content %}{% endblock %}
   </main>
-  <footer class="footer">{% block footer %}RallyRate <span>?</span> Play, record, improve.{% endblock %}</footer>
+  <footer class="footer">{% block footer %}RallyRate <span>·</span> Play, record, improve.{% endblock %}</footer>
 </body>
 </html>

@@ -1,0 +1,181 @@
+from django.contrib.auth import get_user_model
+from django.db.models import Case, IntegerField, Q, Value, When
+from django.utils import timezone
+
+from .models import Match, MatchParticipant
+
+
+def _match_queryset():
+    qs = Match.objects.select_related(
+        "club",
+        "event",
+        "submitted_by",
+        "verified_by",
+        "disputed_by",
+    ).prefetch_related("participants__player")
+    if hasattr(Match, "rating_entries"):
+        qs = qs.prefetch_related("rating_entries")
+    return qs
+
+
+def _display_name(user):
+    full_name = f"{user.first_name} {user.last_name}".strip()
+    return full_name or user.email or user.username
+
+
+def _decorate_match_for_player(match, user):
+    actual_team = match.participant_team_for(user)
+    if actual_team is None:
+        team_a = [_display_name(p.player) for p in match.participants.all() if p.team == MatchParticipant.Team.TEAM_A]
+        team_b = [_display_name(p.player) for p in match.participants.all() if p.team == MatchParticipant.Team.TEAM_B]
+        match.partner_line = " · ".join(team_a) if team_a else "Team A"
+        match.opponents_line = f"vs {' · '.join(team_b)}" if team_b else "vs Team B"
+        return match
+
+    teammates = []
+    opponents = []
+    for p in match.participants.all():
+        if p.team == actual_team:
+            if p.player_id != user.id:
+                teammates.append(_display_name(p.player))
+        else:
+            opponents.append(_display_name(p.player))
+
+    if match.match_type == Match.MatchType.DOUBLES:
+        match.partner_line = " · ".join(teammates) if teammates else "Doubles partner"
+    else:
+        match.partner_line = "Singles match"
+    match.opponents_line = " · ".join(opponents) if opponents else "Opponent"
+    return match
+
+
+def _time_greeting():
+    hour = timezone.localtime().hour
+    if hour < 12:
+        return "Good morning"
+    if hour < 18:
+        return "Good afternoon"
+    return "Good evening"
+
+
+def get_player_dashboard_summary(user):
+    from apps.ratings.engine import get_or_create_profile
+
+    profile = get_or_create_profile(user)
+    user_matches = list(
+        _match_queryset()
+        .filter(Q(submitted_by=user) | Q(participants__player=user))
+        .distinct()
+    )
+
+    verified_count = 0
+    wins = 0
+    losses = 0
+    pending_count = 0
+    disputed_count = 0
+    awaiting_confirmation = []
+    verified_matches = []
+
+    for match in user_matches:
+        _decorate_match_for_player(match, user)
+        match.player_delta = None
+        if hasattr(match, "rating_entries"):
+            for entry in match.rating_entries.all():
+                if entry.user_id == user.id:
+                    sign = "+" if entry.delta > 0 else ""
+                    match.player_delta = f"{sign}{entry.delta}"
+                    match.player_delta_num = entry.delta
+                    break
+
+        user_team = match.participant_team_for(user)
+        if match.status == Match.Status.VERIFIED and user_team is not None:
+            verified_count += 1
+            verified_matches.append(match)
+            if match.winner_team == user_team:
+                wins += 1
+            elif match.winner_team is not None:
+                losses += 1
+        elif match.status == Match.Status.PENDING:
+            pending_count += 1
+            if match.can_be_verified_by(user):
+                awaiting_confirmation.append(match)
+        elif match.status == Match.Status.DISPUTED:
+            disputed_count += 1
+
+    win_rate = round((wins / verified_count) * 100) if verified_count > 0 else None
+    table_matches = verified_matches[:5] if verified_matches else user_matches[:5]
+
+    User = get_user_model()
+    top_profiles = list(
+        User.objects.filter(is_active=True, is_superuser=False)
+        .select_related("rating_profile")
+        .order_by("-rating_profile__doubles_rating", "first_name", "username")[:5]
+    )
+    leaders = []
+    for idx, u in enumerate(top_profiles, start=1):
+        prof = getattr(u, "rating_profile", None)
+        r_val = prof.doubles_rating if prof else "3.000"
+        leaders.append(
+            {
+                "rank": f"{idx:02d}",
+                "name": _display_name(u),
+                "is_you": u.id == user.id,
+                "rating": f"{float(r_val):.3f}",
+            }
+        )
+
+    return {
+        "greeting": _time_greeting(),
+        "is_new_player": len(user_matches) == 0,
+        "total_matches": len(user_matches),
+        "verified_count": verified_count,
+        "wins": wins,
+        "losses": losses,
+        "win_rate": win_rate,
+        "pending_count": pending_count,
+        "disputed_count": disputed_count,
+        "awaiting_confirmation": awaiting_confirmation[:5],
+        "awaiting_confirmation_count": len(awaiting_confirmation),
+        "recent_matches": user_matches[:5],
+        "table_matches": table_matches,
+        "showing_verified_only": bool(verified_matches),
+        "profile": profile,
+        "doubles_rating": f"{float(profile.doubles_rating):.3f}",
+        "singles_rating": f"{float(profile.singles_rating):.3f}",
+        "doubles_reliability": profile.doubles_reliability,
+        "singles_reliability": profile.singles_reliability,
+        "primary_rating": f"{float(profile.primary_rating):.3f}",
+        "primary_format": profile.primary_format,
+        "primary_reliability": profile.primary_reliability,
+        "leaders": leaders,
+    }
+
+
+def get_organizer_dashboard_summary():
+    base_qs = _match_queryset()
+    total_matches = base_qs.count()
+    verified_count = base_qs.filter(status=Match.Status.VERIFIED).count()
+    pending_count = base_qs.filter(status=Match.Status.PENDING).count()
+    disputed_count = base_qs.filter(status=Match.Status.DISPUTED).count()
+
+    review_queue = list(
+        base_qs.filter(status__in=[Match.Status.DISPUTED, Match.Status.PENDING])
+        .annotate(
+            priority=Case(
+                When(status=Match.Status.DISPUTED, then=Value(0)),
+                default=Value(1),
+                output_field=IntegerField(),
+            )
+        )
+        .order_by("priority", "-played_at", "-created_at")[:5]
+    )
+    recent_matches = list(base_qs[:5])
+
+    return {
+        "total_matches": total_matches,
+        "verified_count": verified_count,
+        "pending_count": pending_count,
+        "disputed_count": disputed_count,
+        "review_queue": review_queue,
+        "recent_matches": recent_matches,
+    }

@@ -1,0 +1,108 @@
+{% extends 'workspace_base.html' %}
+{% block title %}Match history · RallyRate{% endblock %}
+{% block nav_history %}active{% endblock %}
+{% block content %}
+<section class="ws-page-head">
+  <div>
+    <h1>Match history</h1>
+    <p class="ws-page-sub">
+      Every club game, peer match, verification status, and confirmed score in one place.
+    </p>
+  </div>
+  <a class="ws-btn ws-btn-primary" href="{% url 'matches:create' %}">Record a match</a>
+</section>
+
+<nav class="ws-filter-bar" aria-label="Filter matches by status">
+  <a class="ws-filter-pill {% if status_filter == 'all' %}active{% endif %}" href="{% url 'matches:list' %}">
+    All <span>{{ counts.all }}</span>
+  </a>
+  {% if counts.scheduled %}
+    <a class="ws-filter-pill {% if status_filter == 'scheduled' %}active{% endif %}" href="{% url 'matches:list' %}?status=scheduled">
+      Scheduled <span>{{ counts.scheduled }}</span>
+    </a>
+  {% endif %}
+  <a class="ws-filter-pill {% if status_filter == 'pending' %}active{% endif %}" href="{% url 'matches:list' %}?status=pending">
+    Pending <span>{{ counts.pending }}</span>
+  </a>
+  <a class="ws-filter-pill {% if status_filter == 'verified' %}active{% endif %}" href="{% url 'matches:list' %}?status=verified">
+    Confirmed <span>{{ counts.verified }}</span>
+  </a>
+  <a class="ws-filter-pill {% if status_filter == 'disputed' %}active{% endif %}" href="{% url 'matches:list' %}?status=disputed">
+    Disputed <span>{{ counts.disputed }}</span>
+  </a>
+</nav>
+
+{% if matches %}
+  <div class="ws-table-card">
+    <table class="ws-table ws-mobile-cards">
+      <thead>
+        <tr>
+          <th>DATE</th>
+          <th>FORMAT</th>
+          <th>PLAYERS</th>
+          <th>CLUB / COURT</th>
+          <th>SCORE</th>
+          <th>STATUS</th>
+          <th class="ws-align-right">ACTION</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for match in matches %}
+          <tr>
+            <td data-label="Date" class="ws-td-muted">{{ match.played_at|date:"M j, Y" }}</td>
+            <td data-label="Format" class="ws-td-muted">
+              <div>
+                {{ match.get_match_type_display }}
+                <div class="ws-row-sub">{{ match.get_source_display }}</div>
+              </div>
+            </td>
+            <td data-label="Players">
+              <div>
+                <a class="ws-row-primary" href="{% url 'matches:detail' match.pk %}">{{ match.partner_line }}</a>
+                <div class="ws-row-sub">{{ match.opponents_line }}</div>
+              </div>
+            </td>
+            <td data-label="Club / Court" class="ws-td-muted">
+              <div>
+                {% if match.club %}{{ match.club.name }}{% else %}{{ match.location }}{% endif %}
+                {% if match.club %}<div class="ws-row-sub">{{ match.location }}</div>{% endif %}
+              </div>
+            </td>
+            <td data-label="Score" class="ws-td-score">{{ match.score_display }}</td>
+            <td data-label="Status">
+              <span>
+                <span class="status-badge status-{{ match.status }}">
+                  {% if match.status == 'verified' %}Confirmed{% else %}{{ match.get_status_display }}{% endif %}
+                </span>
+                {% if match.needs_action %}
+                  <span class="action-pill">Action</span>
+                {% endif %}
+              </span>
+            </td>
+            <td data-label="Action" class="ws-align-right">
+              <a class="ws-text-link" href="{% url 'matches:detail' match.pk %}">
+                {% if match.needs_action %}Review →{% else %}View →{% endif %}
+              </a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <section class="ws-hero-card">
+    <div>
+      <p class="ws-eyebrow">NO MATCHES TO DISPLAY</p>
+      <h2>{% if status_filter == 'all' %}Your match history starts here.{% else %}No {{ status_filter }} matches found.{% endif %}</h2>
+      <p class="ws-hero-copy">
+        {% if status_filter == 'all' %}
+          Join an open-play club session or record a casual match after stepping off court.
+        {% else %}
+          Switch filters above or record a new match to get started.
+        {% endif %}
+      </p>
+      <a class="ws-btn ws-btn-primary" href="{% url 'matches:create' %}">Record a match</a>
+    </div>
+  </section>
+{% endif %}
+{% endblock %}

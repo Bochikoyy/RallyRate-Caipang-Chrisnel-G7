@@ -1,0 +1,109 @@
+{% extends 'workspace_base.html' %}
+{% block title %}Rating history · RallyRate{% endblock %}
+{% block nav_ratings %}active{% endblock %}
+{% block content %}
+<nav class="ws-mobile-segmented" aria-label="Rankings and rating views">
+  <a class="ws-seg-item" href="{% url 'clubs:leaderboard' %}">Ranks</a>
+  <a class="ws-seg-item active" href="{% url 'ratings:history' %}">Rating history</a>
+</nav>
+
+<section class="ws-page-head">
+  <div>
+    <h1>Your rating, over time</h1>
+    <p class="ws-page-sub">1.000 – 8.000 performance progression across verified matches.</p>
+  </div>
+  <div class="ws-filter-bar" style="margin-bottom: 0;">
+    <a class="ws-filter-pill {% if match_format == 'doubles' %}active{% endif %}" href="{% url 'ratings:history' %}?format=doubles">Doubles ({{ profile.doubles_rating }})</a>
+    <a class="ws-filter-pill {% if match_format == 'singles' %}active{% endif %}" href="{% url 'ratings:history' %}?format=singles">Singles ({{ profile.singles_rating }})</a>
+  </div>
+</section>
+
+<section class="ws-rating-hero">
+  <div class="ws-rating-hero-left">
+    <span class="ws-big-rating">{{ current_rating }}</span>
+    <span class="ws-inprogress-pill">{{ current_reliability }}% reliability</span>
+  </div>
+  <span class="ws-td-muted">{{ verified_count }} confirmed {{ match_format }} match{{ verified_count|pluralize:"es" }}</span>
+</section>
+
+<section class="ws-chart-card">
+  {% if chart %}
+    <div style="display: grid; grid-template-columns: 48px 1fr; gap: 14px; align-items: stretch;">
+      <div style="display: flex; flex-direction: column; justify-content: space-between; font-size: 11px; color: var(--ws-muted); padding: 8px 0;">
+        <span>{{ chart.top_label }}</span>
+        <span>{{ chart.mid_label }}</span>
+        <span>{{ chart.bot_label }}</span>
+      </div>
+      <svg viewBox="0 0 640 140" style="width: 100%; height: 150px; overflow: visible;">
+        <line x1="0" y1="12" x2="640" y2="12" stroke="#f0eaed" stroke-width="1"/>
+        <line x1="0" y1="70" x2="640" y2="70" stroke="#dccad4" stroke-width="1.5" stroke-dasharray="4 4"/>
+        <line x1="0" y1="128" x2="640" y2="128" stroke="#f0eaed" stroke-width="1"/>
+        <polyline fill="none" stroke="#591736" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" points="{{ chart.polyline }}"/>
+        {% for d in chart.dots %}
+          <circle cx="{{ d.x }}" cy="{{ d.y }}" r="4.5" fill="#591736" stroke="#ffffff" stroke-width="2">
+            <title>{{ d.val }}</title>
+          </circle>
+        {% endfor %}
+      </svg>
+    </div>
+  {% else %}
+    <div class="ws-chart-grid">
+      <div class="ws-chart-row"><span>3.50</span><div></div></div>
+      <div class="ws-chart-row"><span>3.00</span><div class="ws-chart-baseline"></div></div>
+      <div class="ws-chart-row"><span>2.50</span><div></div></div>
+    </div>
+    <div class="ws-chart-overlay">
+      <span class="ws-inprogress-pill">Baseline 3.000</span>
+      <p>Complete your first verified {{ match_format }} match to unlock your live rating progression curve.</p>
+    </div>
+  {% endif %}
+</section>
+
+<div class="ws-section-head" style="margin-top: 28px;">
+  <h2>Confirmed {{ match_format }} rating ledger</h2>
+</div>
+
+{% if history_entries %}
+  <div class="ws-table-card">
+    <table class="ws-table ws-mobile-cards">
+      <thead>
+        <tr>
+          <th>DATE</th>
+          <th>RESULT</th>
+          <th>OPPONENTS</th>
+          <th>SOURCE</th>
+          <th>BEFORE</th>
+          <th>CHANGE</th>
+          <th class="ws-align-right">AFTER</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for entry in history_entries %}
+          <tr>
+            <td data-label="Date" class="ws-td-muted">{{ entry.match.played_at|date:"M j" }}</td>
+            <td data-label="Result"><span><strong>{{ entry.player_result }}</strong> <span class="ws-muted-small">({{ entry.match.score_display }})</span></span></td>
+            <td data-label="Opponents">
+              <a class="ws-row-primary" href="{% url 'matches:detail' entry.match.pk %}">{{ entry.match.opponents_line }}</a>
+            </td>
+            <td data-label="Source" class="ws-td-muted">
+              {% if entry.source == 'club_event' %}Club event (1.0x){% else %}Peer match (0.6x){% endif %}
+            </td>
+            <td data-label="Before" class="ws-td-muted">{{ entry.rating_before }}</td>
+            <td data-label="Change">
+              <span class="status-badge {% if entry.delta > 0 %}status-verified{% elif entry.delta < 0 %}status-disputed{% else %}ws-inprogress-pill{% endif %}">
+                {% if entry.delta > 0 %}+{% endif %}{{ entry.delta }}{% if entry.mismatch_protected %} · Protected{% endif %}
+              </span>
+            </td>
+            <td data-label="After" class="ws-align-right ws-td-score">{{ entry.rating_after }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <section class="ws-empty-inline">
+    <p>No confirmed {{ match_format }} matches yet. Join a club session or record a peer match to start building your rating.</p>
+    <a class="ws-text-link" href="{% url 'matches:create' %}">Record a match →</a>
+  </section>
+{% endif %}
+{% endblock %}

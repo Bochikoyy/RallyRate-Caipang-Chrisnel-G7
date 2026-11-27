@@ -1,12 +1,126 @@
 {% extends 'base.html' %}
-{% block title %}Create account ? RallyRate{% endblock %}
+{% load static %}
+{% block title %}Create account · RallyRate{% endblock %}
 {% block body_class %}auth-body signup-body{% endblock %}
 {% block header_class %}auth-topbar{% endblock %}
 {% block page_class %}signup-shell{% endblock %}
 {% block header_actions %}<div class="signup-header-action">Already a member? <a href="{% url 'accounts:login' %}">Sign in</a></div>{% endblock %}
 {% block content %}
-<section class="signup-heading"><p class="signin-kicker">JOIN YOUR LOCAL GAME</p><h1>Create your account</h1><p>A few details, then you?re ready for the court.</p></section>
-<form method="post" class="signup-form" novalidate>{% csrf_token %}{% if form.non_field_errors %}<div class="form-errors signup-errors" role="alert">{{ form.non_field_errors }}</div>{% endif %}
-<div class="signup-columns"><div class="signup-column"><h2>01&nbsp; Account details</h2>{% for field in form %}{% if field.name == 'full_name' or field.name == 'email' or field.name == 'password1' or field.name == 'password2' %}<div class="signup-field"><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% if field.name == 'password1' %}<small class="signup-help">Use at least 8 characters.</small>{% endif %}{% for error in field.errors %}<small class="error">{{ error }}</small>{% endfor %}</div>{% endif %}{% endfor %}</div>
-<div class="signup-column"><h2>02&nbsp; Player preferences</h2>{% for field in form %}{% if field.name == 'role' or field.name == 'preferred_paddle' or field.name == 'home_court' %}<div class="signup-field"><label for="{{ field.id_for_label }}">{% if field.name == 'preferred_paddle' %}Preferred paddle (optional){% else %}{{ field.label }}{% endif %}</label>{{ field }}{% if field.name == 'role' %}<small class="signup-help">Club organizers can also record their own matches.</small>{% endif %}{% for error in field.errors %}<small class="error">{{ error }}</small>{% endfor %}</div>{% endif %}{% endfor %}<p class="signup-rating-note">Your profile details can be updated later.</p><button class="signin-submit" type="submit">Create account</button><p class="signup-legal">By creating an account, you agree to our Terms and Privacy Policy.</p></div></div></form>
+<div class="signup-grid">
+  <section class="signup-card" aria-labelledby="signup-title">
+    <p class="signin-kicker">JOIN YOUR LOCAL GAME</p>
+    <h1 id="signup-title">Create your account</h1>
+    <p class="signup-lead">Every player starts on equal footing — join or host clubs, play events, and track your rating.</p>
+
+    <form method="post" class="signup-form" novalidate>
+      {% csrf_token %}
+      {% if form.non_field_errors %}
+        <div class="form-errors signup-errors" role="alert">{{ form.non_field_errors }}</div>
+      {% endif %}
+
+      <div class="signup-field-grid">
+        <div class="signup-field">
+          <label for="{{ form.full_name.id_for_label }}">{{ form.full_name.label }} <span class="required">*</span></label>
+          {{ form.full_name }}
+          {% for error in form.full_name.errors %}<small class="error">{{ error }}</small>{% endfor %}
+        </div>
+
+        <div class="signup-field">
+          <label for="{{ form.email.id_for_label }}">{{ form.email.label }} <span class="required">*</span></label>
+          {{ form.email }}
+          {% for error in form.email.errors %}<small class="error">{{ error }}</small>{% endfor %}
+        </div>
+
+        <div class="signup-field">
+          <label for="{{ form.password1.id_for_label }}">Password <span class="required">*</span></label>
+          <div class="pw-input-wrap">
+            {{ form.password1 }}
+            <button type="button" class="pw-toggle-btn" data-pw-toggle="{{ form.password1.id_for_label }}">Show</button>
+          </div>
+          {% for error in form.password1.errors %}<small class="error">{{ error }}</small>{% endfor %}
+        </div>
+
+        <div class="signup-field">
+          <label for="{{ form.password2.id_for_label }}">Confirm password <span class="required">*</span></label>
+          <div class="pw-input-wrap">
+            {{ form.password2 }}
+            <button type="button" class="pw-toggle-btn" data-pw-toggle="{{ form.password2.id_for_label }}">Show</button>
+          </div>
+          {% for error in form.password2.errors %}<small class="error">{{ error }}</small>{% endfor %}
+        </div>
+      </div>
+      <p class="signup-pw-hint">Use at least 8 characters and avoid common or all-numeric passwords.</p>
+
+      <div class="signup-divider"></div>
+      <p class="signup-section-label">Court preferences <span class="signup-optional-tag">Optional</span></p>
+
+      <div class="signup-field-grid">
+        <div class="signup-field">
+          <label for="{{ form.preferred_paddle.id_for_label }}">Preferred paddle</label>
+          {{ form.preferred_paddle }}
+          {% for error in form.preferred_paddle.errors %}<small class="error">{{ error }}</small>{% endfor %}
+        </div>
+
+        <div class="signup-field">
+          <label for="{{ form.home_court.id_for_label }}">Home court / club</label>
+          {{ form.home_court }}
+          {% for error in form.home_court.errors %}<small class="error">{{ error }}</small>{% endfor %}
+        </div>
+      </div>
+
+      <button class="signin-submit signup-submit-btn" type="submit">Create player account</button>
+    </form>
+  </section>
+
+  <aside class="signup-side-card" aria-label="Club membership benefits">
+    <div>
+      <p class="signin-kicker">YOUR STARTING POINT</p>
+      <div class="signup-start-rating">3.000</div>
+      <p class="signup-start-sub">1.000 – 8.000 performance rating scale.</p>
+
+      <ol class="signup-benefit-list">
+        <li>
+          <span>01</span>
+          <div>
+            <strong>Create or join clubs</strong>
+            <p>Host your own club with co-hosts and open-play events, or join local clubs with an invite code.</p>
+          </div>
+        </li>
+        <li>
+          <span>02</span>
+          <div>
+            <strong>Performance-based ratings</strong>
+            <p>Dynamic 1.0–8.0 ratings factor in opponent strength, score margin, and reliability.</p>
+          </div>
+        </li>
+        <li>
+          <span>03</span>
+          <div>
+            <strong>Host &amp; peer verification</strong>
+            <p>Club hosts enter official event scores directly, or log casual games with opponent confirmation.</p>
+          </div>
+        </li>
+      </ol>
+    </div>
+
+    <div class="signup-side-foot">
+      <img src="{% static 'images/rallyraye.png' %}" alt="RallyRaye mascot">
+      <p>Built for the people you play with.<br><small>Profile preferences can be updated anytime.</small></p>
+    </div>
+  </aside>
+</div>
+
+<script>
+  (function () {
+    document.querySelectorAll('[data-pw-toggle]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        const target = document.getElementById(btn.getAttribute('data-pw-toggle'));
+        if (!target) return;
+        const showing = target.type === 'text';
+        target.type = showing ? 'password' : 'text';
+        btn.textContent = showing ? 'Show' : 'Hide';
+      });
+    });
+  })();
+</script>
 {% endblock %}

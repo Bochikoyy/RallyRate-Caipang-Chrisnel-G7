@@ -1,0 +1,180 @@
+{% extends 'workspace_base.html' %}
+{% block title %}{% if is_edit %}Edit match{% else %}Record a match{% endif %} · RallyRate{% endblock %}
+{% block nav_record %}{% if not is_edit %}active{% endif %}{% endblock %}
+{% block nav_history %}{% if is_edit %}active{% endif %}{% endblock %}
+{% block content %}
+<section class="ws-page-head">
+  <div>
+    <h1>{% if is_edit %}Edit match{% else %}Record a match{% endif %}</h1>
+    <p class="ws-page-sub">Log an individual game. Opponents confirm the final score before 1.0–8.0 ratings update.</p>
+  </div>
+  {% if is_edit %}
+    <a class="ws-btn ws-btn-outline" href="{% url 'matches:detail' match.pk %}">Back to match</a>
+  {% endif %}
+</section>
+
+<form method="post" novalidate class="ws-entry-form">
+  {% csrf_token %}
+  {% if form.non_field_errors %}
+    <div class="ws-alert error" style="margin-bottom: 18px;">{{ form.non_field_errors }}</div>
+  {% endif %}
+
+  <div class="ws-entry-grid">
+    <section class="ws-setup-card">
+      <h2>Match setup</h2>
+
+      <div class="ws-format-tabs" role="tablist" aria-label="Match format">
+        <button type="button" class="ws-format-tab" data-format-btn="doubles">Doubles</button>
+        <button type="button" class="ws-format-tab" data-format-btn="singles">Singles</button>
+      </div>
+      <div class="ws-hidden-select">
+        {{ form.match_type }}
+        {% for error in form.match_type.errors %}<small class="error">{{ error }}</small>{% endfor %}
+      </div>
+
+      <div class="ws-field-grid">
+        <div class="ws-field">
+          <label for="{{ form.played_at.id_for_label }}">Date played</label>
+          {{ form.played_at }}
+          {% for error in form.played_at.errors %}<small class="error">{{ error }}</small>{% endfor %}
+        </div>
+
+        <div class="ws-field">
+          <label for="{{ form.location.id_for_label }}">Court</label>
+          {{ form.location }}
+          {% for error in form.location.errors %}<small class="error">{{ error }}</small>{% endfor %}
+        </div>
+      </div>
+
+      <p class="ws-team-kicker">TEAM A</p>
+      <div class="ws-field-grid">
+        {% if can_pick_lead and form.team_a_player_1 %}
+          <div class="ws-field">
+            <label for="{{ form.team_a_player_1.id_for_label }}">Player 1</label>
+            {{ form.team_a_player_1 }}
+            {% for error in form.team_a_player_1.errors %}<small class="error">{{ error }}</small>{% endfor %}
+          </div>
+        {% else %}
+          <div class="ws-field">
+            <label>Player 1</label>
+            <div class="ws-readonly-box">
+              {{ request.user.get_full_name|default:request.user.first_name|default:request.user.email|default:request.user.username }} · you
+            </div>
+          </div>
+        {% endif %}
+
+        <div class="ws-field" data-doubles-only>
+          <label for="{{ form.partner.id_for_label }}">Partner</label>
+          {{ form.partner }}
+          {% for error in form.partner.errors %}<small class="error">{{ error }}</small>{% endfor %}
+        </div>
+      </div>
+
+      <p class="ws-team-kicker">OPPOSING TEAM</p>
+      <div class="ws-field-grid">
+        <div class="ws-field">
+          <label for="{{ form.opponent_1.id_for_label }}">Opponent 1</label>
+          {{ form.opponent_1 }}
+          {% for error in form.opponent_1.errors %}<small class="error">{{ error }}</small>{% endfor %}
+        </div>
+
+        <div class="ws-field" data-doubles-only>
+          <label for="{{ form.opponent_2.id_for_label }}">Opponent 2</label>
+          {{ form.opponent_2 }}
+          {% for error in form.opponent_2.errors %}<small class="error">{{ error }}</small>{% endfor %}
+        </div>
+      </div>
+
+      <div class="ws-field ws-notes-field">
+        <label for="{{ form.notes.id_for_label }}">{{ form.notes.label }}</label>
+        {{ form.notes }}
+        {% for error in form.notes.errors %}<small class="error">{{ error }}</small>{% endfor %}
+      </div>
+
+      <p class="ws-setup-foot">All players must have a RallyRate account.</p>
+    </section>
+
+    <aside class="ws-score-col">
+      <div class="ws-score-card">
+        <h2>Enter the score</h2>
+        <p class="ws-score-sub">Best of 3 · games to 11, win by 2</p>
+
+        <div class="ws-score-head">
+          <span>GAME</span>
+          <span>TEAM A</span>
+          <span>OPPONENTS</span>
+        </div>
+
+        <div class="ws-score-row">
+          <span class="ws-game-num">01</span>
+          <div>{{ form.team_a_score }}</div>
+          <div>{{ form.team_b_score }}</div>
+        </div>
+        {% for error in form.team_a_score.errors %}<small class="error ws-score-err">{{ error }}</small>{% endfor %}
+        {% for error in form.team_b_score.errors %}<small class="error ws-score-err">{{ error }}</small>{% endfor %}
+
+        <div class="ws-score-row">
+          <span class="ws-game-num">02</span>
+          <div>{{ form.game_2_team_a }}</div>
+          <div>{{ form.game_2_team_b }}</div>
+        </div>
+        {% for error in form.game_2_team_a.errors %}<small class="error ws-score-err">{{ error }}</small>{% endfor %}
+        {% for error in form.game_2_team_b.errors %}<small class="error ws-score-err">{{ error }}</small>{% endfor %}
+
+        <div class="ws-score-row">
+          <span class="ws-game-num">03</span>
+          <div>{{ form.game_3_team_a }}</div>
+          <div>{{ form.game_3_team_b }}</div>
+        </div>
+        {% for error in form.game_3_team_a.errors %}<small class="error ws-score-err">{{ error }}</small>{% endfor %}
+        {% for error in form.game_3_team_b.errors %}<small class="error ws-score-err">{{ error }}</small>{% endfor %}
+
+        <p class="ws-score-foot">Game 3 is optional if the match ends 2–0 (or enter Game 1 only for single-game play).</p>
+      </div>
+
+      <div class="ws-amber-notice">
+        <strong>Peer confirmation required.</strong>
+        <span>Ratings update automatically once an opposing player confirms this result.</span>
+      </div>
+
+      <button class="ws-btn ws-btn-primary ws-submit-full" type="submit">
+        {% if is_edit and can_pick_lead %}Save changes{% elif is_edit %}Submit updated score for confirmation{% else %}Submit for confirmation{% endif %}
+      </button>
+    </aside>
+  </div>
+</form>
+
+<script>
+  (function () {
+    const typeSelect = document.getElementById('{{ form.match_type.id_for_label }}');
+    const tabButtons = document.querySelectorAll('[data-format-btn]');
+    const doublesFields = document.querySelectorAll('[data-doubles-only]');
+    if (!typeSelect) return;
+
+    function syncMatchType() {
+      const val = typeSelect.value || 'doubles';
+      const isDoubles = val === 'doubles';
+      tabButtons.forEach(function (btn) {
+        btn.classList.toggle('active', btn.getAttribute('data-format-btn') === val);
+      });
+      doublesFields.forEach(function (el) {
+        el.style.display = isDoubles ? '' : 'none';
+        if (!isDoubles) {
+          const select = el.querySelector('select');
+          if (select) select.value = '';
+        }
+      });
+    }
+
+    tabButtons.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        typeSelect.value = btn.getAttribute('data-format-btn');
+        syncMatchType();
+      });
+    });
+
+    typeSelect.addEventListener('change', syncMatchType);
+    syncMatchType();
+  })();
+</script>
+{% endblock %}
