@@ -1,22 +1,20 @@
 # RallyRate architecture
 
-RallyRate is a Django modular monolith. A single Django project serves the full application through Django views and templates. Feature domains live in separate Django apps under `apps/` so they can evolve independently while sharing the same project, deployment, and Supabase PostgreSQL database.
+RallyRate is a Django modular monolith. A single Django project serves the full application through server-rendered Django views and templates backed by Supabase PostgreSQL.
 
 ## App boundaries
 
-- `apps.accounts`: authentication, user roles, and player profile data.
-- `apps.matches`: match logging (Singles/Doubles CRUD), pickleball validation, opponent score verification, and organizer dispute resolution.
-- `apps.ratings`: future Elo calculations and rating history.
-- `apps.clubs`: future club membership and leaderboards.
-- `apps.imports`: future CSV and mock API roster/event imports.
-
-The remaining three future feature apps (`ratings`, `clubs`, `imports`) are registered placeholders. Keep their implementation empty until the related feature is scheduled and approved. Cross-app model relationships should refer to users through `settings.AUTH_USER_MODEL` and avoid importing another app's concrete models directly where a string model reference works.
+- `apps.accounts`: player registration, email/username authentication, unified player dashboard, and profile management.
+- `apps.clubs`: Reclub-style clubs, `Host` / `Co-host` / `Member` roles, invite codes, `ClubEvent` open-play sessions, balanced/round-robin match generation, direct host score entry, and Club + Local leaderboards.
+- `apps.matches`: Singles/Doubles match records (`club_event` and `casual_peer` sources), pickleball score validation, opponent verification, and host dispute resolution.
+- `apps.ratings`: `1.000–8.000` performance rating engine (`PlayerRatingProfile`, `RatingHistory`), `0.500` mismatch protection, reliability scaling, chronological recalculation, and rating progression charts.
+- `apps.imports`: reserved module for future CSV and external roster/event imports.
 
 ## Repository map
 
 ```text
 RallyRate/
-├── apps/                 # Django feature apps
+├── apps/                 # Django feature apps (accounts, clubs, matches, ratings, imports)
 ├── config/               # Project settings and root URL configuration
 ├── docs/                 # Architecture and project documentation
 ├── Documents/            # Supplied project proposal, charter, and schedule
@@ -31,7 +29,7 @@ RallyRate/
 ## Conventions
 
 - Keep feature logic with its Django app; use shared templates/static assets only for reusable presentation.
-- Add each feature app's URLs through the project URL configuration when that feature is implemented.
+- Cross-app model relationships refer to users through `settings.AUTH_USER_MODEL` and string model references (`"clubs.Club"`, `"matches.Match"`).
 - Keep secrets in local `.env`; commit only `.env.example` with placeholders.
-- Use PostgreSQL for local and hosted application data. SQLite is not the project database.
-- Keep migrations with their owning app and commit schema changes together with the corresponding feature.
+- Use PostgreSQL for local and hosted application data.
+- Keep migrations with their owning app and commit schema changes together with the corresponding feature phase.

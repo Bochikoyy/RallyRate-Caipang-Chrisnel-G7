@@ -1,4 +1,5 @@
 from django.contrib import admin
+
 from .models import Match, MatchParticipant
 
 
@@ -12,6 +13,9 @@ class MatchParticipantInline(admin.TabularInline):
 class MatchAdmin(admin.ModelAdmin):
     list_display = (
         "id",
+        "club",
+        "event",
+        "source",
         "match_type",
         "played_at",
         "location",
@@ -20,7 +24,7 @@ class MatchAdmin(admin.ModelAdmin):
         "submitted_by",
         "verified_by",
     )
-    list_filter = ("status", "match_type", "played_at")
-    search_fields = ("location", "submitted_by__username", "submitted_by__email", "notes")
+    list_filter = ("status", "source", "match_type", "played_at")
+    search_fields = ("location", "club__name", "submitted_by__username", "submitted_by__email", "notes")
     readonly_fields = ("created_at", "updated_at")
     inlines = [MatchParticipantInline]

@@ -4,36 +4,36 @@
 <section class="ws-page-head">
   <div>
     <h1>Help &amp; rating rules</h1>
-    <p class="ws-page-sub">How match logging, peer confirmation, and club ratings work in RallyRate.</p>
+    <p class="ws-page-sub">How RallyRate calculates 1.000–8.000 performance ratings across club events and peer matches.</p>
   </div>
 </section>
 
 <div class="ws-detail-grid">
   <section class="ws-setup-card">
-    <h2>Match logging &amp; verification</h2>
+    <h2>1.000 – 8.000 performance formula</h2>
     <p class="ws-hero-copy" style="max-width: none; margin-bottom: 18px;">
-      Every match recorded in RallyRate starts in <strong>Pending</strong> status until an opposing player confirms the final score.
+      Every player starts at <strong>3.000</strong> with separate <strong>Doubles</strong> and <strong>Singles</strong> ratings. Ratings update immediately when a club host records an event score or an opponent confirms a peer match.
     </p>
     <ol class="ws-steps-list">
       <li>
         <span class="ws-step-num">01</span>
         <div>
-          <strong class="ws-step-title">Scoring format</strong>
-          <p>Games are played to at least 11 points and must be won by at least 2 points (single game or best of 3).</p>
+          <strong class="ws-step-title">Margin of victory &amp; expectations</strong>
+          <p>Team ratings are averaged in doubles. Your rating shift compares your actual win + point share against your expected score share — winning 11–2 earns a much larger gain than 11–9.</p>
         </div>
       </li>
       <li>
         <span class="ws-step-num">02</span>
         <div>
-          <strong class="ws-step-title">Peer confirmation</strong>
-          <p>Only an opposing player (or a club organizer) can confirm a submitted result. Submitters and partners cannot self-verify.</p>
+          <strong class="ws-step-title">0.500 mismatch protection</strong>
+          <p>When opposing teams differ by 0.500 or more and the favored side wins, ratings stay unchanged (0.000 delta) so favorites are never penalized for close recreational games. Upsets still reward underdogs in full.</p>
         </div>
       </li>
       <li>
         <span class="ws-step-num">03</span>
         <div>
-          <strong class="ws-step-title">Dispute handling</strong>
-          <p>If a score or roster has an error, an opponent can report an issue to hold the match for club organizer review.</p>
+          <strong class="ws-step-title">Match source &amp; reliability weighting</strong>
+          <p>Host-verified club session games carry full <strong>1.0x</strong> weight, while peer-confirmed casual matches carry <strong>0.6x</strong> weight. Newer players calibrate faster with higher K-factors until reliability climbs toward 100%.</p>
         </div>
       </li>
     </ol>
@@ -42,15 +42,18 @@
   <aside class="ws-public-card">
     <div>
       <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px;">
-        <p class="ws-eyebrow" style="margin: 0;">ELO RATING ENGINE</p>
-        <span class="ws-inprogress-pill">In progress</span>
+        <p class="ws-eyebrow" style="margin: 0;">RATING SCALE</p>
+        <span class="status-badge status-verified">Active</span>
       </div>
-      <h2 class="ws-public-name" style="font-size: 20px;">Starting at 1,000</h2>
+      <h2 class="ws-public-name" style="font-size: 22px;">1.000 to 8.000</h2>
       <p class="ws-public-sub" style="line-height: 1.6; margin-top: 8px;">
-        Dynamic Elo rating adjustments and club leaderboard rankings are currently in progress for the next development phase. Pending and disputed matches never alter player ratings.
+        • <strong>2.0 – 2.9:</strong> Developing fundamentals<br>
+        • <strong>3.0 – 3.9:</strong> Consistent intermediate club play<br>
+        • <strong>4.0 – 4.9:</strong> Advanced competitive control<br>
+        • <strong>5.0+:</strong> Elite / open tournament level
       </p>
     </div>
-    <a class="ws-btn ws-btn-primary" href="{% url 'matches:create' %}">Record a match</a>
+    <a class="ws-btn ws-btn-primary" href="{% url 'clubs:hub' %}">Explore clubs &amp; sessions</a>
   </aside>
 </div>
 {% endblock %}

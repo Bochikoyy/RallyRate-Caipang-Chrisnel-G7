@@ -5,8 +5,9 @@
 <section class="ws-page-head">
   <div>
     <h1>Your profile</h1>
-    <p class="ws-page-sub">Keep your details up to date.</p>
+    <p class="ws-page-sub">Manage your player details, court preferences, and club memberships.</p>
   </div>
+  <a class="ws-btn ws-btn-outline" href="{% url 'clubs:hub' %}">My clubs</a>
 </section>
 
 <section class="ws-profile-grid">
@@ -38,50 +39,66 @@
         </div>
 
         <div class="ws-field">
-          <label>Role</label>
-          <div class="ws-readonly-box">{{ request.user.get_role_display }}</div>
-        </div>
-
-        <div class="ws-field">
           <label for="{{ form.preferred_paddle.id_for_label }}">Preferred paddle</label>
           {{ form.preferred_paddle }}
           {% for error in form.preferred_paddle.errors %}<small class="error">{{ error }}</small>{% endfor %}
         </div>
 
-        <div class="ws-field">
+        <div class="ws-field" style="grid-column: 1 / -1;">
           <label for="{{ form.home_court.id_for_label }}">Home court</label>
           {{ form.home_court }}
           {% for error in form.home_court.errors %}<small class="error">{{ error }}</small>{% endfor %}
         </div>
       </div>
 
-      <p class="ws-privacy-note">Your contact details are only visible to you and club organizers.</p>
+      <p class="ws-privacy-note">Your contact details stay private and are only visible to you and hosts of clubs you join.</p>
 
       <div class="ws-profile-actions">
         <button class="ws-btn ws-btn-primary" type="submit">Save changes</button>
         <a class="ws-btn ws-btn-outline" href="{% url 'accounts:dashboard' %}">Cancel</a>
       </div>
     </form>
+
+    {% if memberships %}
+      <div class="ws-breakdown-wrap" style="margin-top: 28px;">
+        <h3 style="margin: 0 0 12px; font-size: 15px;">Club memberships</h3>
+        <ul class="ws-verify-list" style="margin-bottom: 0;">
+          {% for m in memberships %}
+            <li>
+              <a class="ws-row-primary" href="{% url 'clubs:detail' m.club.slug %}">{{ m.club.name }}</a>
+              <span class="ws-inprogress-pill">{{ m.get_role_display }}</span>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
   </div>
 
   <aside class="ws-public-card">
     <div>
-      <p class="ws-eyebrow">PUBLIC PROFILE</p>
+      <p class="ws-eyebrow">PLAYER CARD</p>
       <h2 class="ws-public-name">{{ request.user.get_full_name|default:request.user.first_name|default:request.user.email|default:request.user.username }}</h2>
-      <p class="ws-public-sub">{{ request.user.get_role_display }} · {{ request.user.home_court|default:"RallyRate Club" }}</p>
+      <p class="ws-public-sub">{{ request.user.home_court|default:"RallyRate Pickleball" }}</p>
 
       <div class="ws-public-divider"></div>
 
-      <p class="ws-public-label">CURRENT RATING</p>
+      <p class="ws-public-label">DOUBLES RATING</p>
       <div class="ws-public-rating-row">
-        <span class="ws-public-rating">1,000</span>
-        <span class="ws-inprogress-pill">In progress</span>
+        <span class="ws-public-rating">{{ doubles_rating }}</span>
+        <span class="ws-inprogress-pill">{{ doubles_reliability }}% rel.</span>
       </div>
+
+      <p class="ws-public-label" style="margin-top: 14px;">SINGLES RATING</p>
+      <div class="ws-public-rating-row">
+        <span class="ws-public-rating" style="font-size: 28px;">{{ singles_rating }}</span>
+        <span class="ws-inprogress-pill">{{ singles_reliability }}% rel.</span>
+      </div>
+
       <p class="ws-public-record">{{ wins }} win{{ wins|pluralize }} · {{ losses }} loss{{ losses|pluralize:"es" }}</p>
       <p class="ws-public-paddle">{{ request.user.preferred_paddle|default:"No preferred paddle set" }}</p>
     </div>
 
-    <p class="ws-public-foot">Email and phone stay private.</p>
+    <p class="ws-public-foot">1.000 – 8.000 performance rating scale.</p>
   </aside>
 </section>
 

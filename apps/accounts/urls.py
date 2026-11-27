@@ -1,7 +1,8 @@
 from django.contrib.auth import views as auth_views
 from django.urls import path
-from .forms import EmailLoginForm
+
 from . import views
+from .forms import EmailLoginForm
 
 app_name = "accounts"
 urlpatterns = [
@@ -12,4 +13,7 @@ urlpatterns = [
     path("accounts/logout/", auth_views.LogoutView.as_view(), name="logout"),
     path("accounts/signup/", views.signup, name="signup"),
     path("accounts/profile/", views.profile, name="profile"),
+    path("accounts/notifications/", views.notifications_list, name="notifications"),
+    path("accounts/notifications/read-all/", views.notifications_mark_all_read, name="notifications_mark_all_read"),
+    path("accounts/notifications/<int:pk>/open/", views.notification_open, name="notification_open"),
 ]

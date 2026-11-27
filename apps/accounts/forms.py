@@ -23,7 +23,7 @@ class SignUpForm(UserCreationForm):
 
     class Meta:
         model = User
-        fields = ("full_name", "email", "role", "preferred_paddle", "home_court")
+        fields = ("full_name", "email", "preferred_paddle", "home_court")
         widgets = {
             "preferred_paddle": forms.TextInput(attrs={"placeholder": "e.g., Selkirk LUXX Control"}),
             "home_court": forms.TextInput(attrs={"placeholder": "e.g., Riverside Pickleball Club"}),
@@ -32,8 +32,7 @@ class SignUpForm(UserCreationForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         style_fields(self)
-        self.fields["role"].initial = User.Role.PLAYER
-        self.order_fields(["full_name", "email", "password1", "password2", "role", "preferred_paddle", "home_court"])
+        self.order_fields(["full_name", "email", "password1", "password2", "preferred_paddle", "home_court"])
         self.fields["password1"].widget.attrs.update({"autocomplete": "new-password", "placeholder": "At least 8 characters"})
         self.fields["password2"].widget.attrs.update({"autocomplete": "new-password", "placeholder": "Re-enter password"})
 
@@ -57,6 +56,7 @@ class SignUpForm(UserCreationForm):
         user.username = User.objects.username_for_email(self.cleaned_data["email"])
         user.first_name = parts[0]
         user.last_name = parts[1] if len(parts) > 1 else ""
+        user.role = User.Role.PLAYER
         if commit:
             user.save()
         return user

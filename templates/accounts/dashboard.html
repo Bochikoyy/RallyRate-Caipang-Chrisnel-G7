@@ -4,23 +4,26 @@
 {% block content %}
 
 {% if is_new_player %}
-  <!-- New player · empty state (Screen 7) -->
   <section class="ws-page-head">
     <div>
-      <p class="ws-mobile-eyebrow">{{ request.user.home_court|default:"RALLYRATE PICKLEBALL CLUB"|upper }}</p>
-      <h1>Welcome to the club, {{ request.user.first_name|default:request.user.username }}</h1>
-      <p class="ws-page-sub">Your RallyRate story starts on the court.</p>
+      <p class="ws-mobile-eyebrow">{{ request.user.home_court|default:"RALLYRATE PICKLEBALL"|upper }}</p>
+      <h1>Welcome to RallyRate, {{ request.user.first_name|default:request.user.username }}</h1>
+      <p class="ws-page-sub">Join a local club, jump into an open-play session, or record a casual match.</p>
+    </div>
+    <div class="ws-inline-actions">
+      <a class="ws-btn ws-btn-outline" href="{% url 'clubs:hub' %}">Explore clubs</a>
+      <a class="ws-btn ws-btn-primary" href="{% url 'matches:create' %}">Record match</a>
     </div>
   </section>
 
   <section class="ws-stat-grid">
     <article class="ws-stat-card ws-stat-tinted">
       <div class="ws-stat-top">
-        <p class="ws-stat-label">Starting rating</p>
-        <span class="ws-inprogress-pill ws-pill-white ws-mobile-only">In progress</span>
+        <p class="ws-stat-label">Starting rating (1.0–8.0)</p>
+        <span class="ws-inprogress-pill ws-pill-white ws-mobile-only">Baseline</span>
       </div>
-      <div class="ws-stat-value ws-plum-text">1,000</div>
-      <p class="ws-stat-note ws-plum-note">Your club's starting point<span class="ws-desktop-only"> · In progress</span></p>
+      <div class="ws-stat-value ws-plum-text">{{ doubles_rating }}</div>
+      <p class="ws-stat-note ws-plum-note">Doubles {{ doubles_rating }} · Singles {{ singles_rating }}</p>
     </article>
 
     <article class="ws-stat-card">
@@ -30,50 +33,50 @@
     </article>
 
     <article class="ws-stat-card">
-      <div class="ws-stat-top">
-        <p class="ws-stat-label"><span class="ws-desktop-only">Club standing</span><span class="ws-mobile-only">Standing</span></p>
-        <span class="ws-inprogress-pill ws-mobile-only">In progress</span>
-      </div>
-      <div class="ws-stat-value">Unranked</div>
-      <p class="ws-stat-note"><span class="ws-desktop-only">Play 5 confirmed matches to rank · In progress</span><span class="ws-mobile-only">5 matches to rank</span></p>
+      <p class="ws-stat-label">Your clubs</p>
+      <div class="ws-stat-value">{{ memberships|length }}</div>
+      <p class="ws-stat-note"><a class="ws-text-link" href="{% url 'clubs:hub' %}">Create or join →</a></p>
     </article>
   </section>
 
   <section class="ws-overview-grid">
     <article class="ws-hero-card">
       <div>
-        <p class="ws-eyebrow">EVERY PLAYER STARTS SOMEWHERE</p>
+        <p class="ws-eyebrow">EVERY PLAYER STARTS AT 3.000</p>
         <h2>Your first result belongs here.</h2>
         <p class="ws-hero-copy">
-          Play a match, record the score, and ask the other players to confirm. Your rating updates only then.
+          Join a club game hosted on court, or log a casual match and ask an opposing player to confirm. Your 1.0–8.0 rating updates automatically once verified.
         </p>
-        <a class="ws-btn ws-btn-primary" href="{% url 'matches:create' %}">Record your first match</a>
+        <div class="ws-inline-actions">
+          <a class="ws-btn ws-btn-primary" href="{% url 'clubs:hub' %}">Join or create a club</a>
+          <a class="ws-btn ws-btn-outline" href="{% url 'matches:create' %}">Record peer match</a>
+        </div>
       </div>
       <p class="ws-hero-foot">No match history to display yet.</p>
     </article>
 
     <aside class="ws-steps-card">
-      <h3>A simple start</h3>
+      <h3>How RallyRate works</h3>
       <ol class="ws-steps-list">
         <li>
           <span class="ws-step-num">01</span>
           <div>
-            <a class="ws-step-title" href="{% url 'accounts:profile' %}">Complete your profile</a>
-            <p>Add your paddle and home court.</p>
+            <a class="ws-step-title" href="{% url 'clubs:hub' %}">Join or host a club</a>
+            <p>Use an invite code, join a public club, or create your own as Host.</p>
           </div>
         </li>
         <li>
           <span class="ws-step-num">02</span>
           <div>
-            <a class="ws-step-title" href="{% url 'matches:create' %}">Record a match</a>
-            <p>Singles or doubles. Your choice.</p>
+            <a class="ws-step-title" href="{% url 'matches:create' %}">Play &amp; record scores</a>
+            <p>Club hosts enter event scores directly, or log casual peer games.</p>
           </div>
         </li>
         <li>
           <span class="ws-step-num">03</span>
           <div>
-            <a class="ws-step-title" href="{% url 'matches:list' %}">Confirm the result</a>
-            <p>Everyone sees the same score.</p>
+            <a class="ws-step-title" href="{% url 'clubs:leaderboard' %}">Climb the leaderboards</a>
+            <p>Track both Club Standings and Local 1.0–8.0 Rankings.</p>
           </div>
         </li>
       </ol>
@@ -81,24 +84,26 @@
   </section>
 
 {% else %}
-  <!-- Active player dashboard (Screen 1) -->
   <section class="ws-page-head">
     <div>
-      <p class="ws-mobile-eyebrow">{{ request.user.home_court|default:"RALLYRATE PICKLEBALL CLUB"|upper }}</p>
+      <p class="ws-mobile-eyebrow">{{ request.user.home_court|default:"RALLYRATE PICKLEBALL"|upper }}</p>
       <h1>{{ greeting }}, {{ request.user.first_name|default:request.user.username }}</h1>
-      <p class="ws-page-sub">Here's how your game is shaping up.</p>
+      <p class="ws-page-sub">Here's how your 1.0–8.0 performance rating is shaping up.</p>
     </div>
-    <a class="ws-btn ws-btn-primary" href="{% url 'matches:create' %}">Record a match</a>
+    <div class="ws-inline-actions">
+      <a class="ws-btn ws-btn-outline" href="{% url 'clubs:hub' %}">Clubs &amp; events</a>
+      <a class="ws-btn ws-btn-primary" href="{% url 'matches:create' %}">Record a match</a>
+    </div>
   </section>
 
   <section class="ws-stat-grid">
     <article class="ws-stat-card ws-stat-tinted">
       <div class="ws-stat-top">
-        <p class="ws-stat-label">Current rating</p>
-        <span class="ws-inprogress-pill ws-pill-white ws-mobile-only">In progress</span>
+        <p class="ws-stat-label">{{ primary_format }} rating</p>
+        <span class="ws-inprogress-pill ws-pill-white">{{ primary_reliability }}% rel.</span>
       </div>
-      <div class="ws-stat-value ws-plum-text">1,000</div>
-      <p class="ws-stat-note ws-plum-note">Rating calculation · In progress</p>
+      <div class="ws-stat-value ws-plum-text">{{ primary_rating }}</div>
+      <p class="ws-stat-note ws-plum-note">DBL {{ doubles_rating }} · SGL {{ singles_rating }}</p>
     </article>
 
     <article class="ws-stat-card">
@@ -110,18 +115,21 @@
     </article>
 
     <article class="ws-stat-card">
-      <div class="ws-stat-top">
-        <p class="ws-stat-label"><span class="ws-desktop-only">Club standing</span><span class="ws-mobile-only">Standing</span></p>
-        <span class="ws-inprogress-pill ws-mobile-only">In progress</span>
-      </div>
-      <div class="ws-stat-value"><span class="ws-desktop-only">In progress</span><span class="ws-mobile-only">Unranked</span></div>
-      <p class="ws-stat-note">{{ request.user.home_court|default:"RallyRate Pickleball Club" }}</p>
+      <p class="ws-stat-label">Active clubs</p>
+      <div class="ws-stat-value">{{ memberships|length }}</div>
+      <p class="ws-stat-note">
+        {% if memberships %}
+          <a class="ws-text-link" href="{% url 'clubs:detail' memberships.0.club.slug %}">{{ memberships.0.club.name }} →</a>
+        {% else %}
+          <a class="ws-text-link" href="{% url 'clubs:hub' %}">Join a club →</a>
+        {% endif %}
+      </p>
     </article>
   </section>
 
   {% if awaiting_confirmation_count > 0 %}
     <section class="ws-amber-banner">
-      <span>{{ awaiting_confirmation_count }} match{{ awaiting_confirmation_count|pluralize:" is,es are" }} waiting for confirmation.</span>
+      <span>{{ awaiting_confirmation_count }} match{{ awaiting_confirmation_count|pluralize:" is,es are" }} waiting for your confirmation.</span>
       {% if awaiting_confirmation_count == 1 %}
         <a href="{% url 'matches:detail' awaiting_confirmation.0.pk %}">Review match →</a>
       {% else %}
@@ -149,7 +157,7 @@
               <th>DATE</th>
               <th>PARTNER / OPPONENTS</th>
               <th>SCORE</th>
-              <th class="ws-align-right">CHANGE</th>
+              <th class="ws-align-right">RATING Δ</th>
             </tr>
           </thead>
           <tbody>
@@ -157,13 +165,17 @@
               <tr>
                 <td data-label="Date" class="ws-td-muted">{{ match.played_at|date:"M j" }}</td>
                 <td data-label="Matchup">
-                  <a class="ws-row-primary" href="{% url 'matches:detail' match.pk %}">{{ match.partner_line }}</a>
-                  <div class="ws-row-sub">{{ match.opponents_line }}</div>
+                  <div>
+                    <a class="ws-row-primary" href="{% url 'matches:detail' match.pk %}">{{ match.partner_line }}</a>
+                    <div class="ws-row-sub">{{ match.opponents_line }}</div>
+                  </div>
                 </td>
                 <td data-label="Score" class="ws-td-score">{{ match.score_display }}</td>
-                <td data-label="Status" class="ws-align-right">
-                  {% if match.status == 'verified' %}
-                    <span class="ws-inprogress-pill">In progress</span>
+                <td data-label="Rating Δ" class="ws-align-right">
+                  {% if match.status == 'verified' and match.player_delta %}
+                    <span class="status-badge {% if match.player_delta_num > 0 %}status-verified{% elif match.player_delta_num < 0 %}status-disputed{% else %}ws-inprogress-pill{% endif %}">
+                      {{ match.player_delta }}
+                    </span>
                   {% else %}
                     <span class="status-badge status-{{ match.status }}">{{ match.get_status_display }}</span>
                   {% endif %}
@@ -177,18 +189,23 @@
 
     <aside>
       <div class="ws-section-head">
-        <h2>Club leaders</h2>
+        <h2>Local doubles leaders</h2>
       </div>
       <div class="ws-leaders-card">
-        <div class="ws-leaders-placeholder">
-          <span class="ws-inprogress-pill">In progress</span>
-          <p class="ws-leaders-title">Local rankings coming soon</p>
-          <p class="ws-leaders-copy">
-            Club leaderboard standings will populate automatically once the Elo rating module is active.
-          </p>
-        </div>
-        {% url 'clubs:leaderboard' as leaderboard_url %}
-        <a class="ws-text-link" href="{{ leaderboard_url|default:'#' }}">Full leaderboard →</a>
+        {% if leaders %}
+          <ul class="ws-verify-list" style="margin-bottom: 0;">
+            {% for l in leaders %}
+              <li>
+                <span>
+                  <strong class="ws-td-muted" style="margin-right: 6px;">{{ l.rank }}</strong>
+                  <span class="{% if l.is_you %}ws-you-name{% else %}ws-verify-name{% endif %}">{{ l.name }}{% if l.is_you %} · you{% endif %}</span>
+                </span>
+                <span class="ws-plum-note" style="font-weight: 700;">{{ l.rating }}</span>
+              </li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+        <a class="ws-text-link" href="{% url 'clubs:leaderboard' %}">Full leaderboards →</a>
       </div>
     </aside>
   </section>

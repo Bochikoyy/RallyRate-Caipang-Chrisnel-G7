@@ -5,17 +5,34 @@
 <section class="ws-page-head">
   <div>
     <h1>Match details</h1>
-    <p class="ws-page-sub">{{ request.user.home_court|default:"RallyRate Pickleball Club" }} / Match {{ match.match_code }}</p>
+    <p class="ws-page-sub">
+      {% if match.club %}<a href="{% url 'clubs:detail' match.club.slug %}" style="text-decoration: underline;">{{ match.club.name }}</a>{% else %}Casual Peer Match{% endif %}
+      {% if match.event %} · <a href="{% url 'clubs:event_detail' match.club.slug match.event.pk %}" style="text-decoration: underline;">{{ match.event.title }}</a>{% endif %}
+      / Match {{ match.match_code }}
+    </p>
   </div>
-  <a class="ws-btn ws-btn-outline" href="{% url 'matches:list' %}">Back to matches</a>
+  <div class="ws-inline-actions">
+    {% if match.event and match.club %}
+      <a class="ws-btn ws-btn-outline" href="{% url 'clubs:event_detail' match.club.slug match.event.pk %}">Back to session</a>
+    {% endif %}
+    <a class="ws-btn ws-btn-outline" href="{% url 'matches:list' %}">All matches</a>
+  </div>
 </section>
 
-{% if match.status == 'pending' %}
+{% if match.status == 'scheduled' %}
+  <section class="ws-status-banner ws-banner-pending">
+    <span class="ws-banner-tag">Scheduled</span>
+    <div>
+      <strong>Matchup on court</strong>
+      <p>Waiting for the club host to enter the final score.</p>
+    </div>
+  </section>
+{% elif match.status == 'pending' %}
   <section class="ws-status-banner ws-banner-pending">
     <span class="ws-banner-tag">Pending</span>
     <div>
-      <strong>Waiting for player confirmation</strong>
-      <p>Your rating stays at 1,000. Pending matches do not change ratings.</p>
+      <strong>Waiting for opponent confirmation</strong>
+      <p>Pending matches do not change 1.0–8.0 ratings until verified.</p>
     </div>
   </section>
 {% elif match.status == 'verified' %}
@@ -24,7 +41,10 @@
     <div>
       <strong>Match result confirmed</strong>
       <p>
-        {% if match.verified_by %}Verified by {{ match.verified_by.get_full_name|default:match.verified_by.email|default:match.verified_by.username }}{% else %}Confirmed match record{% endif %}{% if match.verified_at %} on {{ match.verified_at|date:"M j, Y" }}{% endif %}. Rating calculation is in progress.
+        {% if match.verified_by %}Verified by {{ match.verified_by.get_full_name|default:match.verified_by.email|default:match.verified_by.username }}{% else %}Confirmed match record{% endif %}{% if match.verified_at %} on {{ match.verified_at|date:"M j, Y" }}{% endif %}.
+        {% if user_rating_entry %}
+          Your {{ match.get_match_type_display|lower }} rating: {{ user_rating_entry.rating_before }} → <strong>{{ user_rating_entry.rating_after }}</strong> ({% if user_rating_entry.delta > 0 %}+{% endif %}{{ user_rating_entry.delta }}{% if user_rating_entry.mismatch_protected %}, mismatch protected{% endif %}).
+        {% endif %}
       </p>
     </div>
   </section>
@@ -32,87 +52,105 @@
   <section class="ws-status-banner ws-banner-disputed">
     <span class="ws-banner-tag">Disputed</span>
     <div>
-      <strong>Flagged for organizer review</strong>
+      <strong>Flagged for review</strong>
       <p>{{ match.dispute_reason|default:"A player reported an issue with this score." }} Disputed results stay out of ratings.</p>
     </div>
   </section>
 {% endif %}
 
 <section class="ws-detail-grid">
-  <!-- Left Card: Scoreboard -->
   <article class="ws-detail-card">
-    <p class="ws-detail-eyebrow">{{ match.get_match_type_display|upper }} · {{ match.played_at|date:"M j, Y"|upper }}</p>
+    <p class="ws-detail-eyebrow">
+      {{ match.get_match_type_display|upper }} · {{ match.get_source_display|upper }} · {{ match.played_at|date:"M j, Y"|upper }}
+    </p>
     <p class="ws-detail-court">{{ match.location }}</p>
 
     <div class="ws-series-score">{{ match.series_score_display }}</div>
     <p class="ws-submitted-by">
-      Submitted by {{ match.submitted_by.get_full_name|default:match.submitted_by.email|default:match.submitted_by.username }}
+      Logged by {{ match.submitted_by.get_full_name|default:match.submitted_by.email|default:match.submitted_by.username }}
     </p>
 
-    <div class="ws-breakdown-wrap">
-      <table class="ws-breakdown-table">
-        <thead>
-          <tr>
-            <th>TEAM</th>
-            {% for g in match.games %}
-              <th class="ws-align-right">GAME {{ g.num }}</th>
-            {% endfor %}
-          </tr>
-        </thead>
-        <tbody>
-          <tr class="{% if match.winner_team == 'A' %}ws-winner-row{% endif %}">
-            <td>
-              {% for p in match.team_a_participants %}
-                {{ p.player.get_full_name|default:p.player.email|default:p.player.username }}{% if not forloop.last %} · {% endif %}
-              {% empty %}
-                Team A
+    {% if match.has_scores %}
+      <div class="ws-breakdown-wrap">
+        <table class="ws-breakdown-table">
+          <thead>
+            <tr>
+              <th>TEAM</th>
+              {% for g in match.games %}
+                <th class="ws-align-right">GAME {{ g.num }}</th>
               {% endfor %}
-            </td>
-            {% for g in match.games %}
-              <td class="ws-align-right ws-game-cell {% if g.a > g.b %}ws-cell-win{% endif %}">{{ g.a }}</td>
-            {% endfor %}
-          </tr>
-          <tr class="{% if match.winner_team == 'B' %}ws-winner-row{% endif %}">
-            <td>
-              {% for p in match.team_b_participants %}
-                {{ p.player.get_full_name|default:p.player.email|default:p.player.username }}{% if not forloop.last %} · {% endif %}
-              {% empty %}
-                Team B
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="{% if match.winner_team == 'A' %}ws-winner-row{% endif %}">
+              <td>
+                {% for p in match.team_a_participants %}
+                  {{ p.player.get_full_name|default:p.player.email|default:p.player.username }}{% if not forloop.last %} · {% endif %}
+                {% empty %}
+                  Team A
+                {% endfor %}
+              </td>
+              {% for g in match.games %}
+                <td class="ws-align-right ws-game-cell {% if g.a > g.b %}ws-cell-win{% endif %}">{{ g.a }}</td>
               {% endfor %}
-            </td>
-            {% for g in match.games %}
-              <td class="ws-align-right ws-game-cell {% if g.b > g.a %}ws-cell-win{% endif %}">{{ g.b }}</td>
-            {% endfor %}
-          </tr>
-        </tbody>
-      </table>
-    </div>
+            </tr>
+            <tr class="{% if match.winner_team == 'B' %}ws-winner-row{% endif %}">
+              <td>
+                {% for p in match.team_b_participants %}
+                  {{ p.player.get_full_name|default:p.player.email|default:p.player.username }}{% if not forloop.last %} · {% endif %}
+                {% empty %}
+                  Team B
+                {% endfor %}
+              </td>
+              {% for g in match.games %}
+                <td class="ws-align-right ws-game-cell {% if g.b > g.a %}ws-cell-win{% endif %}">{{ g.b }}</td>
+              {% endfor %}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="ws-breakdown-wrap">
+        <p class="ws-muted-small">
+          <strong>Team A:</strong> {% for p in match.team_a_participants %}{{ p.player.get_full_name|default:p.player.username }}{% if not forloop.last %} &amp; {% endif %}{% endfor %}
+          <br>
+          <strong>Team B:</strong> {% for p in match.team_b_participants %}{{ p.player.get_full_name|default:p.player.username }}{% if not forloop.last %} &amp; {% endif %}{% endfor %}
+        </p>
+      </div>
+    {% endif %}
 
     {% if match.notes %}
       <p class="ws-detail-notes"><strong>Notes:</strong> {{ match.notes }}</p>
     {% endif %}
 
     <div class="ws-detail-foot">
-      {% if match.status == 'pending' %}
-        <span class="ws-impact-pending">Rating impact: none while pending</span>
-      {% elif match.status == 'verified' %}
-        <span class="ws-impact-verified">Rating impact: calculation in progress</span>
-      {% else %}
+      {% if match.status == 'verified' %}
+        <span class="ws-impact-verified">
+          Rating impact: applied ({% if match.source == 'club_event' %}1.0x Club Event weight{% else %}0.6x Peer Match weight{% endif %})
+        </span>
+      {% elif match.status == 'disputed' %}
         <span class="ws-impact-disputed">Rating impact: excluded while disputed</span>
+      {% else %}
+        <span class="ws-impact-pending">Rating impact: none until verified</span>
       {% endif %}
 
-      {% if can_modify %}
+      {% if can_modify or can_delete %}
         <div class="ws-inline-actions">
-          <a class="ws-text-link" href="{% url 'matches:update' match.pk %}">Edit match</a>
-          <a class="ws-danger-link" href="{% url 'matches:delete' match.pk %}">Delete</a>
+          {% if can_modify %}
+            <a class="ws-text-link" href="{% url 'matches:update' match.pk %}">
+              {% if match.submitted_by_id == request.user.id or is_organizer %}Edit match{% else %}Edit score{% endif %}
+            </a>
+          {% endif %}
+          {% if can_delete %}
+            <a class="ws-danger-link" href="{% url 'matches:delete' match.pk %}">Delete</a>
+          {% endif %}
         </div>
       {% endif %}
     </div>
   </article>
 
-  <!-- Right Card: Player Verification -->
   <aside class="ws-verification-card">
-    <h2>Player verification</h2>
+    <h2>Verification</h2>
 
     <ul class="ws-verify-list">
       {% for row in match.verification_rows %}
@@ -132,9 +170,28 @@
       </form>
     {% endif %}
 
+    {% if match.status == 'verified' and rating_entries %}
+      <div class="ws-breakdown-wrap" style="margin-bottom: 18px;">
+        <h3 style="margin: 0 0 10px; font-size: 13.5px;">Rating adjustments</h3>
+        <ul class="ws-verify-list" style="margin-bottom: 0;">
+          {% for entry in rating_entries %}
+            <li>
+              <span>{{ entry.user.get_full_name|default:entry.user.username }}</span>
+              <span class="ws-td-score">
+                {{ entry.rating_before }} → {{ entry.rating_after }}
+                <small class="{% if entry.delta > 0 %}ws-state-confirmed{% elif entry.delta < 0 %}ws-state-disputed{% else %}ws-muted-small{% endif %}">
+                  ({% if entry.delta > 0 %}+{% endif %}{{ entry.delta }})
+                </small>
+              </span>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+
     <div class="ws-error-box">
       <h3>Spotted an error?</h3>
-      <p>Flag the score for organizer review. Disputed results stay out of ratings.</p>
+      <p>Flag the score for review. Disputed results stay out of ratings.</p>
 
       {% if can_dispute %}
         <details class="ws-report-details" {% if dispute_form.errors %}open{% endif %}>
@@ -150,9 +207,9 @@
           </form>
         </details>
       {% elif match.status == 'disputed' %}
-        <span class="ws-verify-state ws-state-disputed">Issue reported — awaiting organizer review</span>
+        <span class="ws-verify-state ws-state-disputed">Issue reported — awaiting host review</span>
       {% elif match.status == 'verified' %}
-        <span class="ws-muted-small">Score has been confirmed and locked.</span>
+        <span class="ws-muted-small">Score has been confirmed and applied to ratings.</span>
       {% else %}
         <span class="ws-muted-small">Opposing players can confirm or report an issue.</span>
       {% endif %}

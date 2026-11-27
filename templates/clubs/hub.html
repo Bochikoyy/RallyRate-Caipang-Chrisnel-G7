@@ -1,0 +1,138 @@
+{% extends 'workspace_base.html' %}
+{% block title %}Clubs & events · RallyRate{% endblock %}
+{% block nav_clubs %}active{% endblock %}
+{% block content %}
+<section class="ws-page-head">
+  <div>
+    <p class="ws-mobile-eyebrow">CLUBS &amp; OPEN PLAY</p>
+    <h1>Clubs &amp; open play</h1>
+    <p class="ws-page-sub">Join a local club, host open-play games, and compete on club &amp; local leaderboards.</p>
+  </div>
+  <a class="ws-btn ws-btn-primary" href="{% url 'clubs:create' %}">+ Create a club</a>
+</section>
+
+<section class="ws-aligned-two-col">
+  <div class="ws-aligned-col">
+    <div class="ws-section-head">
+      <h2>Your clubs</h2>
+      {% if my_memberships %}
+        <span class="ws-td-muted">{{ my_memberships|length }} joined</span>
+      {% endif %}
+    </div>
+
+    {% if my_memberships %}
+      <div class="ws-club-grid">
+        {% for m in my_memberships %}
+          <article class="ws-setup-card ws-club-card">
+            <div>
+              <div class="ws-club-card-top">
+                <div style="display: flex; align-items: center; gap: 12px; min-width: 0;">
+                  <div class="ws-club-crest ws-club-crest-sm" aria-hidden="true">{{ m.club.name|slice:":2" }}</div>
+                  <div style="min-width: 0;">
+                    <p class="ws-eyebrow" style="margin-bottom: 3px;">{{ m.club.home_court }}</p>
+                    <h3 style="margin: 0; font-size: 17.5px;">
+                      <a class="ws-row-primary" href="{% url 'clubs:detail' m.club.slug %}">{{ m.club.name }}</a>
+                    </h3>
+                  </div>
+                </div>
+                <span class="status-badge {% if m.status == 'pending' %}status-pending{% elif m.role == 'host' or m.role == 'co_host' %}status-verified{% else %}ws-inprogress-pill{% endif %}">
+                  {% if m.status == 'pending' %}Pending{% else %}{{ m.get_role_display }}{% endif %}
+                </span>
+              </div>
+              {% if m.club.description %}
+                <p class="ws-muted-small" style="margin: 12px 0 16px; line-height: 1.55;">{{ m.club.description|truncatechars:110 }}</p>
+              {% else %}
+                <p class="ws-muted-small" style="margin: 12px 0 16px;">Open-play sessions, verified matches, and club standings.</p>
+              {% endif %}
+            </div>
+            <div class="ws-club-card-foot">
+              <span class="ws-td-muted">{{ m.active_member_count }} member{{ m.active_member_count|pluralize }}</span>
+              <div class="ws-inline-actions">
+                <a class="ws-text-link" href="{% url 'clubs:club_leaderboard' m.club.slug %}">Standings</a>
+                <a class="ws-text-link" href="{% url 'clubs:detail' m.club.slug %}">Open →</a>
+              </div>
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <article class="ws-hero-card">
+        <div>
+          <p class="ws-eyebrow">NO CLUBS JOINED YET</p>
+          <h2>Find your home court.</h2>
+          <p class="ws-hero-copy" style="margin-bottom: 0;">
+            Enter an invite code from your host, join an open public club below, or start a new club for your regular pickleball group.
+          </p>
+        </div>
+        <p class="ws-hero-foot">Club hosts can add co-hosts, schedule open-play games, and generate balanced court matchups.</p>
+      </article>
+    {% endif %}
+  </div>
+
+  <aside class="ws-aligned-col">
+    <div class="ws-section-head">
+      <h2>Have an invite code?</h2>
+    </div>
+
+    <div class="ws-invite-card">
+      <div>
+        <p class="ws-eyebrow">INSTANT MEMBERSHIP</p>
+        <h3>Join with club code</h3>
+        <p>
+          Got a code like <strong>RR-7K4M9P</strong> from a club host? Enter it below to join their roster right away.
+        </p>
+      </div>
+      <form method="post" action="{% url 'clubs:join_by_code' %}" class="ws-invite-form" novalidate>
+        {% csrf_token %}
+        <div class="ws-field">
+          <label for="{{ code_form.join_code.id_for_label }}">{{ code_form.join_code.label }}</label>
+          {{ code_form.join_code }}
+        </div>
+        <button class="ws-btn ws-btn-primary ws-submit-full" type="submit">Join club</button>
+      </form>
+    </div>
+  </aside>
+</section>
+
+<div class="ws-section-head">
+  <h2>Discover public clubs</h2>
+  {% if discover_clubs %}
+    <span class="ws-td-muted">{{ discover_clubs|length }} available</span>
+  {% endif %}
+</div>
+
+{% if discover_clubs %}
+  <div class="ws-session-stack" style="margin-bottom: 0;">
+    {% for club in discover_clubs %}
+      <article class="ws-session-card">
+        <div class="ws-session-left">
+          <div class="ws-club-crest ws-club-crest-sm" aria-hidden="true">{{ club.name|slice:":2" }}</div>
+          <div class="ws-session-info">
+            <a class="ws-session-title" href="{% url 'clubs:detail' club.slug %}">{{ club.name }}</a>
+            <div class="ws-session-meta">
+              <span>{{ club.home_court }}</span>
+              <span>·</span>
+              <span>{{ club.active_member_count }} member{{ club.active_member_count|pluralize }}</span>
+              {% if club.description %}
+                <span class="ws-desktop-only">· {{ club.description|truncatechars:65 }}</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        <div class="ws-session-right">
+          <a class="ws-text-link" href="{% url 'clubs:detail' club.slug %}">View</a>
+          <form method="post" action="{% url 'clubs:join' club.slug %}" style="margin: 0;">
+            {% csrf_token %}
+            <button class="ws-btn ws-btn-outline" style="height: 36px; padding: 0 16px;" type="submit">Join club</button>
+          </form>
+        </div>
+      </article>
+    {% endfor %}
+  </div>
+{% else %}
+  <section class="ws-empty-inline">
+    <p>No additional public clubs to discover right now. Start a club for your local court and invite your group!</p>
+    <a class="ws-text-link" href="{% url 'clubs:create' %}">Create a club →</a>
+  </section>
+{% endif %}
+{% endblock %}
