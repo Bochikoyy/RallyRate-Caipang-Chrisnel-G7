@@ -134,10 +134,16 @@
         <span class="ws-impact-pending">Rating impact: none until verified</span>
       {% endif %}
 
-      {% if can_modify %}
+      {% if can_modify or can_delete %}
         <div class="ws-inline-actions">
-          <a class="ws-text-link" href="{% url 'matches:update' match.pk %}">Edit match</a>
-          <a class="ws-danger-link" href="{% url 'matches:delete' match.pk %}">Delete</a>
+          {% if can_modify %}
+            <a class="ws-text-link" href="{% url 'matches:update' match.pk %}">
+              {% if match.submitted_by_id == request.user.id or is_organizer %}Edit match{% else %}Edit score{% endif %}
+            </a>
+          {% endif %}
+          {% if can_delete %}
+            <a class="ws-danger-link" href="{% url 'matches:delete' match.pk %}">Delete</a>
+          {% endif %}
         </div>
       {% endif %}
     </div>

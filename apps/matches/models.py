@@ -203,7 +203,7 @@ class Match(models.Model):
             return False
         if self.club_id and self.club is not None:
             return self.club.is_manager(user)
-        return getattr(user, "role", None) == "organizer"
+        return False
 
     def is_organizer(self, user):
         return self.is_club_manager(user)
@@ -232,9 +232,18 @@ class Match(models.Model):
             return True
         if self.club_id and self.club is not None:
             return self.club.is_member(user) or self.club.is_public
-        return getattr(user, "role", None) == "organizer"
+        return False
 
     def can_be_modified_by(self, user):
+        if not user or not user.is_authenticated:
+            return False
+        if self.is_club_manager(user):
+            return True
+        if self.status in (self.Status.PENDING, self.Status.DISPUTED):
+            return self.submitted_by_id == user.id or self.participant_team_for(user) is not None
+        return False
+
+    def can_be_deleted_by(self, user):
         if not user or not user.is_authenticated:
             return False
         if self.is_club_manager(user):

@@ -138,7 +138,7 @@
       </div>
 
       <button class="ws-btn ws-btn-primary ws-submit-full" type="submit">
-        {% if is_edit %}Save changes{% else %}Submit for confirmation{% endif %}
+        {% if is_edit and can_pick_lead %}Save changes{% elif is_edit %}Submit updated score for confirmation{% else %}Submit for confirmation{% endif %}
       </button>
     </aside>
   </div>

@@ -54,8 +54,6 @@ def _managed_club_ids(user):
 
 def _matches_for_user(user):
     queryset = _base_match_queryset()
-    if getattr(user, "role", None) == "organizer":
-        return queryset
     managed_ids = _managed_club_ids(user)
     q = Q(submitted_by=user) | Q(participants__player=user)
     if managed_ids:
@@ -68,7 +66,7 @@ def match_list(request):
     status_filter = request.GET.get("status", "all").strip().lower()
     valid_statuses = {choice.value for choice in Match.Status}
     managed_ids = set(_managed_club_ids(request.user))
-    is_manager_any = bool(managed_ids) or getattr(request.user, "role", None) == "organizer"
+    is_manager_any = bool(managed_ids)
 
     visible_matches = _matches_for_user(request.user)
     counts = {
@@ -118,6 +116,7 @@ def _detail_context(match, user, dispute_form=None):
     return {
         "match": match,
         "can_modify": match.can_be_modified_by(user),
+        "can_delete": match.can_be_deleted_by(user),
         "can_verify": match.can_be_verified_by(user),
         "can_dispute": match.can_be_disputed_by(user),
         "dispute_form": dispute_form or MatchDisputeForm(),
@@ -182,10 +181,10 @@ def match_update(request, pk):
     if not match.can_be_viewed_by(request.user):
         raise PermissionDenied("You do not have permission to edit this match.")
     if not match.can_be_modified_by(request.user):
-        if match.submitted_by_id == request.user.id:
+        if match.submitted_by_id == request.user.id or match.participant_team_for(request.user) is not None:
             messages.error(
                 request,
-                "Only pending matches can be edited. Contact your club host for changes to verified or disputed matches.",
+                "Verified matches are locked. Only pending or disputed matches can be edited.",
             )
             return redirect("matches:detail", pk=match.pk)
         raise PermissionDenied("You do not have permission to edit this match.")
@@ -193,10 +192,35 @@ def match_update(request, pk):
     was_verified = match.status == Match.Status.VERIFIED
     form = MatchForm(request.POST or None, instance=match, user=request.user)
     if request.method == "POST" and form.is_valid():
-        updated_match = form.save_with_participants(submitted_by=match.submitted_by)
-        if was_verified or updated_match.status == Match.Status.VERIFIED:
-            _trigger_rating_sync(match=updated_match, full_recalc=was_verified)
-        messages.success(request, "Match details updated.")
+        if form.can_pick_lead:
+            updated_match = form.save_with_participants(submitted_by=match.submitted_by)
+            if was_verified or updated_match.status == Match.Status.VERIFIED:
+                _trigger_rating_sync(match=updated_match, full_recalc=was_verified)
+            messages.success(request, "Match details updated.")
+        else:
+            updated_match = form.save_with_participants(submitted_by=request.user)
+            if was_verified:
+                _trigger_rating_sync(full_recalc=True)
+            detail_url = reverse("matches:detail", kwargs={"pk": updated_match.pk})
+            Notification.objects.filter(
+                recipient=request.user,
+                target_url=detail_url,
+                is_read=False,
+            ).update(is_read=True)
+            actor_label = _notif_name(request.user)
+            opponents = [p.player for p in updated_match.team_b_participants]
+            notify_users(
+                opponents,
+                category=Notification.Category.MATCH_REVIEW,
+                title=f"{actor_label} updated match {updated_match.match_code} ({updated_match.score_display})",
+                body="Review and confirm the updated score so ratings can update.",
+                target_url=detail_url,
+                actor=request.user,
+            )
+            messages.success(
+                request,
+                "Updated score submitted. Waiting for opposing player confirmation.",
+            )
         return redirect("matches:detail", pk=match.pk)
 
     return render(
@@ -216,11 +240,11 @@ def match_delete(request, pk):
     match = get_object_or_404(_base_match_queryset(), pk=pk)
     if not match.can_be_viewed_by(request.user):
         raise PermissionDenied("You do not have permission to delete this match.")
-    if not match.can_be_modified_by(request.user):
-        if match.submitted_by_id == request.user.id:
+    if not match.can_be_deleted_by(request.user):
+        if match.submitted_by_id == request.user.id or match.participant_team_for(request.user) is not None:
             messages.error(
                 request,
-                "Only pending matches can be deleted. Contact your club host for changes to verified or disputed matches.",
+                "Only the player who submitted a pending match (or a club host) can delete it.",
             )
             return redirect("matches:detail", pk=match.pk)
         raise PermissionDenied("You do not have permission to delete this match.")

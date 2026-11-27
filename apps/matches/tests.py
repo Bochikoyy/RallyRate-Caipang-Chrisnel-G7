@@ -6,6 +6,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
+from apps.accounts.models import Notification
 from apps.clubs.models import Club, ClubMembership
 from apps.ratings.models import RatingHistory
 
@@ -200,3 +201,64 @@ class MatchCRUDAndClubHostTests(TestCase):
         self.client.post(reverse("matches:delete", args=[match.pk]))
         self.player_b1.rating_profile.refresh_from_db()
         self.assertEqual(self.player_b1.rating_profile.singles_rating, Decimal("3.000"))
+
+    def test_opponent_edit_requires_original_submitter_verification_and_locks_verified_peer_match(self):
+        # Even if a player had a legacy role attribute, casual peer matches never bypass peer verification
+        self.player_b1.role = "organizer"
+        self.player_b1.save(update_fields=["role"])
+
+        match = self._create_singles_match(submitted_by=self.player_a1, club=None)
+        self.assertEqual(match.status, Match.Status.PENDING)
+
+        # Opponent cannot delete the submitter's pending match
+        self.client.force_login(self.player_b1)
+        self.client.post(reverse("matches:delete", args=[match.pk]))
+        self.assertTrue(Match.objects.filter(pk=match.pk).exists())
+
+        # Opponent opens edit form -> sees score from their own team perspective (7 - 11)
+        edit_get = self.client.get(reverse("matches:update", args=[match.pk]))
+        self.assertEqual(edit_get.status_code, 200)
+        self.assertEqual(edit_get.context["form"].initial["team_a_score"], 7)
+        self.assertEqual(edit_get.context["form"].initial["team_b_score"], 11)
+
+        # Opponent edits score to 11 - 9 in their favor -> stays PENDING, flips submitted_by to opponent
+        edit_post = self.client.post(
+            reverse("matches:update", args=[match.pk]),
+            {
+                "match_type": Match.MatchType.SINGLES,
+                "played_at": timezone.localdate().isoformat(),
+                "location": "Cebu Court 1",
+                "opponent_1": self.player_a1.pk,
+                "team_a_score": 11,
+                "team_b_score": 9,
+            },
+        )
+        self.assertRedirects(edit_post, reverse("matches:detail", args=[match.pk]))
+        match.refresh_from_db()
+        self.assertEqual(match.status, Match.Status.PENDING)
+        self.assertEqual(match.submitted_by, self.player_b1)
+        self.assertIsNone(match.verified_by)
+
+        # Opponent who just edited CANNOT confirm their own edited score
+        self.client.post(reverse("matches:verify", args=[match.pk]))
+        match.refresh_from_db()
+        self.assertEqual(match.status, Match.Status.PENDING)
+
+        # Original submitter receives a review notification and CAN confirm the updated score
+        self.assertTrue(
+            Notification.objects.filter(
+                recipient=self.player_a1,
+                actor=self.player_b1,
+                category=Notification.Category.MATCH_REVIEW,
+                is_read=False,
+            ).exists()
+        )
+        self.client.force_login(self.player_a1)
+        self.client.post(reverse("matches:verify", args=[match.pk]))
+        match.refresh_from_db()
+        self.assertEqual(match.status, Match.Status.VERIFIED)
+        self.assertEqual(match.verified_by, self.player_a1)
+
+        # Once verified, casual peer match is locked from further player edits
+        self.assertFalse(match.can_be_modified_by(self.player_a1))
+        self.assertFalse(match.can_be_modified_by(self.player_b1))

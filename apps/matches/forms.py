@@ -86,7 +86,7 @@ class MatchForm(forms.ModelForm):
         self.can_pick_lead = bool(
             self.instance
             and self.instance.pk
-            and (self.instance.is_club_manager(user) or getattr(user, "role", None) == "organizer")
+            and self.instance.is_club_manager(user)
         )
 
         active_users = User.objects.filter(is_active=True).order_by("first_name", "last_name", "username")
@@ -117,19 +117,35 @@ class MatchForm(forms.ModelForm):
                 .select_related("player")
                 .order_by("id")
             )
-            if self.can_pick_lead and team_a:
-                self.fields["team_a_player_1"].initial = team_a[0].player
-                if len(team_a) > 1:
-                    self.fields["partner"].initial = team_a[1].player
-            elif not self.can_pick_lead:
-                partners = [p.player for p in team_a if not user or p.player_id != user.id]
+            if self.can_pick_lead:
+                if team_a:
+                    self.fields["team_a_player_1"].initial = team_a[0].player
+                    if len(team_a) > 1:
+                        self.fields["partner"].initial = team_a[1].player
+                if team_b:
+                    self.fields["opponent_1"].initial = team_b[0].player
+                if len(team_b) > 1:
+                    self.fields["opponent_2"].initial = team_b[1].player
+            else:
+                user_in_team_b = bool(user and any(p.player_id == user.id for p in team_b))
+                my_team = team_b if user_in_team_b else team_a
+                opp_team = team_a if user_in_team_b else team_b
+
+                partners = [p.player for p in my_team if not user or p.player_id != user.id]
                 if partners:
                     self.fields["partner"].initial = partners[0]
+                if opp_team:
+                    self.fields["opponent_1"].initial = opp_team[0].player
+                if len(opp_team) > 1:
+                    self.fields["opponent_2"].initial = opp_team[1].player
 
-            if team_b:
-                self.fields["opponent_1"].initial = team_b[0].player
-            if len(team_b) > 1:
-                self.fields["opponent_2"].initial = team_b[1].player
+                if user_in_team_b and not self.is_bound:
+                    self.initial["team_a_score"] = self.instance.team_b_score
+                    self.initial["team_b_score"] = self.instance.team_a_score
+                    self.initial["game_2_team_a"] = self.instance.game_2_team_b
+                    self.initial["game_2_team_b"] = self.instance.game_2_team_a
+                    self.initial["game_3_team_a"] = self.instance.game_3_team_b
+                    self.initial["game_3_team_b"] = self.instance.game_3_team_a
         elif user and getattr(user, "home_court", "") and not self.fields["location"].initial:
             self.fields["location"].initial = user.home_court
 
@@ -241,13 +257,19 @@ class MatchForm(forms.ModelForm):
                 match.club = None
                 match.status = Match.Status.PENDING
                 match.source = Match.Source.CASUAL_PEER
-            elif match.status == Match.Status.SCHEDULED and match.has_scores:
-                if match.is_club_manager(submitted_by) or (self.user and match.is_club_manager(self.user)):
+            elif self.can_pick_lead:
+                if match.status == Match.Status.SCHEDULED and match.has_scores:
                     match.status = Match.Status.VERIFIED
                     match.verified_by = self.user or submitted_by
                     match.verified_at = timezone.now()
-                else:
-                    match.status = Match.Status.PENDING
+            else:
+                # Any player edit/counter-proposal resets verification and requires the opposing side to confirm
+                match.submitted_by = self.user or submitted_by
+                match.status = Match.Status.PENDING
+                match.verified_by = None
+                match.verified_at = None
+                match.disputed_by = None
+                match.dispute_reason = ""
             match.save()
 
             match.participants.all().delete()
