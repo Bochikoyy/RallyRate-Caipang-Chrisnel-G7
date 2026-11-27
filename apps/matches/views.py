@@ -135,14 +135,7 @@ def match_detail(request, pk):
 
 @login_required
 def match_create(request):
-    initial_club = None
-    club_slug = (request.GET.get("club") or "").strip()
-    if club_slug:
-        club_candidate = Club.objects.filter(slug=club_slug).first()
-        if club_candidate and club_candidate.is_member(request.user):
-            initial_club = club_candidate
-
-    form = MatchForm(request.POST or None, user=request.user, initial_club=initial_club)
+    form = MatchForm(request.POST or None, user=request.user)
     if request.method == "POST" and form.is_valid():
         match = form.save_with_participants(submitted_by=request.user)
         messages.success(request, "Match logged and submitted for opponent verification.")

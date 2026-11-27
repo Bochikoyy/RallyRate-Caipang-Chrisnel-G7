@@ -3,8 +3,6 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils import timezone
 
-from apps.clubs.models import Club, ClubMembership
-
 from .models import Match, MatchParticipant
 
 User = get_user_model()
@@ -20,12 +18,6 @@ class PlayerChoiceField(forms.ModelChoiceField):
 
 
 class MatchForm(forms.ModelForm):
-    club = forms.ModelChoiceField(
-        queryset=Club.objects.none(),
-        required=False,
-        empty_label="Casual / Independent peer match",
-        label="Club (optional)",
-    )
     team_a_player_1 = PlayerChoiceField(
         queryset=User.objects.none(),
         label="Player 1",
@@ -50,7 +42,6 @@ class MatchForm(forms.ModelForm):
     class Meta:
         model = Match
         fields = (
-            "club",
             "match_type",
             "played_at",
             "location",
@@ -86,39 +77,16 @@ class MatchForm(forms.ModelForm):
             "notes": "Notes (optional)",
         }
 
-    def __init__(self, *args, user=None, initial_club=None, **kwargs):
+    def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.user = user
         self.fields["team_a_score"].required = True
         self.fields["team_b_score"].required = True
 
-        user_clubs = Club.objects.none()
-        is_any_club_manager = False
-        if user and user.is_authenticated:
-            user_clubs = Club.objects.filter(
-                memberships__user=user,
-                memberships__status=ClubMembership.Status.ACTIVE,
-            ).order_by("name")
-            is_any_club_manager = ClubMembership.objects.filter(
-                user=user,
-                status=ClubMembership.Status.ACTIVE,
-                role__in=[ClubMembership.Role.HOST, ClubMembership.Role.CO_HOST],
-            ).exists()
-
-        if self.instance and self.instance.pk and self.instance.club_id:
-            user_clubs = (user_clubs | Club.objects.filter(pk=self.instance.club_id)).distinct()
-
-        self.fields["club"].queryset = user_clubs
-        if initial_club and not self.instance.pk and not self.is_bound:
-            self.fields["club"].initial = initial_club
-            if not self.fields["location"].initial:
-                self.fields["location"].initial = initial_club.home_court
-
         self.can_pick_lead = bool(
-            getattr(user, "role", None) == "organizer"
-            or (self.instance and self.instance.pk and self.instance.is_club_manager(user))
-            or (initial_club and initial_club.is_manager(user))
-            or is_any_club_manager
+            self.instance
+            and self.instance.pk
+            and (self.instance.is_club_manager(user) or getattr(user, "role", None) == "organizer")
         )
 
         active_users = User.objects.filter(is_active=True).order_by("first_name", "last_name", "username")
@@ -131,8 +99,6 @@ class MatchForm(forms.ModelForm):
             self.fields["partner"].queryset = active_users
             self.fields["opponent_1"].queryset = active_users
             self.fields["opponent_2"].queryset = active_users
-            if not self.instance.pk and user:
-                self.fields["team_a_player_1"].initial = user
         else:
             self.fields.pop("team_a_player_1", None)
             other_users = active_users.exclude(pk=user.pk) if user else active_users
@@ -200,7 +166,6 @@ class MatchForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean()
         match_type = cleaned_data.get("match_type")
-        selected_club = cleaned_data.get("club")
         g1_a = cleaned_data.get("team_a_score")
         g1_b = cleaned_data.get("team_b_score")
         g2_a = cleaned_data.get("game_2_team_a")
@@ -235,16 +200,7 @@ class MatchForm(forms.ModelForm):
             self.add_error("game_3_team_a", "Series is tied 1–1; enter Game 3 to determine the match winner.")
 
         chosen_lead = cleaned_data.get("team_a_player_1")
-        if self.can_pick_lead and chosen_lead is not None:
-            if chosen_lead != self.user:
-                is_club_mgr = bool(selected_club and selected_club.is_manager(self.user))
-                is_instance_mgr = bool(self.instance and self.instance.pk and self.instance.is_club_manager(self.user))
-                is_global_org = getattr(self.user, "role", None) == "organizer"
-                if not (is_club_mgr or is_instance_mgr or is_global_org):
-                    self.add_error("club", "Select a club you host/co-host to record a match on behalf of other players.")
-            lead_player = chosen_lead
-        else:
-            lead_player = self.user
+        lead_player = chosen_lead if (self.can_pick_lead and chosen_lead is not None) else self.user
 
         partner = cleaned_data.get("partner")
         opponent_1 = cleaned_data.get("opponent_1")
@@ -282,6 +238,7 @@ class MatchForm(forms.ModelForm):
             match = super().save(commit=False)
             if not match.pk:
                 match.submitted_by = submitted_by
+                match.club = None
                 match.status = Match.Status.PENDING
                 match.source = Match.Source.CASUAL_PEER
             elif match.status == Match.Status.SCHEDULED and match.has_scores:

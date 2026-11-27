@@ -28,15 +28,9 @@
     </div>
 
     <div class="ws-hero-actions">
-      {% if is_manager %}
-        {% url 'clubs:event_create' club.slug as create_event_url %}
-        {% if create_event_url %}
-          <a class="ws-btn ws-btn-primary" href="{{ create_event_url }}">+ Host a game</a>
-        {% endif %}
-        <a class="ws-btn ws-btn-outline" href="{% url 'matches:create' %}?club={{ club.slug }}">Log match</a>
-      {% elif is_member %}
-        <a class="ws-btn ws-btn-primary" href="{% url 'matches:create' %}?club={{ club.slug }}">Log club match</a>
-      {% else %}
+      {% if is_manager and create_event_url %}
+        <a class="ws-btn ws-btn-primary" href="{{ create_event_url }}">+ Host a game</a>
+      {% elif not is_member %}
         <form method="post" action="{% url 'clubs:join' club.slug %}" style="margin: 0;">
           {% csrf_token %}
           <button class="ws-btn ws-btn-primary" type="submit">Join club</button>
@@ -131,23 +125,18 @@
             {% if is_manager %}
               Host a pickleball session so members can join the roster, auto-generate balanced court pairings, and record scores live.
             {% else %}
-              Check back when a host posts the next session, or log a peer match with another club member anytime.
+              Check back when a host posts the next open-play session so you can join the court roster.
             {% endif %}
           </p>
         </div>
         {% if is_manager and create_event_url %}
           <a class="ws-btn ws-btn-primary" href="{{ create_event_url }}">Create session</a>
-        {% elif is_member %}
-          <a class="ws-btn ws-btn-outline" href="{% url 'matches:create' %}?club={{ club.slug }}">Log peer match</a>
         {% endif %}
       </section>
     {% endif %}
 
     <div class="ws-section-head">
       <h2>Recent club matches</h2>
-      {% if is_member %}
-        <a class="ws-text-link" href="{% url 'matches:create' %}?club={{ club.slug }}">Record match →</a>
-      {% endif %}
     </div>
 
     {% if club_matches %}

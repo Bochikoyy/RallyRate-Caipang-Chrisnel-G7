@@ -94,7 +94,6 @@ class MatchCRUDAndClubHostTests(TestCase):
         resp = self.client.post(
             reverse("matches:create"),
             {
-                "club": self.club.pk,
                 "match_type": Match.MatchType.DOUBLES,
                 "played_at": timezone.localdate().isoformat(),
                 "location": "Banilad Court 3",
@@ -108,7 +107,7 @@ class MatchCRUDAndClubHostTests(TestCase):
         self.assertEqual(Match.objects.count(), 1)
         match = Match.objects.first()
         self.assertRedirects(resp, reverse("matches:detail", args=[match.pk]))
-        self.assertEqual(match.club, self.club)
+        self.assertIsNone(match.club)
         self.assertEqual(match.source, Match.Source.CASUAL_PEER)
         self.assertEqual(match.status, Match.Status.PENDING)
         self.assertEqual(match.participants.count(), 4)

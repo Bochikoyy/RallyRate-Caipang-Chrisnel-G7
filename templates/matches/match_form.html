@@ -5,8 +5,8 @@
 {% block content %}
 <section class="ws-page-head">
   <div>
-    <h1>{% if is_edit %}Edit match{% else %}Record a peer match{% endif %}</h1>
-    <p class="ws-page-sub">Log a casual or club game. Opponents confirm the final score before 1.0–8.0 ratings update.</p>
+    <h1>{% if is_edit %}Edit match{% else %}Record a match{% endif %}</h1>
+    <p class="ws-page-sub">Log an individual game. Opponents confirm the final score before 1.0–8.0 ratings update.</p>
   </div>
   {% if is_edit %}
     <a class="ws-btn ws-btn-outline" href="{% url 'matches:detail' match.pk %}">Back to match</a>
@@ -30,12 +30,6 @@
       <div class="ws-hidden-select">
         {{ form.match_type }}
         {% for error in form.match_type.errors %}<small class="error">{{ error }}</small>{% endfor %}
-      </div>
-
-      <div class="ws-field" style="margin-bottom: 16px;">
-        <label for="{{ form.club.id_for_label }}">{{ form.club.label }}</label>
-        {{ form.club }}
-        {% for error in form.club.errors %}<small class="error">{{ error }}</small>{% endfor %}
       </div>
 
       <div class="ws-field-grid">
